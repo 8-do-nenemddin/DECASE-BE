@@ -38,3 +38,13 @@ out/
 
 ### env ###
 .env
+.env.properties
+
+### Media Dir ###
+DECASE
+
+### DS_Store
+.DS_Store
+._.DS_Store
+**/DS_Store
+**/._.DS_Store

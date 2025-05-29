@@ -13,12 +13,13 @@ import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import java.time.LocalDateTime;
 import java.util.List;
-import lombok.Getter;
+
+import lombok.Data;
 import lombok.NoArgsConstructor;
 
 @Entity
+@Data
 @Table(name = "TM_DOCUMENTS")
-@Getter
 @NoArgsConstructor
 public class Document {
 
@@ -53,7 +54,7 @@ public class Document {
     private Project project;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "member_id", insertable = false, updatable = false)
+    @JoinColumn(name = "member_id", updatable = false)
     private Member createdBy;
 
     @OneToMany(mappedBy = "document", fetch = FetchType.LAZY)
