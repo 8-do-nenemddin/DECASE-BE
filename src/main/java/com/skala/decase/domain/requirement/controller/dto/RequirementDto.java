@@ -1,0 +1,43 @@
+package com.skala.decase.domain.requirement.controller.dto;
+
+import com.skala.decase.domain.requirement.domain.Requirement;
+import lombok.Data;
+
+@Data
+public class RequirementDto {
+	private long reqPk;
+	private String reqIdCode;
+	private int revisionCount;
+	private String type;
+	private String status;
+	private String level1;
+	private String level2;
+	private String level3;
+	private String priority;
+	private String difficulty;
+	private String name;
+	private String description;
+	private String createdDate;
+	private String modifiedDate;
+	private String modReason;
+
+	public static RequirementDto fromEntity(Requirement r) {
+		RequirementDto dto = new RequirementDto();
+		dto.setReqPk(r.getReqPk());
+		dto.setReqIdCode(r.getReqIdCode());
+		dto.setRevisionCount(r.getRevisionCount());
+		dto.setType(r.getType().name());
+		dto.setStatus(r.getType().name());
+		dto.setLevel1(r.getLevel1());
+		dto.setLevel2(r.getLevel2());
+		dto.setLevel3(r.getLevel3());
+		dto.setPriority(r.getPriority() != null ? r.getPriority().name() : null);
+		dto.setDifficulty(r.getDifficulty() != null ? r.getDifficulty().name() : null);
+		dto.setName(r.getName());
+		dto.setDescription(r.getDescription());
+		dto.setCreatedDate(r.getCreatedDate().toString());
+		dto.setModifiedDate(r.getModifiedDate().toString());
+		dto.setModReason(r.getModReason());
+		return dto;
+	}
+}
