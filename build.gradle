@@ -37,8 +37,10 @@ dependencies {
 
 	//h2
 	runtimeOnly 'com.h2database:h2'
+
 	//mysql
-	implementation 'com.mysql:mysql-connector-j'
+	//implementation 'com.mysql:mysql-connector-j'
+
 	//mariadb
 	implementation 'org.mariadb.jdbc:mariadb-java-client:3.3.3'
 
@@ -47,7 +49,6 @@ dependencies {
 
 	//actuator
 	implementation 'org.springframework.boot:spring-boot-starter-actuator'
-
 }
 
 tasks.named('test') {

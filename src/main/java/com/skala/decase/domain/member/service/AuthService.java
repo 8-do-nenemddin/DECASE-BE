@@ -6,11 +6,17 @@ import com.skala.decase.domain.company.repository.CompanyRepository;
 import com.skala.decase.domain.department.domain.Department;
 import com.skala.decase.domain.department.exception.DepartmentException;
 import com.skala.decase.domain.department.repository.DepartmentRepository;
+import com.skala.decase.domain.member.controller.dto.request.DeleteRequest;
+import com.skala.decase.domain.member.controller.dto.request.DuplicationCheckRequest;
 import com.skala.decase.domain.member.controller.dto.request.LogInRequest;
 import com.skala.decase.domain.member.controller.dto.request.SignUpRequest;
+import com.skala.decase.domain.member.controller.dto.response.DeleteResponse;
+import com.skala.decase.domain.member.controller.dto.response.DuplicationCheckResponse;
 import com.skala.decase.domain.member.controller.dto.response.MemberResponse;
 import com.skala.decase.domain.member.domain.Member;
 import com.skala.decase.domain.member.exception.MemberException;
+import com.skala.decase.domain.member.mapper.CheckDuplicationMapper;
+import com.skala.decase.domain.member.mapper.DeleteMapper;
 import com.skala.decase.domain.member.mapper.MemberMapper;
 import com.skala.decase.domain.member.repository.MemberRepository;
 import lombok.RequiredArgsConstructor;
@@ -27,9 +33,9 @@ public class AuthService {
     private final CompanyRepository companyRepository;
     private final DepartmentRepository departmentRepository;
 
-    private final MemberService memberService;
-
     private final MemberMapper memberMapper;
+    private final DeleteMapper deleteMapper;
+    private final CheckDuplicationMapper checkDuplicationMapper;
 
     /**
      * 회원가입
@@ -65,5 +71,25 @@ public class AuthService {
         }
 
         return memberMapper.toResponse(member);
+    }
+
+    public DeleteResponse withdrawal(String memberId, DeleteRequest request) {
+        Member member = memberRepository.findByMemberId(memberId)
+                .orElseThrow(() -> new MemberException("해당 사용자를 찾을 수 없습니다.", HttpStatus.NOT_FOUND));
+
+        if (!member.getPassword().equals(request.password())) {
+            throw new MemberException("비밀번호 불일치", HttpStatus.BAD_REQUEST);
+        }
+        memberRepository.delete(member);
+        return deleteMapper.success();
+    }
+
+    public DuplicationCheckResponse checkDuplication(DuplicationCheckRequest request) {
+        Member member = memberRepository.findByMemberId(request.id())
+                .orElse(null);
+        if (member != null) {
+            return checkDuplicationMapper.failure();
+        }
+        return checkDuplicationMapper.success();
     }
 }
