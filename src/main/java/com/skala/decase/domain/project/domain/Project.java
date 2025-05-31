@@ -2,26 +2,19 @@ package com.skala.decase.domain.project.domain;
 
 import com.skala.decase.domain.document.domain.Document;
 import com.skala.decase.domain.requirement.domain.Requirement;
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
-import jakarta.persistence.FetchType;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.OneToMany;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
+
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
-import lombok.Getter;
+
+import lombok.Data;
 import lombok.NoArgsConstructor;
 
 @Entity
 @Table(name = "TM_PROJECTS")
-@Getter
+@Data
 @NoArgsConstructor
 public class Project {
 
@@ -64,10 +57,10 @@ public class Project {
     @OneToMany(mappedBy = "project", fetch = FetchType.LAZY)
     private List<MemberProject> membersProjects;
 
-    @OneToMany(mappedBy = "project", fetch = FetchType.LAZY)
+    @OneToMany(mappedBy = "project", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Document> documents;
 
-    @OneToMany(mappedBy = "project", fetch = FetchType.LAZY)
+    @OneToMany(mappedBy = "project", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Requirement> requirements;
 
     // 프로젝트 생성자
