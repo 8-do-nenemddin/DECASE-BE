@@ -53,7 +53,7 @@ public class AuthController {
 
     @Operation(summary = "회원 탈퇴", description = "회원 정보를 삭제합니다.")
     @DeleteMapping("/{memberId}")
-    public ResponseEntity<ApiResponse<DeleteResponse>> deleteMember(@PathVariable String memberId, @RequestBody DeleteRequest request) {
+    public ResponseEntity<ApiResponse<DeleteResponse>> deleteMember(@PathVariable Long memberId, @RequestBody DeleteRequest request) {
         DeleteResponse response = authService.withdrawal(memberId, request);
 
         return ResponseEntity.ok()

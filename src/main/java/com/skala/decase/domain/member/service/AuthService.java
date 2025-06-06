@@ -73,8 +73,9 @@ public class AuthService {
         return memberMapper.toResponse(member);
     }
 
-    public DeleteResponse withdrawal(String memberId, DeleteRequest request) {
-        Member member = memberRepository.findByMemberId(memberId)
+    @Transactional
+    public DeleteResponse withdrawal(Long memberId, DeleteRequest request) {
+        Member member = memberRepository.findById(memberId)
                 .orElseThrow(() -> new MemberException("해당 사용자를 찾을 수 없습니다.", HttpStatus.NOT_FOUND));
 
         if (!member.getPassword().equals(request.password())) {
