@@ -48,6 +48,8 @@ dependencies {
 	//actuator
 	implementation 'org.springframework.boot:spring-boot-starter-actuator'
 
+	// envers
+	implementation 'org.hibernate:hibernate-envers:6.4.4.Final'
 }
 
 tasks.named('test') {

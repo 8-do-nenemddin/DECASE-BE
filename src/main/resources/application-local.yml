@@ -23,7 +23,7 @@ spring:
   # JPA 로컬 설정
   jpa:
     hibernate:
-      ddl-auto: update  # 로컬에서는 자동 스키마 업데이트
+      ddl-auto: create-drop  # 로컬에서는 자동 스키마 업데이트
     properties:
       hibernate:
         dialect: org.hibernate.dialect.MariaDBDialect # mariadb
