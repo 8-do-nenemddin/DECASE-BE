@@ -16,6 +16,7 @@ import com.skala.decase.domain.source.service.SourceRepository;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -65,18 +66,26 @@ public class AsyncRfpProcessor {
             MultipartBodyBuilder builder = new MultipartBodyBuilder();
             builder.part("file", file.getResource());
 
-            SrsAgentResponse response = webClient.post()
-                    .uri("/api/v1/requirements/srs-agent")
+            Map<String, Object> response = webClient.post()
+                    .uri("/api/v1/requirements/srs-agent/start")
                     .contentType(MediaType.MULTIPART_FORM_DATA)
                     .body(BodyInserters.fromMultipartData(builder.build()))
                     .retrieve()
-                    .bodyToMono(SrsAgentResponse.class)
+                    .bodyToMono(Map.class)
                     .timeout(Duration.ofMinutes(3))
                     .block();
 
-            if (response != null && response.getRequirements() != null && !response.getRequirements().isEmpty()) {
-                saveRequirements(response.getRequirements(), member, project, document);
-                log.info("요구사항 {} 개 저장 완료", response.getRequirements().size());
+            String jobId = (String) response.get("job_id");
+            log.info("요구사항 분석 Job ID 받음: {}", jobId);
+
+            // 2단계: 상태만 주기적으로 확인 (진짜 폴링)
+            SrsAgentResponse result = pollJobStatus(jobId);
+            // 3단계: 결과 저장
+            if (result != null && "COMPLETED".equals(result.getState()) &&
+                    result.getRequirements() != null && !result.getRequirements().isEmpty()) {
+
+                saveRequirements(result.getRequirements(), member, project, document);
+                log.info("요구사항 {} 개 저장 완료", result.getRequirements().size());
             }
 
             return CompletableFuture.completedFuture(null);
@@ -84,6 +93,65 @@ public class AsyncRfpProcessor {
         } catch (Exception e) {
             log.error("요구사항 처리 실패", e);
             return CompletableFuture.failedFuture(e);
+        }
+    }
+
+    /**
+     * 2단계: Job 상태만 주기적으로 확인 (진짜 폴링)
+     */
+    private SrsAgentResponse pollJobStatus(String jobId) {
+        try {
+            int maxAttempts = 40; // 최대 20분 (30초 * 40)
+            int attempts = 0;
+
+            while (attempts < maxAttempts) {
+                attempts++;
+
+                try {
+                    log.info("요구사항 상태 확인 중... jobId={}, attempt={}/{}", jobId, attempts, maxAttempts);
+
+                    // 상태만 조회 (파일 업로드 없음)
+                    SrsAgentResponse response = webClient.get()
+                            .uri("/api/v1/requirements/srs-agent/{jobId}/status", jobId)
+                            .retrieve()
+                            .bodyToMono(SrsAgentResponse.class)
+                            .timeout(Duration.ofSeconds(30))  // 30초 타임아웃
+                            .block();
+
+                    if (response != null) {
+                        String state = response.getState();
+                        log.info("요구사항 처리 상태: jobId={}, state={}, message={}",
+                                jobId, state, response.getMessage());
+
+                        if ("COMPLETED".equals(state)) {
+                            log.info("요구사항 처리 완료! jobId={}", jobId);
+                            return response;
+                        } else if ("FAILED".equals(state)) {
+                            log.error("요구사항 처리 실패: jobId={}, message={}", jobId, response.getMessage());
+                            throw new RuntimeException("요구사항 처리 실패: " + response.getMessage());
+                        }
+                        // PROCESSING인 경우 계속 폴링
+                    }
+
+                } catch (Exception e) {
+                    log.warn("요구사항 상태 확인 중 일시적 오류 (attempt={}): {}", attempts, e.getMessage());
+                    // 일시적 오류는 무시하고 계속 시도
+                }
+
+                // 30초 대기 후 다시 상태 확인
+                try {
+                    Thread.sleep(30000);
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                    throw new RuntimeException("요구사항 처리 중단됨", e);
+                }
+            }
+
+            throw new RuntimeException("요구사항 처리 타임아웃: jobId=" + jobId);
+
+        } catch (Exception e) {
+            log.error("요구사항 상태 폴링 실패: jobId={}", jobId, e);
+            throw new RuntimeException("요구사항 처리 실패", e);
         }
     }
 
@@ -146,8 +214,7 @@ public class AsyncRfpProcessor {
         }
     }
 
-    private String extractFileName(HttpHeaders headers)
-    {
+    private String extractFileName(HttpHeaders headers) {
         String contentDisposition = headers.getFirst("Content-Disposition");
         if (contentDisposition != null && contentDisposition.contains("filename=")) {
             return contentDisposition.split("filename=")[1].replaceAll("\"", "");

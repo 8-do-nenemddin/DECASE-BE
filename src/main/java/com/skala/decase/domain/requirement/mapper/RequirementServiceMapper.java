@@ -26,12 +26,12 @@ public class RequirementServiceMapper {
 
         Requirement newReq = new Requirement();
 
-        String description="[요구사항]\n"+response.description_content()+"\n"
-                +"[대상업무]\n"+response.target_task()+"\n"
-                +"[요건 처리 상세]\n"+response.processing_detail();
+        String description = "[요구사항]\n" + response.description_content() + "\n"
+                + "[대상업무]\n" + response.target_task() + "\n"
+                + "[요건 처리 상세]\n" + response.processing_detail();
 
         newReq.createInitialRequirement(
-                "REQ-0001",
+                response.id(),
                 RequirementType.fromKorean(response.type()),
                 response.category_large(),
                 response.category_medium(),

@@ -9,6 +9,7 @@ import java.util.List;
 @Setter
 public class SrsAgentResponse {
     private String message;
+    private String state;
     private List<CreateRfpResponse> requirements;
 
 } 
