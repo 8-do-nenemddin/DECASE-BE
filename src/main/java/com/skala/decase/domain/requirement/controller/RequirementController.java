@@ -1,10 +1,9 @@
 package com.skala.decase.domain.requirement.controller;
 
-import com.skala.decase.domain.requirement.controller.dto.RequirementDto;
-import com.skala.decase.domain.requirement.controller.dto.RequirementRevisionDto;
-import com.skala.decase.domain.requirement.controller.dto.UpdateRequirementDto;
+import com.skala.decase.domain.requirement.controller.dto.request.RequirementDto;
+import com.skala.decase.domain.requirement.controller.dto.request.RequirementRevisionDto;
+import com.skala.decase.domain.requirement.controller.dto.request.UpdateRequirementDto;
 import com.skala.decase.domain.requirement.controller.dto.response.RequirementWithSourceResponse;
-import com.skala.decase.domain.requirement.domain.Requirement;
 import com.skala.decase.domain.requirement.service.ExelExportService;
 import com.skala.decase.domain.requirement.service.RequirementService;
 import com.skala.decase.global.model.ApiResponse;

@@ -1,4 +1,4 @@
-package com.skala.decase.domain.requirement.controller.dto;
+package com.skala.decase.domain.requirement.controller.dto.request;
 
 import com.skala.decase.domain.requirement.domain.Requirement;
 import lombok.Data;
@@ -21,7 +21,7 @@ public class RequirementDto {
 	private int deletedRevision;
 	private String modReason;
 
-	public static RequirementDto fromEntity(Requirement r) {
+	public RequirementDto fromEntity(Requirement r) {
 		RequirementDto dto = new RequirementDto();
 		dto.setReqPk(r.getReqPk());
 		dto.setReqIdCode(r.getReqIdCode());
