@@ -1,6 +1,7 @@
 package com.skala.decase.domain.mockup.service;
 
 import com.skala.decase.domain.mockup.domain.Mockup;
+import com.skala.decase.domain.mockup.domain.dto.MockupExistDto;
 import com.skala.decase.domain.mockup.exception.MockupException;
 import com.skala.decase.domain.mockup.repository.MockupRepository;
 import com.skala.decase.domain.project.domain.Project;
@@ -177,4 +178,10 @@ public class MockupService {
 
         return responses;
     }
+
+	// 해당 리비전에 목업 유무 반환
+	public MockupExistDto mockupExists(Long projectId, Integer revisionCount) {
+		boolean mockupExist = mockupRepository.existsByProject_ProjectIdAndRevisionCount(projectId, revisionCount);
+		return (new MockupExistDto(mockupExist));
+	}
 }

@@ -60,6 +60,7 @@ dependencies {
 
 	implementation 'org.springframework.retry:spring-retry'
 	implementation 'org.springframework:spring-aspects'
+
 	// envers
 	implementation 'org.hibernate:hibernate-envers:6.4.4.Final'
 }

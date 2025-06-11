@@ -4,7 +4,7 @@ spring:
       on-profile: local
 
   datasource:
-    #    driver-class-name: com.mysql.cj.jdbc.Driver
+#    driver-class-name: com.mysql.cj.jdbc.Driver
     driver-class-name: org.mariadb.jdbc.Driver
     url: ${MARIA_DATABASE_URL}
     username: ${MARIA_USER}
@@ -22,10 +22,11 @@ spring:
   jpa:
     hibernate:
       ddl-auto: update
+
     properties:
       hibernate:
         dialect: org.hibernate.dialect.MariaDBDialect # mariadb
-    #        dialect: org.hibernate.dialect.MySQL8Dialect # mysql
+#            dialect: org.hibernate.dialect.MySQL8Dialect # mysql
     show-sql: true
 
   mail:

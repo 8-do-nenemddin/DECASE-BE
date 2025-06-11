@@ -88,10 +88,10 @@ public class RequirementController {
     }
 
     // 프로젝트의 요구사항 분류(대/중/소) 불러오기
-    @GetMapping("/{projectId}/documents/categories")
+    @GetMapping("/{projectId}/documents/{revisionCount}/categories")
     public ResponseEntity<Map<String, List<String>>> getRequirementCategory(
-            @PathVariable Long projectId) {
-        return ResponseEntity.ok(requirementService.getRequirementCategory(projectId));
+            @PathVariable Long projectId, @PathVariable int revisionCount) {
+        return ResponseEntity.ok(requirementService.getRequirementCategory(projectId, revisionCount));
     }
 
     // 프로젝트의 쿼리 및 카테고리 별 검색

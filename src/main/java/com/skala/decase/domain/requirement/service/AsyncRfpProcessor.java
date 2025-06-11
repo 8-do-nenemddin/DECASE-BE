@@ -16,7 +16,9 @@ import com.skala.decase.domain.source.service.SourceRepository;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.atomic.AtomicInteger;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpHeaders;
@@ -30,6 +32,8 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.reactive.function.BodyInserters;
 import org.springframework.web.reactive.function.client.WebClient;
+import reactor.core.publisher.Mono;
+import reactor.util.retry.Retry;
 
 @Service
 @Slf4j
@@ -65,25 +69,92 @@ public class AsyncRfpProcessor {
             MultipartBodyBuilder builder = new MultipartBodyBuilder();
             builder.part("file", file.getResource());
 
-            SrsAgentResponse response = webClient.post()
-                    .uri("/api/v1/requirements/srs-agent")
+            Map<String, Object> response = webClient.post()
+                    .uri("/api/v1/requirements/srs-agent/start")
                     .contentType(MediaType.MULTIPART_FORM_DATA)
                     .body(BodyInserters.fromMultipartData(builder.build()))
                     .retrieve()
-                    .bodyToMono(SrsAgentResponse.class)
-                    .timeout(Duration.ofMinutes(3))
+                    .bodyToMono(Map.class)
+                    .timeout(Duration.ofHours(1))
                     .block();
 
-            if (response != null && response.getRequirements() != null && !response.getRequirements().isEmpty()) {
-                saveRequirements(response.getRequirements(), member, project, document);
-                log.info("요구사항 {} 개 저장 완료", response.getRequirements().size());
+            String jobId = (String) response.get("job_id");
+            log.info("요구사항 분석 Job ID 받음: {}", jobId);
+
+            // 2단계: 상태만 주기적으로 확인 (진짜 폴링)
+            SrsAgentResponse result = pollJobStatus(jobId);
+            // 3단계: 결과 저장
+            if (result != null && "COMPLETED".equals(result.getState()) &&
+                    result.getRequirements() != null && !result.getRequirements().isEmpty()) {
+
+                saveRequirements(result.getRequirements(), member, project, document);
+                log.info("요구사항 {} 개 저장 완료", result.getRequirements().size());
             }
 
             return CompletableFuture.completedFuture(null);
 
         } catch (Exception e) {
-            log.error("요구사항 처리 실패", e);
+            log.error("요구사항 처리 실패 - 프로젝트: {}, 에러: {}", projectId, e.getMessage(), e);
             return CompletableFuture.failedFuture(e);
+        }
+    }
+
+    /**
+     * 2단계: Job 상태만 주기적으로 확인 (진짜 폴링)
+     */
+    private SrsAgentResponse pollJobStatus(String jobId) {
+        try {
+            int maxAttempts = 120; // 최대 1시간 (30초 * 120)
+            int attempts = 0;
+
+            while (attempts < maxAttempts) {
+                attempts++;
+
+                try {
+                    log.info("요구사항 상태 확인 중... jobId={}, attempt={}/{}", jobId, attempts, maxAttempts);
+
+                    // 상태만 조회 (파일 업로드 없음)
+                    SrsAgentResponse response = webClient.get()
+                            .uri("/api/v1/requirements/srs-agent/{jobId}/status", jobId)
+                            .retrieve()
+                            .bodyToMono(SrsAgentResponse.class)
+                            .timeout(Duration.ofSeconds(30))  // 30초 타임아웃
+                            .block();
+
+                    if (response != null) {
+                        String state = response.getState();
+                        log.info("요구사항 처리 상태: jobId={}, state={}, message={}",
+                                jobId, state, response.getMessage());
+
+                        if ("COMPLETED".equals(state)) {
+                            log.info("요구사항 처리 완료! jobId={}", jobId);
+                            return response;
+                        } else if ("FAILED".equals(state)) {
+                            log.error("요구사항 처리 실패: jobId={}, message={}", jobId, response.getMessage());
+                            throw new RuntimeException("요구사항 처리 실패: " + response.getMessage());
+                        }
+                        // PROCESSING인 경우 계속 폴링
+                    }
+
+                } catch (Exception e) {
+                    log.warn("요구사항 상태 확인 중 일시적 오류 (attempt={}): {}", attempts, e.getMessage());
+                    // 일시적 오류는 무시하고 계속 시도
+                }
+
+                // 30초 대기 후 다시 상태 확인
+                try {
+                    Thread.sleep(30000);
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                    throw new RuntimeException("요구사항 처리 중단됨", e);
+                }
+            }
+
+            throw new RuntimeException("요구사항 처리 타임아웃: jobId=" + jobId);
+
+        } catch (Exception e) {
+            log.error("요구사항 상태 폴링 실패: jobId={}", jobId, e);
+            throw new RuntimeException("요구사항 처리 실패", e);
         }
     }
 
@@ -103,30 +174,120 @@ public class AsyncRfpProcessor {
 
             log.info("ASIS 처리 시작 - 프로젝트: {}", project.getProjectId());
 
-            MultipartBodyBuilder builder = new MultipartBodyBuilder();
-            builder.part("file", rfpFile.getResource());
-
-            ResponseEntity<byte[]> response = webClient.post()
-                    .uri("/api/v1/requirements/as-is")
-                    .contentType(MediaType.MULTIPART_FORM_DATA)
-                    .body(BodyInserters.fromMultipartData(builder.build()))
-                    .retrieve()
-                    .toEntity(byte[].class)
-                    .timeout(Duration.ofMinutes(3))
-                    .block();
-
-            if (response.getBody() != null) {
-                String fileName = extractFileName(response.getHeaders());
-                documentService.uploadDocumentFromBytes(response.getBody(), fileName, 8, project, member);
-                log.info("ASIS 문서 저장 완료");
-            }
-
-            return CompletableFuture.completedFuture(null);
+            // 1. FastAPI에 작업 요청 후 Job ID 받기
+            return requestAsisProcessing(rfpFile)
+                    .flatMap(jobId -> {
+                        log.info("ASIS 처리 Job 시작: jobId={}", jobId);
+                        return pollForAsisResult(jobId);
+                    })
+                    .flatMap(result -> {
+                        if (result != null) {
+                            String fileName = "asis_report_" + System.currentTimeMillis() + ".pdf";
+                            documentService.uploadDocumentFromBytes(result, fileName, 8, project, member);
+                            log.info("ASIS 문서 저장 완료");
+                        }
+                        return Mono.empty();
+                    })
+                    .then()
+                    .toFuture();
 
         } catch (Exception e) {
             log.error("ASIS 처리 실패", e);
             return CompletableFuture.failedFuture(e);
         }
+    }
+
+    private Mono<String> requestAsisProcessing(MultipartFile rfpFile) {
+        int maxRetries = 3;
+        Duration timeout = Duration.ofHours(1);
+
+        return Mono.defer(() -> {
+            MultipartBodyBuilder builder = new MultipartBodyBuilder();
+            builder.part("file", rfpFile.getResource());
+
+            return webClient.post()
+                    .uri("/api/v1/requirements/as-is/start")
+                    .contentType(MediaType.MULTIPART_FORM_DATA)
+                    .body(BodyInserters.fromMultipartData(builder.build()))
+                    .retrieve()
+                    .bodyToMono(Map.class)
+                    .timeout(timeout)
+                    .map(response -> {
+                        if (response != null && response.containsKey("job_id")) {
+                            return (String) response.get("job_id");
+                        }
+                        throw new RuntimeException("Invalid response format: job_id not found");
+                    });
+        })
+        .retryWhen(Retry.backoff(maxRetries, Duration.ofSeconds(1))
+                .doBeforeRetry(signal -> 
+                    log.warn("ASIS 처리 요청 재시도 (시도 {}/{}): {}", 
+                            signal.totalRetries() + 1, maxRetries, signal.failure().getMessage()))
+                .onRetryExhaustedThrow((retryBackoffSpec, retrySignal) -> {
+                    log.error("ASIS 처리 요청 최종 실패: {}", retrySignal.failure().getMessage());
+                    return new RuntimeException("ASIS 처리 요청 실패: " + retrySignal.failure().getMessage());
+                }));
+    }
+
+    private Mono<byte[]> pollForAsisResult(String jobId) {
+        int maxAttempts = 120; // 최대 1시간 (30초 * 120)
+        Duration pollInterval = Duration.ofSeconds(30);
+        Duration statusTimeout = Duration.ofSeconds(30);
+
+        return Mono.defer(() -> {
+            AtomicInteger attempts = new AtomicInteger(0);
+            AtomicInteger consecutiveErrors = new AtomicInteger(0);
+            int maxConsecutiveErrors = 3;
+
+            return Mono.just(jobId)
+                    .flatMap(id -> {
+                        if (attempts.incrementAndGet() > maxAttempts) {
+                            return Mono.error(new RuntimeException("ASIS 처리 타임아웃: jobId=" + jobId));
+                        }
+
+                        return webClient.get()
+                                .uri("/api/v1/requirements/as-is/{jobId}/status", id)
+                                .retrieve()
+                                .bodyToMono(Map.class)
+                                .timeout(statusTimeout)
+                                .flatMap(statusResponse -> {
+                                    if (statusResponse == null) {
+                                        return Mono.error(new RuntimeException("Empty status response"));
+                                    }
+
+                                    String status = (String) statusResponse.get("status");
+                                    log.info("ASIS 처리 상태: jobId={}, status={}, attempt={}/{}", 
+                                            id, status, attempts.get(), maxAttempts);
+
+                                    if ("COMPLETED".equals(status)) {
+                                        consecutiveErrors.set(0);
+                                        return webClient.get()
+                                                .uri("/api/v1/requirements/as-is/{jobId}/result", id)
+                                                .retrieve()
+                                                .bodyToMono(byte[].class)
+                                                .timeout(Duration.ofMinutes(30));  // 결과 다운로드 타임아웃 30분으로 증가
+                                    } else if ("FAILED".equals(status)) {
+                                        String message = (String) statusResponse.get("message");
+                                        return Mono.error(new RuntimeException("ASIS 처리 실패: " + message));
+                                    } else {
+                                        consecutiveErrors.set(0);
+                                        return Mono.empty();
+                                    }
+                                })
+                                .onErrorResume(e -> {
+                                    int errors = consecutiveErrors.incrementAndGet();
+                                    log.warn("ASIS 상태 확인 중 일시적 오류 (attempt={}, consecutive={}): {}", 
+                                            attempts.get(), errors, e.getMessage());
+                                    
+                                    if (errors >= maxConsecutiveErrors) {
+                                        return Mono.error(new RuntimeException("연속적인 상태 확인 실패: " + e.getMessage()));
+                                    }
+                                    return Mono.empty();
+                                });
+                    })
+                    .repeatWhenEmpty(repeat -> repeat.delayElements(pollInterval))
+                    .take(Duration.ofHours(1));  // 전체 폴링 시간을 1시간으로 제한
+        });
     }
 
     private void saveRequirements(List<CreateRfpResponse> responses, Member member, Project project,
@@ -146,8 +307,7 @@ public class AsyncRfpProcessor {
         }
     }
 
-    private String extractFileName(HttpHeaders headers)
-    {
+    private String extractFileName(HttpHeaders headers) {
         String contentDisposition = headers.getFirst("Content-Disposition");
         if (contentDisposition != null && contentDisposition.contains("filename=")) {
             return contentDisposition.split("filename=")[1].replaceAll("\"", "");

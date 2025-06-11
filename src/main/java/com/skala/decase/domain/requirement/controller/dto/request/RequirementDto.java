@@ -21,7 +21,7 @@ public class RequirementDto {
 	private int deletedRevision;
 	private String modReason;
 
-	public RequirementDto fromEntity(Requirement r) {
+	public static RequirementDto fromEntity(Requirement r) {
 		RequirementDto dto = new RequirementDto();
 		dto.setReqPk(r.getReqPk());
 		dto.setReqIdCode(r.getReqIdCode());

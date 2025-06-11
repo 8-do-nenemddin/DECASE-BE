@@ -10,4 +10,5 @@ public interface MockupRepository extends JpaRepository<Mockup, Long> {
 	List<Mockup> findAllByProject_ProjectId(Long projectId);
 	List<Mockup> findAllByProject_ProjectIdAndRevisionCount(Long projectId, Integer revisionCount);
 	Optional<Mockup> findByProject_ProjectIdAndRevisionCountAndName(Long ProjectId, Integer revisionCount, String fileName);
+	Boolean existsByProject_ProjectIdAndRevisionCount(Long projectId, Integer revisionCount);
 }

@@ -28,6 +28,7 @@ public class UpdateRequirementDto {
 	public Requirement toEntity(Project project, String reqIdCode, int revisionCount, Member member) {
 		Requirement requirement = new Requirement();
 		requirement.setProject(project);
+		requirement.setProjectIdAud(project.getProjectId());
 		requirement.setReqIdCode(reqIdCode);
 		requirement.setRevisionCount(revisionCount);
 		requirement.setCreatedBy(member);

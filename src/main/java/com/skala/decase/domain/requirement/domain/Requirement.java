@@ -20,18 +20,16 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
+import lombok.Data;
 import org.hibernate.envers.Audited;
 import org.hibernate.envers.NotAudited;
 import org.hibernate.envers.RelationTargetAuditMode;
-
-import lombok.Getter;
 import lombok.NoArgsConstructor;
-import lombok.Setter;
 
 @Entity
+@Audited
 @Table(name = "TD_REQUIREMENTS")
-@Getter
-@Setter
+@Data
 @NoArgsConstructor
 public class Requirement {
 
@@ -40,43 +38,33 @@ public class Requirement {
     @Column(name = "req_pk", nullable = false)
     private long reqPk;
 
-    @Audited
     @Column(name = "req_id_code", length = 100, nullable = false)
     private String reqIdCode;
 
-    @Audited
-    @Column(nullable = false, columnDefinition = "INT DEFAULT 1")
+    @Column(nullable = false, columnDefinition = "INT DEFAULT 0")
     private int revisionCount;
 
-    @Audited
     @Enumerated(EnumType.STRING)
     private RequirementType type;
 
-    @Audited
     @Column(name = "level_1", length = 100)
     private String level1;
 
-    @Audited
     @Column(name = "level_2", length = 100)
     private String level2;
 
-    @Audited
     @Column(name = "level_3", length = 100)
     private String level3;
 
-    @Audited
     @Column(name = "name", length = 100, nullable = false)
     private String name;  // 요구사항 명
 
-    @Audited
     @Column(name = "description", length = 5000)
     private String description;  //요구사항 설명
 
-    @Audited
     @Enumerated(EnumType.STRING)
     private Priority priority;
 
-    @Audited
     @Enumerated(EnumType.STRING)
     private Difficulty difficulty;
 
@@ -84,33 +72,31 @@ public class Requirement {
     @Column(nullable = false)
     private LocalDateTime createdDate;
 
-    @Audited
-    @Column(nullable = false)
-    private LocalDateTime modifiedDate;
-
-    @Audited
     @Column(columnDefinition = "boolean DEFAULT false")
     private boolean isDeleted;  //요구사항 삭제 여부
 
     @Column(nullable = false)
     private int deletedRevision;  // 요구사항이 삭제된 버전 정보
 
+    // Envers 감사 전용
+    @Column(name = "project_id_aud")
+    private Long projectIdAud;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "project_id", nullable = false)
-    @Audited(targetAuditMode = RelationTargetAuditMode.NOT_AUDITED)
+    @NotAudited
     private Project project;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "member_id", nullable = false)
-    @Audited(targetAuditMode = RelationTargetAuditMode.NOT_AUDITED)
     private Member createdBy;
 
-    @Audited
     private String modReason;   //수정 사유
 
-    @OneToMany(mappedBy = "requirement", fetch = FetchType.LAZY)
+    // 양방향 관계
+    @OneToMany(mappedBy = "requirement", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
     @Audited(targetAuditMode = RelationTargetAuditMode.NOT_AUDITED)
-    private List<RequirementDocument> requirementDocuments;  //출처
+    private List<Source> sources;  //출처
 
     /**
      * 요구사항 정의서 soft delete
@@ -141,10 +127,12 @@ public class Requirement {
         this.deletedRevision = 0;  //초기 요구사항은 삭제 x
         this.isDeleted = false;
         this.project = project;
+        this.projectIdAud = project.getProjectId();
         this.createdBy = createdBy;
         this.modReason = ""; //초기 요구사항 정의서의 수정 이유는 비워둠.
         this.sources = new ArrayList<>();
     }
+
 
     /**
      * 요구사항 정의서 수정시 추가되는 데이터
@@ -167,9 +155,8 @@ public class Requirement {
         this.createdDate = createdDate;
         this.isDeleted = false;
         this.project = project;
+        this.projectIdAud = project.getProjectId();
         this.createdBy = createdBy;
         this.modReason = modReason; //요구사항 추가 이유
     }
-
-
 }
