@@ -29,8 +29,10 @@ dependencies {
 //	implementation 'org.springframework.boot:spring-boot-starter-security'
 	implementation 'org.springframework.boot:spring-boot-starter-web'
 	implementation 'org.springframework.boot:spring-boot-starter-webflux'  // WebClient
+	implementation 'org.springframework.retry:spring-retry'  // Spring Retry
+	implementation 'org.springframework.boot:spring-boot-starter-aop'  // Required for Spring Retry
 	compileOnly 'org.projectlombok:lombok'
-	runtimeOnly 'org.mariadb.jdbc:mariadb-java-client'
+//	runtimeOnly 'org.mariadb.jdbc:mariadb-java-client'
 	annotationProcessor 'org.projectlombok:lombok'
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
 //	testImplementation 'org.springframework.security:spring-security-test'
@@ -40,10 +42,10 @@ dependencies {
 	runtimeOnly 'com.h2database:h2'
 
 	//mysql
-//	implementation 'com.mysql:mysql-connector-j'
+	implementation 'com.mysql:mysql-connector-j'
 
 	//mariadb
-	implementation 'org.mariadb.jdbc:mariadb-java-client:3.3.3'
+//	implementation 'org.mariadb.jdbc:mariadb-java-client:3.3.3'
 
 	// swagger-ui
 	implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.7.0'
@@ -57,9 +59,6 @@ dependencies {
 	//엑셀 파일
 	implementation 'org.apache.poi:poi-ooxml:5.2.4'
 	implementation 'org.apache.poi:poi-scratchpad:5.2.4'
-
-	implementation 'org.springframework.retry:spring-retry'
-	implementation 'org.springframework:spring-aspects'
 }
 
 tasks.named('test') {
