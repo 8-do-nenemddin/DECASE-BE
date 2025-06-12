@@ -40,7 +40,7 @@ public class RequirementAuditRepository {
 
         return results.stream()
                 .map(requirementAuditMapper::toEntity)
-                .sorted(Comparator.comparing(dto -> dto.getRequirement().getProjectIdAud()))
+                .sorted(Comparator.comparing(RequirementAuditDTO::getRevisionDate).reversed())
                 .toList();
     }
 }
