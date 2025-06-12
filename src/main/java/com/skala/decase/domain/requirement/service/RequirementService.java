@@ -5,9 +5,9 @@ import com.skala.decase.domain.member.exception.MemberException;
 import com.skala.decase.domain.member.repository.MemberRepository;
 import com.skala.decase.domain.project.domain.Project;
 import com.skala.decase.domain.project.service.ProjectService;
-import com.skala.decase.domain.requirement.controller.dto.RequirementDto;
-import com.skala.decase.domain.requirement.controller.dto.RequirementRevisionDto;
-import com.skala.decase.domain.requirement.controller.dto.UpdateRequirementDto;
+import com.skala.decase.domain.requirement.controller.dto.request.RequirementDto;
+import com.skala.decase.domain.requirement.controller.dto.request.RequirementRevisionDto;
+import com.skala.decase.domain.requirement.controller.dto.request.UpdateRequirementDto;
 import com.skala.decase.domain.requirement.controller.dto.response.RequirementWithSourceResponse;
 import com.skala.decase.domain.requirement.domain.Requirement;
 import com.skala.decase.domain.requirement.domain.RequirementType;
@@ -229,6 +229,51 @@ public class RequirementService {
     /**
      * 사용자가 직접 화면에서 요구사항 정의서 내용을 수정할때 리비전 업데이트 x
      */
+//    @Transactional
+//    public void updateRequirement(Long projectId, int revisionCount, List<UpdateRequirementDto> dtoList) {
+//        Project project = projectService.findByProjectId(projectId);
+//
+//        for (UpdateRequirementDto req : dtoList) {
+//            Member member = memberRepository.findById(req.getMemberId())
+//                    .orElseThrow(() -> new MemberException("존재하지 않는 회원입니다.", HttpStatus.NOT_FOUND));
+//
+//            Requirement requirement = requirementRepository.findById(req.getReqPk())
+//                    .orElseThrow(() -> new RequirementException("해당 요구사항이 존재하지 않습니다.", HttpStatus.NOT_FOUND));
+//
+//            // 프로젝트 소속 확인
+//            if (requirement.getProject().getProjectId() != projectId) {
+//                throw new IllegalArgumentException("해당 프로젝트의 요구사항이 아닙니다.");
+//            }
+//
+//            // 업데이트 된 요구사항 저장
+//            Requirement updatedReq = req.toEntity(project, requirement.getReqIdCode(), revisionCount, member);
+//            Requirement savedReq = requirementRepository.save(updatedReq);
+//
+//            // 기존 Source를 새로운 요구사항과 연결
+//            List<Source> sources = sourceRepository.findAllByRequirement(requirement);
+//            List<Source> newSources = sources.stream()
+//                    .map(oldSource -> {
+//                        // 기존 Source 정보를 바탕으로 새로운 Source 생성
+//                        Source newSource = new Source();
+//                        newSource.createSource(
+//                                savedReq,  // 새로운 요구사항과 연결
+//                                oldSource.getDocument(),  // 기존 문서 정보 유지
+//                                oldSource.getPageNum(),   // 기존 페이지 번호 유지
+//                                oldSource.getRelSentence()  // 기존 관련 문장 유지
+//                        );
+//                        return newSource;
+//                    })
+//                    .toList();
+//
+//            sourceRepository.saveAll(newSources);
+//
+//            // 기존 요구사항 soft delete
+//            requirement.setDeleted(true);
+//            requirement.setDeletedRevision(revisionCount);
+//            requirementRepository.save(requirement);
+//        }
+//    }
+
     @Transactional
     public void updateRequirement(Long projectId, int revisionCount, List<UpdateRequirementDto> dtoList) {
         Project project = projectService.findByProjectId(projectId);
@@ -242,12 +287,12 @@ public class RequirementService {
 
             // 프로젝트 소속 확인
             if (requirement.getProject().getProjectId() != projectId) {
-                throw new IllegalArgumentException("해당 프로젝트의 요구사항이 아닙니다.");
+                throw new RequirementException("해당 프로젝트의 요구사항이 아닙니다.", HttpStatus.BAD_REQUEST);
             }
 
-            // 업데이트 된 요구사항 저장
-            Requirement updatedReq = req.toEntity(project, requirement.getReqIdCode(), revisionCount, member);
-            Requirement savedReq = requirementRepository.save(updatedReq);
+            requirement.update(req, member); // 변경 사항 업데이트
+
+            Requirement savedReq = requirementRepository.save(requirement);
 
             // 기존 Source를 새로운 요구사항과 연결
             List<Source> sources = sourceRepository.findAllByRequirement(requirement);
@@ -266,11 +311,6 @@ public class RequirementService {
                     .toList();
 
             sourceRepository.saveAll(newSources);
-
-            // 기존 요구사항 soft delete
-            requirement.setDeleted(true);
-            requirement.setDeletedRevision(revisionCount);
-            requirementRepository.save(requirement);
         }
     }
 

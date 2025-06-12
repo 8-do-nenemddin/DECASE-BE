@@ -1,4 +1,4 @@
-package com.skala.decase.domain.requirement.controller.dto;
+package com.skala.decase.domain.requirement.controller.dto.request;
 
 import com.skala.decase.domain.member.domain.Member;
 import com.skala.decase.domain.project.domain.Project;
@@ -12,22 +12,23 @@ import java.time.LocalDateTime;
 
 @Data
 public class UpdateRequirementDto {
-	private Long memberId;
-	private Long reqPk;
-	private RequirementType type;
-	private String level1;
-	private String level2;
-	private String level3;
-	private Priority priority;
-	private Difficulty difficulty;
-	private String name;
-	private String description;
-	private boolean isDeleted;
-	private String modReason;
+	private Long memberId; // createdBy  변경
+	private Long reqPk; // 변경 X
+	private RequirementType type; // 변경
+	private String level1; // 변경
+	private String level2; // 변경
+	private String level3; // 변경
+	private Priority priority; // 변경
+	private Difficulty difficulty; // 변경
+	private String name; // 변경
+	private String description; // 변경
+ 	private boolean isDeleted;
+	private String modReason; // 변경
 
 	public Requirement toEntity(Project project, String reqIdCode, int revisionCount, Member member) {
 		Requirement requirement = new Requirement();
 		requirement.setProject(project);
+		requirement.setProjectIdAud(project.getProjectId());
 		requirement.setReqIdCode(reqIdCode);
 		requirement.setRevisionCount(revisionCount);
 		requirement.setCreatedBy(member);

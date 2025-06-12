@@ -11,9 +11,12 @@ import java.util.List;
 
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.hibernate.envers.Audited;
+import org.hibernate.envers.NotAudited;
 import org.springframework.scheduling.annotation.Scheduled;
 
 @Entity
+@Audited
 @Table(name = "TM_PROJECTS")
 @Data
 @NoArgsConstructor
@@ -49,18 +52,22 @@ public class Project {
     @Enumerated(EnumType.STRING)
     private ProjectStatus status;
 
+    @NotAudited
     @Column(nullable = false)
     private LocalDateTime createdDate;
 
+    @NotAudited
     @Column(nullable = false)
     private LocalDateTime modifiedDate;
 
     @OneToMany(mappedBy = "project", fetch = FetchType.LAZY)
     private List<MemberProject> membersProjects;
 
+    @NotAudited
     @OneToMany(mappedBy = "project", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Document> documents;
 
+    @NotAudited
     @OneToMany(mappedBy = "project", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Requirement> requirements;
 

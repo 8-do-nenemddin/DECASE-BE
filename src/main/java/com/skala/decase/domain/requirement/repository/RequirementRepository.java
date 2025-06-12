@@ -66,4 +66,7 @@ public interface RequirementRepository extends JpaRepository<Requirement, Long> 
     """, nativeQuery = true)
     List<Requirement> findRequirementsByReqPksAndRevision(@Param("reqPks") List<Long> reqPks,
                                                    @Param("revisionCount") int revisionCount);
+
+    @Query("SELECT r FROM Requirement r WHERE r.reqIdCode = :reqIdCode")
+    Optional<Requirement> findByReqIdCode(@Param("reqIdCode") String id);
 }

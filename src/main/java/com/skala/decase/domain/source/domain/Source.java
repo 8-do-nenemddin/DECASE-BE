@@ -14,11 +14,14 @@ import jakarta.persistence.Table;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.hibernate.envers.Audited;
+import org.hibernate.envers.RelationTargetAuditMode;
 
 @Entity
 @Table(name = "TD_SOURCE")
 @Getter
 @Setter
+@Audited
 @NoArgsConstructor
 public class Source {
 
@@ -35,6 +38,7 @@ public class Source {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "doc_id", nullable = false)
+    @Audited(targetAuditMode = RelationTargetAuditMode.NOT_AUDITED)
     private Document document;
 
     private int pageNum;  //페이지 번호
