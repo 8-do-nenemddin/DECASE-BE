@@ -30,4 +30,12 @@ public class RequirementAuditController {
         return ResponseEntity.ok()
                 .body(ApiResponse.success(responses));
     }
+
+    @GetMapping("/projects/{projectId}/srs/{reqIdCode}")
+    public ResponseEntity<ApiResponse<List<RequirementAuditResponse>>> findOneByProjectIdAndReqIdCode(@PathVariable("projectId") long projectId, @PathVariable("reqIdCode") String reqIdCode) {
+        List<RequirementAuditResponse> responses = requirementAuditService.findByProjectIdAndReqIdCode(projectId, reqIdCode);
+
+        return ResponseEntity.ok()
+                .body(ApiResponse.success(responses));
+    }
 }
