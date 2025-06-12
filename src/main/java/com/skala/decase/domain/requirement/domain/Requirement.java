@@ -2,20 +2,10 @@ package com.skala.decase.domain.requirement.domain;
 
 import com.skala.decase.domain.member.domain.Member;
 import com.skala.decase.domain.project.domain.Project;
+import com.skala.decase.domain.requirement.controller.dto.request.UpdateRequirementDto;
 import com.skala.decase.domain.source.domain.Source;
-import jakarta.persistence.CascadeType;
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
-import jakarta.persistence.FetchType;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
-import jakarta.persistence.OneToMany;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
+
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -25,12 +15,15 @@ import org.hibernate.envers.Audited;
 import org.hibernate.envers.NotAudited;
 import org.hibernate.envers.RelationTargetAuditMode;
 import lombok.NoArgsConstructor;
+import org.springframework.data.annotation.LastModifiedDate;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 @Entity
 @Audited
 @Table(name = "TD_REQUIREMENTS")
 @Data
 @NoArgsConstructor
+@EntityListeners(AuditingEntityListener.class)
 public class Requirement {
 
     @Id
@@ -90,6 +83,9 @@ public class Requirement {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "member_id", nullable = false)
     private Member createdBy;
+
+    @LastModifiedDate
+    private LocalDateTime modifiedDate;
 
     private String modReason;   //수정 사유
 
@@ -158,5 +154,19 @@ public class Requirement {
         this.projectIdAud = project.getProjectId();
         this.createdBy = createdBy;
         this.modReason = modReason; //요구사항 추가 이유
+    }
+
+    public void update(UpdateRequirementDto requirementDto, Member createdBy) {
+        this.type = requirementDto.getType();
+        this.level1 = requirementDto.getLevel1();
+        this.level2 = requirementDto.getLevel2();
+        this.level3 = requirementDto.getLevel3();
+        this.priority = requirementDto.getPriority();
+        this.difficulty = requirementDto.getDifficulty();
+        this.name = requirementDto.getName();
+        this.description = requirementDto.getDescription();
+        this.modReason = requirementDto.getModReason();
+        this.createdBy = createdBy;
+        this.projectIdAud = createdBy.getMemberId();
     }
 }

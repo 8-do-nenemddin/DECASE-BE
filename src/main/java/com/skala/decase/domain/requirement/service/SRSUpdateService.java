@@ -64,7 +64,7 @@ public class SRSUpdateService {
     }
 
     /**
-     * RFP 수정
+     * RFP 수정 -> RFP가 아니라 SRS..
      *
      * @param projectId
      * @param memberId
@@ -83,6 +83,7 @@ public class SRSUpdateService {
         List<UpdateRfpResponse> requirements = fetchUpdateRequirements(file);
 
         if (requirements == null) {
+            // 여기서 왜 종료되었는지 로그 찍어야 함....
             return;
         }
 
