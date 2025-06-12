@@ -41,7 +41,7 @@ public class Requirement {
     @Column(name = "req_id_code", length = 100, nullable = false)
     private String reqIdCode;
 
-    @Column(nullable = false, columnDefinition = "INT DEFAULT 0")
+    @Column(nullable = false, columnDefinition = "INT DEFAULT 1")
     private int revisionCount;
 
     @Enumerated(EnumType.STRING)
