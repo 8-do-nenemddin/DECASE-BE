@@ -290,9 +290,7 @@ public class RequirementService {
                 throw new RequirementException("해당 프로젝트의 요구사항이 아닙니다.", HttpStatus.BAD_REQUEST);
             }
 
-            // 업데이트 된 요구사항 저장
-//              Requirement updatedReq = req.toEntity(project, requirement.getReqIdCode(), revisionCount, member);
-            requirement.update(req, member);
+            requirement.update(req, member); // 변경 사항 업데이트
 
             Requirement savedReq = requirementRepository.save(requirement);
 
@@ -313,11 +311,6 @@ public class RequirementService {
                     .toList();
 
             sourceRepository.saveAll(newSources);
-
-            // 기존 요구사항 soft delete
-//            requirement.setDeleted(true);
-//            requirement.setDeletedRevision(revisionCount);
-//            requirementRepository.save(requirement);
         }
     }
 

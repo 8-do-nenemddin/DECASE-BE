@@ -3,6 +3,7 @@ package com.skala.decase.domain.requirement.domain;
 import com.skala.decase.domain.member.domain.Member;
 import com.skala.decase.domain.project.domain.Project;
 import com.skala.decase.domain.requirement.controller.dto.request.UpdateRequirementDto;
+import com.skala.decase.domain.requirement.service.dto.response.UpdateRfpResponse;
 import com.skala.decase.domain.source.domain.Source;
 import jakarta.persistence.*;
 
@@ -168,5 +169,18 @@ public class Requirement {
         this.modReason = requirementDto.getModReason();
         this.createdBy = createdBy;
         this.projectIdAud = createdBy.getMemberId();
+    }
+
+    public void updateSRS(UpdateRfpResponse response, Member createdBy) {
+        this.revisionCount += 1;
+        this.modReason = response.mod_reason();
+        this.type = RequirementType.fromKorean(response.type());
+        this.level1 = response.category_large();
+        this.level2 = response.category_medium();
+        this.level3 = response.category_small();
+        this.name = response.name();
+        this.priority = Priority.fromKorean(response.importance());
+        this.difficulty = Difficulty.fromKorean(response.difficulty());
+        this.createdBy = createdBy;
     }
 }
