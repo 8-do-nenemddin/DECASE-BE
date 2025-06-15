@@ -26,9 +26,7 @@ public class SrsProcessingController {
     private final SrsUpdateService srsUpdateService;
 
     /**
-     * 요구사항 정의서 생성
-     * 업로드된 RFP DB에 저장
-     * as-is, 요구사항 도출 fast api 각각 호출
+     * 요구사항 정의서 생성 업로드된 RFP DB에 저장 as-is, 요구사항 도출 fast api 각각 호출
      *
      * @param projectId 프로젝트 id
      * @param memberId  멤버 id
@@ -42,8 +40,8 @@ public class SrsProcessingController {
                                                               @RequestParam("memberId") Long memberId,
                                                               @RequestPart("file") MultipartFile file) {
         // post: /api/v1/process-rfp-file에서 생성된 요구사항 정의서 리스트를 받아옴.
-        srsProcessingService.createRequirementsSpecification(projectId, memberId, file);
-        return ResponseEntity.ok().body(ApiResponse.success("요구사항 정의서 생성 완료"));
+        String docId = srsProcessingService.createRequirementsSpecification(projectId, memberId, file);
+        return ResponseEntity.ok().body(ApiResponse.success(docId + "의 요구사항 정의서 생성 요청"));
     }
 
     /**
