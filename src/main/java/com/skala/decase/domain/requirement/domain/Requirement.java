@@ -2,32 +2,29 @@ package com.skala.decase.domain.requirement.domain;
 
 import com.skala.decase.domain.member.domain.Member;
 import com.skala.decase.domain.project.domain.Project;
+import com.skala.decase.domain.requirement.controller.dto.request.UpdateRequirementDto;
+import com.skala.decase.domain.requirement.service.dto.response.UpdateRfpResponse;
 import com.skala.decase.domain.source.domain.Source;
-import jakarta.persistence.CascadeType;
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
-import jakarta.persistence.FetchType;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
-import jakarta.persistence.OneToMany;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
+
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
-import lombok.Getter;
+
+import lombok.Data;
+import org.hibernate.envers.Audited;
+import org.hibernate.envers.NotAudited;
+import org.hibernate.envers.RelationTargetAuditMode;
 import lombok.NoArgsConstructor;
-import lombok.Setter;
+import org.springframework.data.annotation.LastModifiedDate;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 @Entity
+@Audited
 @Table(name = "TD_REQUIREMENTS")
-@Getter
-@Setter
+@Data
 @NoArgsConstructor
+@EntityListeners(AuditingEntityListener.class)
 public class Requirement {
 
     @Id
@@ -65,6 +62,7 @@ public class Requirement {
     @Enumerated(EnumType.STRING)
     private Difficulty difficulty;
 
+    @NotAudited
     @Column(nullable = false)
     private LocalDateTime createdDate;
 
@@ -74,18 +72,27 @@ public class Requirement {
     @Column(nullable = false)
     private int deletedRevision;  // 요구사항이 삭제된 버전 정보
 
+    // Envers 감사 전용
+    @Column(name = "project_id_aud")
+    private Long projectIdAud;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "project_id", nullable = false)
+    @NotAudited
     private Project project;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "member_id", nullable = false)
     private Member createdBy;
 
+    @LastModifiedDate
+    private LocalDateTime modifiedDate;
+
     private String modReason;   //수정 사유
 
     // 양방향 관계
     @OneToMany(mappedBy = "requirement", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
+    @Audited(targetAuditMode = RelationTargetAuditMode.NOT_AUDITED)
     private List<Source> sources;  //출처
 
     /**
@@ -117,10 +124,12 @@ public class Requirement {
         this.deletedRevision = 0;  //초기 요구사항은 삭제 x
         this.isDeleted = false;
         this.project = project;
+        this.projectIdAud = project.getProjectId();
         this.createdBy = createdBy;
         this.modReason = ""; //초기 요구사항 정의서의 수정 이유는 비워둠.
         this.sources = new ArrayList<>();
     }
+
 
     /**
      * 요구사항 정의서 수정시 추가되는 데이터
@@ -143,8 +152,35 @@ public class Requirement {
         this.createdDate = createdDate;
         this.isDeleted = false;
         this.project = project;
+        this.projectIdAud = project.getProjectId();
         this.createdBy = createdBy;
         this.modReason = modReason; //요구사항 추가 이유
     }
 
+    public void update(UpdateRequirementDto requirementDto, Member createdBy) {
+        this.type = requirementDto.getType();
+        this.level1 = requirementDto.getLevel1();
+        this.level2 = requirementDto.getLevel2();
+        this.level3 = requirementDto.getLevel3();
+        this.priority = requirementDto.getPriority();
+        this.difficulty = requirementDto.getDifficulty();
+        this.name = requirementDto.getName();
+        this.description = requirementDto.getDescription();
+        this.modReason = requirementDto.getModReason();
+        this.createdBy = createdBy;
+        this.projectIdAud = createdBy.getMemberId();
+    }
+
+    public void updateSRS(UpdateRfpResponse response, Member createdBy) {
+        this.revisionCount += 1;
+        this.modReason = response.mod_reason();
+        this.type = RequirementType.fromKorean(response.type());
+        this.level1 = response.category_large();
+        this.level2 = response.category_medium();
+        this.level3 = response.category_small();
+        this.name = response.name();
+        this.priority = Priority.fromKorean(response.importance());
+        this.difficulty = Difficulty.fromKorean(response.difficulty());
+        this.createdBy = createdBy;
+    }
 }

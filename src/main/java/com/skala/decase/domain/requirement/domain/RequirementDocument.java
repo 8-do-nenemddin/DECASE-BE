@@ -1,5 +1,8 @@
 package com.skala.decase.domain.requirement.domain;
 
+import org.hibernate.envers.Audited;
+import org.hibernate.envers.RelationTargetAuditMode;
+
 import com.skala.decase.domain.document.domain.Document;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -17,6 +20,7 @@ import lombok.Setter;
 @Getter
 @Setter
 @NoArgsConstructor
+@Audited
 public class RequirementDocument {
 
     @Id
@@ -29,6 +33,7 @@ public class RequirementDocument {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "doc_id", insertable = false, updatable = false)
+    @Audited(targetAuditMode = RelationTargetAuditMode.NOT_AUDITED)
     private Document document;
 
     private int pageNum;  //페이지 번호

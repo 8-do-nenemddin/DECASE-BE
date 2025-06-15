@@ -15,8 +15,10 @@ import jakarta.persistence.Table;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.hibernate.envers.Audited;
 
 @Entity
+@Audited
 @Table(name = "TD_MEMBER_PROJECTS")
 @Data
 @NoArgsConstructor

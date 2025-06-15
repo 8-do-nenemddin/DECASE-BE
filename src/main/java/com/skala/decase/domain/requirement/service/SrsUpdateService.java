@@ -64,13 +64,74 @@ public class SrsUpdateService {
     }
 
     /**
-     * RFP 수정
+     * RFP 수정 -> RFP가 아니라 SRS..
      *
      * @param projectId
      * @param memberId
      * @param docId
      * @param file
      */
+//    @Transactional
+//    public void updateRFP(Long projectId, Long memberId, String docId, MultipartFile file) {
+//        Project project = projectService.findByProjectId(projectId);
+//        Member member = memberService.findByMemberId(memberId);
+//        Document document = documentRepository.findByDocId(docId)
+//                .orElseThrow(() -> new DocumentException("문서를 찾을 수 없습니다.", HttpStatus.NOT_FOUND));
+//
+//        //AI가 생성한 추가/업데이트/삭제 요구사항 받아옴
+//        //TODO: ai쪽 완성되면 api url 수정 필요
+//        List<UpdateRfpResponse> requirements = fetchUpdateRequirements(file);
+//
+//        if (requirements == null) {
+//            // 여기서 왜 종료되었는지 로그 찍어야 함....
+//            return;
+//        }
+//
+//        //수정 이유 (mod reason), modified date 수정, revision 정보 업데이트
+//        LocalDateTime modDate = LocalDateTime.now();  //수정 시각
+//        int latestRevisionCount = requirementRepository.findMaxRevisionCountByProject(project)
+//                .orElseThrow(() -> new RequirementException("수정할 요구사항 정의서가 없습니다.", HttpStatus.NOT_FOUND));
+//
+//        // fast api로부터 받아온 요구사항 정의서 목록들 반영
+//        for (UpdateRfpResponse requirement : requirements) {
+//            //추가: 요구사항 단순 추가
+//            if (UpdateStatus.fromAI(requirement.status()).equals(UpdateStatus.CREATE)) {
+//                Requirement updatedRequirement = requirementUpdateServiceMapper.toCreateREQEntity(requirement, member,
+//                        project,
+//                        modDate, latestRevisionCount + 1);
+//                requirementRepository.save(updatedRequirement);
+//                Source source = requirementUpdateServiceMapper.toSrcEntity(requirement, updatedRequirement, document);
+//                sourceRepository.save(source);
+//            }
+//
+//            //업데이트: 출처가 다른 경우 출처 추가 필요
+//            if (UpdateStatus.fromAI(requirement.status()).equals(UpdateStatus.UPDATE)) {
+//                // 기존 요구사항 isDeleted=true로 바꾸기
+//                Requirement oldRequirement = requirementRepository.findByReqIdCodeAndIsDeletedFalse(requirement.id())
+//                        .orElseThrow(() -> new RequirementException("업데이트할 요구사항을 찾을 수 없습니다.", HttpStatus.NOT_FOUND));
+//                oldRequirement.softDelete(latestRevisionCount + 1);
+//
+//                // 새로운 업데이트된 요구사항 생성
+//                Requirement updatedRequirement = requirementUpdateServiceMapper.toUpdateREQEntity(requirement, member,
+//                        project,
+//                        modDate, latestRevisionCount + 1);
+//                requirementRepository.save(updatedRequirement);
+//                // 새로운 출처 생성
+//                Source source = requirementUpdateServiceMapper.toSrcEntity(requirement, updatedRequirement, document);
+//                sourceRepository.save(source);
+//            }
+//
+//            //삭제 : isdelete 필드 업데이트
+//            if (UpdateStatus.fromAI(requirement.status()).equals(UpdateStatus.DELETE)) {
+//                Requirement updatedRequirement = requirementRepository.findByReqIdCodeAndIsDeletedFalse(
+//                                requirement.id())
+//                        .orElseThrow(() -> new RequirementException("삭제할 요구사항을 찾을 수 없습니다.", HttpStatus.NOT_FOUND));
+//                updatedRequirement.softDelete(latestRevisionCount + 1);
+//            }
+//
+//        }
+//    }
+
     @Transactional
     public void updateRFP(Long projectId, Long memberId, String docId, MultipartFile file) {
         Project project = projectService.findByProjectId(projectId);
@@ -81,53 +142,40 @@ public class SrsUpdateService {
         //AI가 생성한 추가/업데이트/삭제 요구사항 받아옴
         //TODO: ai쪽 완성되면 api url 수정 필요
         List<UpdateRfpResponse> requirements = fetchUpdateRequirements(file);
-
+        int latestRevisionCount = requirementRepository.findMaxRevisionCountByProject(project)
+                .orElseThrow(() -> new RequirementException("수정할 요구사항 정의서가 없습니다.", HttpStatus.NOT_FOUND));
         if (requirements == null) {
+            // 여기서 왜 종료되었는지 로그 찍어야 함....
             return;
         }
 
-        //수정 이유 (mod reason), modified date 수정, revision 정보 업데이트
-        LocalDateTime modDate = LocalDateTime.now();  //수정 시각
-        int latestRevisionCount = requirementRepository.findMaxRevisionCountByProject(project)
-                .orElseThrow(() -> new RequirementException("수정할 요구사항 정의서가 없습니다.", HttpStatus.NOT_FOUND));
+        LocalDateTime modDate = LocalDateTime.now();
+        for (UpdateRfpResponse response : requirements) {
 
-        // fast api로부터 받아온 요구사항 정의서 목록들 반영
-        for (UpdateRfpResponse requirement : requirements) {
-            //추가: 요구사항 단순 추가
-            if (UpdateStatus.fromAI(requirement.status()).equals(UpdateStatus.CREATE)) {
-                Requirement updatedRequirement = requirementUpdateServiceMapper.toCreateREQEntity(requirement, member,
-                        project,
-                        modDate, latestRevisionCount + 1);
-                requirementRepository.save(updatedRequirement);
-                Source source = requirementUpdateServiceMapper.toSrcEntity(requirement, updatedRequirement, document);
-                sourceRepository.save(source);
+            if (UpdateStatus.fromAI(response.status()).equals(UpdateStatus.CREATE)) {
+                // 없으면 새로 생성해서 저장
+                Requirement newRequirement = requirementUpdateServiceMapper.toCreateREQEntity(response, member, project, modDate, latestRevisionCount);
+                requirementRepository.save(newRequirement);
             }
 
-            //업데이트: 출처가 다른 경우 출처 추가 필요
-            if (UpdateStatus.fromAI(requirement.status()).equals(UpdateStatus.UPDATE)) {
-                // 기존 요구사항 isDeleted=true로 바꾸기
-                Requirement oldRequirement = requirementRepository.findByReqIdCodeAndIsDeletedFalse(requirement.id())
-                        .orElseThrow(() -> new RequirementException("업데이트할 요구사항을 찾을 수 없습니다.", HttpStatus.NOT_FOUND));
-                oldRequirement.softDelete(latestRevisionCount + 1);
+            if (UpdateStatus.fromAI(response.status()).equals(UpdateStatus.UPDATE)) {
+                Requirement requirement = requirementRepository.findByReqIdCode(response.id())
+                        .orElseThrow(() -> new RequirementException("요구사항이 존재하지 않습니다.", HttpStatus.BAD_REQUEST));
+                if (requirement != null) {
+                    // 기존 요구사항이 있으면 수정해서 저장
+                    requirement.updateSRS(response, member);
+                    Requirement updatedRequirement = requirementRepository.save(requirement);
 
-                // 새로운 업데이트된 요구사항 생성
-                Requirement updatedRequirement = requirementUpdateServiceMapper.toUpdateREQEntity(requirement, member,
-                        project,
-                        modDate, latestRevisionCount + 1);
-                requirementRepository.save(updatedRequirement);
-                // 새로운 출처 생성
-                Source source = requirementUpdateServiceMapper.toSrcEntity(requirement, updatedRequirement, document);
-                sourceRepository.save(source);
+                    Source source = requirementUpdateServiceMapper.toSrcEntity(response, updatedRequirement, document);
+                    sourceRepository.save(source);
+                }
             }
 
-            //삭제 : isdelete 필드 업데이트
-            if (UpdateStatus.fromAI(requirement.status()).equals(UpdateStatus.DELETE)) {
-                Requirement updatedRequirement = requirementRepository.findByReqIdCodeAndIsDeletedFalse(
-                                requirement.id())
-                        .orElseThrow(() -> new RequirementException("삭제할 요구사항을 찾을 수 없습니다.", HttpStatus.NOT_FOUND));
-                updatedRequirement.softDelete(latestRevisionCount + 1);
+            if (UpdateStatus.fromAI(response.status()).equals(UpdateStatus.DELETE)) {
+                Requirement requirement = requirementRepository.findByReqIdCode(response.id())
+                        .orElseThrow(() -> new RequirementException("요구사항이 존재하지 않습니다.", HttpStatus.BAD_REQUEST));
+                requirementRepository.delete(requirement);
             }
-
         }
     }
 }

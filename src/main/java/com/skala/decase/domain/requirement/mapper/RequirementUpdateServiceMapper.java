@@ -78,7 +78,7 @@ public class RequirementUpdateServiceMapper {
         newReq.createSource(
                 requirement,
                 document,
-                Integer.parseInt(response.source_pages()),  //int로 변환할까
+                Integer.parseInt(response.source_pages()),  //int로 변환할까 -> 이미 변환 했는데.. ?
                 response.acceptance_criteria()
         );
         return newReq;

@@ -1,5 +1,6 @@
 package com.skala.decase.domain.requirement.service;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.skala.decase.domain.document.domain.Document;
 import com.skala.decase.domain.document.service.DocumentService;
 import com.skala.decase.domain.member.domain.Member;
@@ -13,6 +14,8 @@ import com.skala.decase.domain.requirement.service.dto.response.CreateRfpRespons
 import com.skala.decase.domain.requirement.service.dto.response.SrsAgentResponse;
 import com.skala.decase.domain.source.domain.Source;
 import com.skala.decase.domain.source.service.SourceRepository;
+
+import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -234,60 +237,88 @@ public class AsyncRfpProcessor {
         Duration pollInterval = Duration.ofSeconds(30);
         Duration statusTimeout = Duration.ofSeconds(30);
 
-        return Mono.defer(() -> {
-            AtomicInteger attempts = new AtomicInteger(0);
-            AtomicInteger consecutiveErrors = new AtomicInteger(0);
-            int maxConsecutiveErrors = 3;
+        AtomicInteger attempts = new AtomicInteger(0);
+        AtomicInteger consecutiveErrors = new AtomicInteger(0);
+        int maxConsecutiveErrors = 3;
 
-            return Mono.just(jobId)
-                    .flatMap(id -> {
-                        if (attempts.incrementAndGet() > maxAttempts) {
-                            return Mono.error(new RuntimeException("ASIS 처리 타임아웃: jobId=" + jobId));
-                        }
-
-                        return webClient.get()
-                                .uri("/api/v1/requirements/as-is/{jobId}/status", id)
-                                .retrieve()
-                                .bodyToMono(Map.class)
-                                .timeout(statusTimeout)
-                                .flatMap(statusResponse -> {
-                                    if (statusResponse == null) {
-                                        return Mono.error(new RuntimeException("Empty status response"));
-                                    }
-
-                                    String status = (String) statusResponse.get("status");
-                                    log.info("ASIS 처리 상태: jobId={}, status={}, attempt={}/{}", 
-                                            id, status, attempts.get(), maxAttempts);
-
-                                    if ("COMPLETED".equals(status)) {
-                                        consecutiveErrors.set(0);
-                                        return webClient.get()
-                                                .uri("/api/v1/requirements/as-is/{jobId}/result", id)
-                                                .retrieve()
-                                                .bodyToMono(byte[].class)
-                                                .timeout(Duration.ofMinutes(30));  // 결과 다운로드 타임아웃 30분으로 증가
-                                    } else if ("FAILED".equals(status)) {
-                                        String message = (String) statusResponse.get("message");
-                                        return Mono.error(new RuntimeException("ASIS 처리 실패: " + message));
-                                    } else {
-                                        consecutiveErrors.set(0);
+        return Mono.defer(() ->
+                Mono.just(jobId)
+                        .flatMap(id -> {
+                            if (attempts.incrementAndGet() > maxAttempts) {
+                                return Mono.error(new RuntimeException("ASIS 처리 타임아웃: jobId=" + jobId));
+                            }
+                            // 상태 조회 시 응답 타입을 확인하여 처리
+                            return webClient.get()
+                                    .uri("/api/v1/requirements/as-is/{jobId}/status", id)
+                                    .retrieve()
+                                    .toEntity(byte[].class)  // byte[]로 받아서 Content-Type 확인
+                                    .timeout(statusTimeout)
+                                    .flatMap(responseEntity -> {
+                                        String contentType = responseEntity.getHeaders().getContentType() != null ?
+                                                responseEntity.getHeaders().getContentType().toString() : "";
+                                        byte[] responseBody = responseEntity.getBody();
+                                        if (responseBody == null) {
+                                            return Mono.error(new RuntimeException("Empty response body"));
+                                        }
+                                        // PDF 응답인 경우 - 작업 완료
+                                        if (contentType.contains("application/pdf")) {
+                                            consecutiveErrors.set(0);
+                                            log.info("ASIS 처리 완료: jobId={}, PDF 결과 수신 (크기: {} bytes)",
+                                                    id, responseBody.length);
+                                            return Mono.just(responseBody);
+                                        }
+                                        // JSON 응답인 경우 - 상태 확인
+                                        else if (contentType.contains("application/json")) {
+                                            try {
+                                                String jsonString = new String(responseBody, StandardCharsets.UTF_8);
+                                                ObjectMapper mapper = new ObjectMapper();
+                                                Map<String, Object> statusResponse = mapper.readValue(jsonString, Map.class);
+                                                String status = (String) statusResponse.get("status");
+                                                log.info("ASIS 처리 상태: jobId={}, status={}, attempt={}/{}",
+                                                        id, status, attempts.get(), maxAttempts);
+                                                if ("COMPLETED".equals(status) || "completed".equals(status)) {
+                                                    consecutiveErrors.set(0);
+                                                    // 별도 결과 엔드포인트에서 PDF 다운로드
+                                                    return webClient.get()
+                                                            .uri("/api/v1/requirements/as-is/{jobId}/result", id)
+                                                            .retrieve()
+                                                            .bodyToMono(byte[].class)
+                                                            .timeout(Duration.ofMinutes(5))  // 결과 다운로드 타임아웃
+                                                            .doOnNext(pdfBytes ->
+                                                                    log.info("ASIS PDF 결과 다운로드 완료: jobId={}, 크기={} bytes",
+                                                                            id, pdfBytes.length));
+                                                } else if ("FAILED".equals(status) || "failed".equals(status)) {
+                                                    String message = (String) statusResponse.get("message");
+                                                    return Mono.error(new RuntimeException("ASIS 처리 실패: " + message));
+                                                } else {
+                                                    // PENDING, PROCESSING 등 - 계속 폴링
+                                                    consecutiveErrors.set(0);
+                                                    return Mono.empty();
+                                                }
+                                            } catch (Exception parseException) {
+                                                log.warn("JSON 파싱 실패: {}", parseException.getMessage());
+                                                return Mono.error(new RuntimeException("응답 파싱 실패: " + parseException.getMessage()));
+                                            }
+                                        }
+                                        // 기타 응답 타입
+                                        else {
+                                            log.warn("예상하지 못한 응답 타입: {}", contentType);
+                                            return Mono.error(new RuntimeException("지원하지 않는 응답 타입: " + contentType));
+                                        }
+                                    })
+                                    .onErrorResume(e -> {
+                                        int errors = consecutiveErrors.incrementAndGet();
+                                        log.warn("ASIS 상태 확인 중 일시적 오류 (attempt={}, consecutive={}): {}",
+                                                attempts.get(), errors, e.getMessage());
+                                        if (errors >= maxConsecutiveErrors) {
+                                            return Mono.error(new RuntimeException("연속적인 상태 확인 실패: " + e.getMessage()));
+                                        }
                                         return Mono.empty();
-                                    }
-                                })
-                                .onErrorResume(e -> {
-                                    int errors = consecutiveErrors.incrementAndGet();
-                                    log.warn("ASIS 상태 확인 중 일시적 오류 (attempt={}, consecutive={}): {}", 
-                                            attempts.get(), errors, e.getMessage());
-                                    
-                                    if (errors >= maxConsecutiveErrors) {
-                                        return Mono.error(new RuntimeException("연속적인 상태 확인 실패: " + e.getMessage()));
-                                    }
-                                    return Mono.empty();
-                                });
-                    })
-                    .repeatWhenEmpty(repeat -> repeat.delayElements(pollInterval))
-                    .take(Duration.ofHours(1));  // 전체 폴링 시간을 1시간으로 제한
-        });
+                                    });
+                        })
+                        .repeatWhenEmpty(repeat -> repeat.delayElements(pollInterval))
+                        .timeout(Duration.ofHours(1))  // 전체 폴링 시간을 1시간으로 제한
+        );
     }
 
     private void saveRequirements(List<CreateRfpResponse> responses, Member member, Project project,

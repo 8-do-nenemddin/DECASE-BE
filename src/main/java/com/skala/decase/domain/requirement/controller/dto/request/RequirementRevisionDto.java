@@ -1,4 +1,4 @@
-package com.skala.decase.domain.requirement.controller.dto;
+package com.skala.decase.domain.requirement.controller.dto.request;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
