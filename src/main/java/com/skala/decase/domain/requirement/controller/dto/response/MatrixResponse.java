@@ -32,7 +32,7 @@ public class MatrixResponse {
         this.level3 = level3;
         this.name = name;
         this.description = description;
-        this.reception = null;
+        this.reception = reception;
         this.tableId = "";
         this.uiId = "";
         this.programId = "";
