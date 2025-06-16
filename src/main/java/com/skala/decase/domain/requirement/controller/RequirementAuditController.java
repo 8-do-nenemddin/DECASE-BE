@@ -1,5 +1,6 @@
 package com.skala.decase.domain.requirement.controller;
 
+import com.skala.decase.domain.requirement.controller.dto.response.MatrixResponse;
 import com.skala.decase.domain.requirement.controller.dto.response.RequirementAuditResponse;
 import com.skala.decase.domain.requirement.service.RequirementAuditService;
 import com.skala.decase.global.model.ApiResponse;
@@ -37,5 +38,13 @@ public class RequirementAuditController {
 
         return ResponseEntity.ok()
                 .body(ApiResponse.success(responses));
+    }
+
+    @GetMapping("/projects/{projectId}/all")
+    public ResponseEntity<ApiResponse<List<MatrixResponse>>> findMatrix(@PathVariable("projectId") long projectId) {
+        List<MatrixResponse> response = requirementAuditService.createMatrix(projectId);
+
+        return ResponseEntity.ok()
+                .body(ApiResponse.success(response));
     }
 }
