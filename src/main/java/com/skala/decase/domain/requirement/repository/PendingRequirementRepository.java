@@ -7,6 +7,6 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import java.util.List;
 
 public interface PendingRequirementRepository extends JpaRepository<PendingRequirement, Long> {
-	List<PendingRequirement> findAllByProject_ProjectId(Long projectId);
+	List<PendingRequirement> findAllByProject_ProjectIdAndStatusFalse(Long projectId);
 
 }

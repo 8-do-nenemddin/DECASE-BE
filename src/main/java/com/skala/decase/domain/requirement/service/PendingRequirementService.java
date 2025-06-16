@@ -1,10 +1,16 @@
 package com.skala.decase.domain.requirement.service;
 
+import com.skala.decase.domain.requirement.controller.dto.request.ApproveDto;
 import com.skala.decase.domain.requirement.controller.dto.response.PendingRequirementDto;
 import com.skala.decase.domain.requirement.controller.dto.response.RequirementDto;
+import com.skala.decase.domain.requirement.domain.PendingRequirement;
+import com.skala.decase.domain.requirement.domain.Requirement;
+import com.skala.decase.domain.requirement.exception.PendingRequirementException;
+import com.skala.decase.domain.requirement.exception.RequirementException;
 import com.skala.decase.domain.requirement.repository.PendingRequirementRepository;
 import com.skala.decase.domain.requirement.repository.RequirementRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -22,7 +28,7 @@ public class PendingRequirementService {
 
     @Transactional(readOnly = true)
     public List<PendingRequirementDto> getPendingRequirementsList(Long projectId) {
-        return pendingRequirementRepository.findAllByProject_ProjectId(projectId).stream()
+        return pendingRequirementRepository.findAllByProject_ProjectIdAndStatusFalse(projectId).stream()
             .map(pendingRequirement -> {
                 // 동일한 reqIdCode, projectId로 원본 찾기
                 var originalRequirement = requirementRepository
@@ -68,5 +74,49 @@ public class PendingRequirementService {
                     .build();
             })
             .toList();
+    }
+
+    @Transactional
+    public String approveRequest(Long projectId, List<ApproveDto> dtoList) {
+        for (ApproveDto dto : dtoList) {
+            // 1) PendingRequirement 조회
+            PendingRequirement pendingRequirement = pendingRequirementRepository.findById(dto.getPendingPk())
+                    .orElseThrow(() -> new PendingRequirementException("해당 요청이 존재하지 않습니다.", HttpStatus.NOT_FOUND));
+
+            // 2) 원본 Requirement 조회
+            Requirement originalRequirement = requirementRepository.findByProject_ProjectIdAndReqIdCode(
+                    projectId, pendingRequirement.getReqIdCode()
+            ).orElseThrow(() -> new RequirementException("원본 요구사항을 찾을 수 없습니다.", HttpStatus.NOT_FOUND));
+
+            if (dto.getStatus() == 2) {
+                // 승인 처리: Pending 값으로 원본 Requirement 필드 덮어쓰기
+                originalRequirement.updateFromPending(
+                        pendingRequirement.getType(),
+                        pendingRequirement.getLevel1(),
+                        pendingRequirement.getLevel2(),
+                        pendingRequirement.getLevel3(),
+                        pendingRequirement.getName(),
+                        pendingRequirement.getDescription(),
+                        pendingRequirement.getPriority(),
+                        pendingRequirement.getDifficulty(),
+                        pendingRequirement.getModReason(),
+                        pendingRequirement.getCreatedBy()
+                );
+
+                // 원본 Requirement 저장
+                requirementRepository.save(originalRequirement);
+
+                // Pending 삭제
+                pendingRequirementRepository.delete(pendingRequirement);
+
+            } else if (dto.getStatus() == 1) {
+                // 반려 처리: Pending 삭제
+                pendingRequirement.setStatus(true);
+                pendingRequirementRepository.save(pendingRequirement);
+            } else {
+                throw new PendingRequirementException("유효하지 않은 상태 값입니다. status는 1(승인) 또는 2(반려)이어야 합니다.", HttpStatus.BAD_REQUEST);
+            }
+        }
+        return "요청된 요구사항이 정상적으로 처리되었습니다.";
     }
 }
