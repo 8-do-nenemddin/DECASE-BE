@@ -69,4 +69,6 @@ public interface RequirementRepository extends JpaRepository<Requirement, Long> 
 
     @Query("SELECT r FROM Requirement r WHERE r.reqIdCode = :reqIdCode")
     Optional<Requirement> findByReqIdCode(@Param("reqIdCode") String id);
+
+    Optional<Requirement> findByProject_ProjectIdAndReqIdCode(Long projectId, String reqIdCode);
 }
