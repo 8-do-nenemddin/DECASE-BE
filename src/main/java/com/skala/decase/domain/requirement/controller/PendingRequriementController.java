@@ -36,7 +36,18 @@ public class PendingRequriementController {
 			@PathVariable Long projectId,
 			@RequestBody List<ApproveDto> dtoList) {
 
+		String result = pendingRequirementService.approveRequests(projectId, dtoList);
+		return ResponseEntity.ok(result);
+	}
+
+	@Operation( summary = "[Admin] 요청 요구사항 단건 승인/반려", description = "한 건의 수정 요청을 승인 또는 반려합니다.")
+	@PostMapping("/{projectId}/requirement/approveOne")
+	public ResponseEntity<String> approveRequest(
+			@PathVariable Long projectId,
+			@RequestBody ApproveDto dtoList) {
+
 		String result = pendingRequirementService.approveRequest(projectId, dtoList);
 		return ResponseEntity.ok(result);
 	}
+
 }
