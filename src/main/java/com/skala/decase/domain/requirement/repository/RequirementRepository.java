@@ -68,5 +68,8 @@ public interface RequirementRepository extends JpaRepository<Requirement, Long> 
                                                    @Param("revisionCount") int revisionCount);
 
     @Query("SELECT r FROM Requirement r WHERE r.reqIdCode = :reqIdCode")
-    Optional<Requirement> findByReqIdCode(@Param("reqIdCode") String id);
+    Optional<Requirement> findByReqIdCode(@Param("reqIdCode") String id); // project도 where 조건에 추가하기
+
+    @Query("SELECT r FROM Requirement r WHERE r.project.projectId = :projectId")
+    Optional<List<Requirement>> findByProjectId(@Param("projectId") long project);
 }
