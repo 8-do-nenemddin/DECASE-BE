@@ -106,6 +106,9 @@ public class PendingRequirementService {
                         pendingRequirement.getCreatedBy()
                 );
 
+                // 원본 Requirement 저장
+                requirementRepository.save(originalRequirement);
+
                 // Pending 삭제
                 pendingRequirementRepository.delete(pendingRequirement);
 
