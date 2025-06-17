@@ -119,47 +119,4 @@ public class PendingRequirementService {
         }
         return "요청된 요구사항이 정상적으로 처리되었습니다.";
     }
-
-    @Transactional
-    public String approveRequest(Long projectId, ApproveDto dto) {
-        // 1) PendingRequirement 조회
-        PendingRequirement pendingRequirement = pendingRequirementRepository.findById(dto.getPendingPk())
-                .orElseThrow(() -> new PendingRequirementException("해당 요청이 존재하지 않습니다.", HttpStatus.NOT_FOUND));
-
-        // 2) 원본 Requirement 조회
-        Requirement originalRequirement = requirementRepository.findByProject_ProjectIdAndReqIdCode(
-                projectId, pendingRequirement.getReqIdCode()
-        ).orElseThrow(() -> new RequirementException("원본 요구사항을 찾을 수 없습니다.", HttpStatus.NOT_FOUND));
-
-        if (dto.getStatus() == 2) {
-            // 승인 처리: Pending 값으로 원본 Requirement 필드 덮어쓰기
-            originalRequirement.updateFromPending(
-                    pendingRequirement.getType(),
-                    pendingRequirement.getLevel1(),
-                    pendingRequirement.getLevel2(),
-                    pendingRequirement.getLevel3(),
-                    pendingRequirement.getName(),
-                    pendingRequirement.getDescription(),
-                    pendingRequirement.getPriority(),
-                    pendingRequirement.getDifficulty(),
-                    pendingRequirement.getModReason(),
-                    pendingRequirement.getCreatedBy()
-            );
-
-            // 원본 Requirement 저장
-            requirementRepository.save(originalRequirement);
-
-            // Pending 삭제
-            pendingRequirementRepository.delete(pendingRequirement);
-
-        } else if (dto.getStatus() == 1) {
-            // 반려 처리: Pending 상태만 true로 변경
-            pendingRequirement.setStatus(true);
-            pendingRequirementRepository.save(pendingRequirement);
-        } else {
-            throw new PendingRequirementException("유효하지 않은 상태 값입니다. status는 1(반려) 또는 2(승인)이어야 합니다.", HttpStatus.BAD_REQUEST);
-        }
-
-        return "요청된 요구사항이 정상적으로 처리되었습니다.";
-    }
 }
