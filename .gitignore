@@ -38,6 +38,7 @@ out/
 ### env ###
 .env
 .env.properties
+./.env.properties
 
 ### Media Dir ###
 DECASE/upload
