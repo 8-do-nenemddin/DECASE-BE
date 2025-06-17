@@ -2,12 +2,14 @@ package com.skala.decase.domain.requirement.domain;
 
 import com.skala.decase.domain.member.domain.Member;
 import com.skala.decase.domain.project.domain.Project;
+import com.skala.decase.domain.requirement.controller.dto.request.UpdateRequirementDto;
 import jakarta.persistence.*;
 import lombok.Data;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 
 @Data
 @Entity
@@ -25,9 +27,6 @@ public class PendingRequirement {
 
 	@Column(name = "req_id_code", length = 100, nullable = false)
 	private String reqIdCode;
-
-	@Column(nullable = false, columnDefinition = "INT DEFAULT 1")
-	private int revisionCount;
 
 	@Column(name = "name", length = 100, nullable = false)
 	private String name;  // 요구사항 명
@@ -57,13 +56,27 @@ public class PendingRequirement {
 	@JoinColumn(name = "member_id", nullable = false)
 	private Member createdBy;
 
-	@Column(nullable = false)
-	private LocalDateTime createdDate;
-
 	@LastModifiedDate
 	private LocalDateTime modifiedDate;
 
 	private String modReason;   //수정 사유
 
 	private Boolean status;
+
+	public void createPendingRequirement(UpdateRequirementDto req, String reqIdCode, Project project, Member createdBy) {
+		this.project = project;
+		this.reqIdCode = reqIdCode;
+		this.name = req.getName();
+		this.description = req.getDescription();
+		this.type = req.getType();
+		this.level1 = req.getLevel1();
+		this.level2 = req.getLevel2();
+		this.level3 = req.getLevel3();
+		this.priority = req.getPriority();
+		this.difficulty = req.getDifficulty();
+		this.createdBy = createdBy;
+		this.modifiedDate = LocalDateTime.now();
+		this.modReason = req.getModReason();
+		this.status = false;
+	}
 }

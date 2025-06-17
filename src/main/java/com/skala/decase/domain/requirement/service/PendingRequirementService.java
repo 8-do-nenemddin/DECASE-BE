@@ -9,6 +9,8 @@ import com.skala.decase.domain.requirement.exception.PendingRequirementException
 import com.skala.decase.domain.requirement.exception.RequirementException;
 import com.skala.decase.domain.requirement.repository.PendingRequirementRepository;
 import com.skala.decase.domain.requirement.repository.RequirementRepository;
+import com.skala.decase.domain.source.domain.Source;
+import com.skala.decase.domain.source.service.SourceRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -25,6 +27,7 @@ import java.util.Optional;
 public class PendingRequirementService {
     private final PendingRequirementRepository pendingRequirementRepository;
 	private final RequirementRepository requirementRepository;
+    private final SourceRepository sourceRepository;
 
     @Transactional(readOnly = true)
     public List<PendingRequirementDto> getPendingRequirementsList(Long projectId) {
