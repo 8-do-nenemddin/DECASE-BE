@@ -138,6 +138,11 @@ public class DocumentService {
 
         List<DocumentResponse> responses = new ArrayList<>();
 
+        Project project = projectRepository.findById(projectId)
+                .orElseThrow(() -> new DocumentException("유효하지 않은 프로젝트 ID: " + projectId, HttpStatus.NOT_FOUND));
+        Member member = memberRepository.findById(memberId)
+                .orElseThrow(() -> new MemberException("유효하지 않은 사용자 ID: " + memberId, HttpStatus.NOT_FOUND));
+
         for (int i = 0; i < files.size(); i++) {
             MultipartFile file = files.get(i);
             int iType = types.get(i);
@@ -146,15 +151,15 @@ public class DocumentService {
                 throw new DocumentException("유효하지 않은 문서 타입: " + iType, HttpStatus.BAD_REQUEST);
             }
 
-            Project project = projectRepository.findById(projectId)
-                    .orElseThrow(() -> new DocumentException("유효하지 않은 프로젝트 ID: " + projectId, HttpStatus.NOT_FOUND));
-            Member member = memberRepository.findById(memberId)
-                    .orElseThrow(() -> new MemberException("유효하지 않은 사용자 ID: " + memberId, HttpStatus.NOT_FOUND));
             // 파일 저장
             Document doc = uploadDocument(file, iType, project, member);
 
             responses.add(new DocumentResponse(doc.getDocId(), doc.getName()));
         }
+
+        // 프로젝트 리비전 증가
+        project.setRevisionCount(project.getRevisionCount() + 1);
+        projectRepository.save(project);
 
         return responses;
     }
