@@ -58,6 +58,7 @@ public class PendingRequirementService {
                         )
                         .modifier(originalRequirement.getCreatedBy().getName())
                         .reason(Optional.ofNullable(originalRequirement.getModReason()).orElse(null))
+                        .isDelete(false)
                         .build())
                     .proposed(RequirementDto.builder()
                         .id(pendingRequirement.getPendingPk())
@@ -73,6 +74,7 @@ public class PendingRequirementService {
                         .modifiedDate(pendingRequirement.getModifiedDate().toString())
                         .modifier(pendingRequirement.getCreatedBy().getName())
                         .reason(pendingRequirement.getModReason())
+                        .isDelete(pendingRequirement.getIsDelete())
                         .build())
                     .build();
             })
@@ -92,26 +94,31 @@ public class PendingRequirementService {
             ).orElseThrow(() -> new RequirementException("원본 요구사항을 찾을 수 없습니다.", HttpStatus.NOT_FOUND));
 
             if (dto.getStatus() == 2) {
-                // 승인 처리: Pending 값으로 원본 Requirement 필드 덮어쓰기
-                originalRequirement.updateFromPending(
-                        pendingRequirement.getType(),
-                        pendingRequirement.getLevel1(),
-                        pendingRequirement.getLevel2(),
-                        pendingRequirement.getLevel3(),
-                        pendingRequirement.getName(),
-                        pendingRequirement.getDescription(),
-                        pendingRequirement.getPriority(),
-                        pendingRequirement.getDifficulty(),
-                        pendingRequirement.getModReason(),
-                        pendingRequirement.getCreatedBy()
-                );
+                if (pendingRequirement.getIsDelete() == true) {
+                    originalRequirement.setModifiedDate(pendingRequirement.getModifiedDate());
+                    originalRequirement.setModReason(pendingRequirement.getModReason());
+                    originalRequirement.setModifiedBy(pendingRequirement.getCreatedBy());
+                    requirementRepository.delete(originalRequirement);
 
-                // 원본 Requirement 저장
-                requirementRepository.save(originalRequirement);
-
+                } else {
+                    // 승인 처리: Pending 값으로 원본 Requirement 필드 덮어쓰기
+                    originalRequirement.updateFromPending(
+                            pendingRequirement.getType(),
+                            pendingRequirement.getLevel1(),
+                            pendingRequirement.getLevel2(),
+                            pendingRequirement.getLevel3(),
+                            pendingRequirement.getName(),
+                            pendingRequirement.getDescription(),
+                            pendingRequirement.getPriority(),
+                            pendingRequirement.getDifficulty(),
+                            pendingRequirement.getModReason(),
+                            pendingRequirement.getCreatedBy()
+                    );
+                    // 원본 Requirement 저장
+                    requirementRepository.save(originalRequirement);
+                }
                 // Pending 삭제
                 pendingRequirementRepository.delete(pendingRequirement);
-
             } else if (dto.getStatus() == 1) {
                 // 반려 처리: Pending 삭제
                 pendingRequirement.setStatus(true);
