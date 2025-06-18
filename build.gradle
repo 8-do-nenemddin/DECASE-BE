@@ -72,3 +72,7 @@ tasks.named('test') {
 jar {
     destinationDirectory = file("$rootDir/target")
 }
+
+bootJar {
+    mainClass = 'com.skala.decase.DecaseApplication'
+}
