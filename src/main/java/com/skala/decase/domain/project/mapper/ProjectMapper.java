@@ -2,12 +2,14 @@ package com.skala.decase.domain.project.mapper;
 
 import com.skala.decase.domain.member.domain.Member;
 import com.skala.decase.domain.project.controller.dto.request.CreateProjectRequest;
+import com.skala.decase.domain.project.controller.dto.response.DocumentResponse;
 import com.skala.decase.domain.project.controller.dto.response.MappingTableResponseDto;
 import com.skala.decase.domain.project.controller.dto.response.ProjectDetailResponseDto;
 import com.skala.decase.domain.project.controller.dto.response.ProjectResponse;
 import com.skala.decase.domain.project.domain.Project;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.List;
 
 import com.skala.decase.domain.requirement.domain.Requirement;
 import com.skala.decase.domain.requirement.domain.RequirementDocument;
@@ -63,14 +65,20 @@ public class ProjectMapper {
         );
     }
 
-    public MappingTableResponseDto toMappingTable(Requirement requirement, RequirementDocument requirementDocument) {
+    public DocumentResponse toMappingDocs(RequirementDocument document) {
+        return new DocumentResponse(
+                document.getDocument().getName(),
+                document.getPageNum(),
+                document.getRelSentence()
+        );
+    }
+
+    public MappingTableResponseDto toMappingTable(Requirement requirement, List<DocumentResponse> documentResponse) {
         return new MappingTableResponseDto(
                 requirement.getReqIdCode(),
                 requirement.getName(),
                 requirement.getDescription(),
-                requirementDocument.getDocument().getName(),
-                requirementDocument.getPageNum(),
-                requirementDocument.getRelSentence()
+                documentResponse
         );
     }
 }

@@ -20,16 +20,14 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 
 import com.skala.decase.domain.requirement.domain.Requirement;
 import com.skala.decase.domain.requirement.domain.RequirementDocument;
 import com.skala.decase.domain.requirement.repository.RequirementDocumentRepository;
 import lombok.RequiredArgsConstructor;
-import org.apache.poi.ss.usermodel.Cell;
-import org.apache.poi.ss.usermodel.Row;
-import org.apache.poi.ss.usermodel.Sheet;
-import org.apache.poi.ss.usermodel.Workbook;
+import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -137,48 +135,27 @@ public class ProjectService {
     }
 
     // 조견표 리스트 생성
-    private List<MappingTableResponseDto> createMappingTable(Long projectId) {
-        return findByProjectId(projectId).getRequirements().stream()
-                .filter(requirement -> !requirement.isDeleted())
-                .map(requirement -> {
-                    RequirementDocument doc = requirementDocumentRepository.findByRequirement(requirement);
-                    return projectMapper.toMappingTable(requirement, doc);
-                })
-                .toList();
-    }
+    public List<MappingTableResponseDto> createMappingTable(Long projectId) {
+        Project project = findByProjectId(projectId);
+        List<Requirement> requirements = project.getRequirements();
 
+        List<MappingTableResponseDto> result = new ArrayList<>();
 
-    // 조견표 출력
-    public byte[] exportMappingTableToExcel(Long projectId) throws IOException {
-        List<MappingTableResponseDto> list = createMappingTable(projectId);
+        for (Requirement requirement : requirements) {
+            List<RequirementDocument> requirementDocuments = requirementDocumentRepository.findAllByRequirement(requirement);
 
-        Workbook workbook = new XSSFWorkbook();
-        Sheet sheet = workbook.createSheet("Mapping Table");
+            List<DocumentResponse> responseDtos = new ArrayList<>();
 
-        // 1. 헤더 작성
-        Row headerRow = sheet.createRow(0);
-        String[] headers = {"요구사항 ID", "요구사항명", "설명", "출처 문서명", "페이지 번호", "관련 문장"};
-        for (int i = 0; i < headers.length; i++) {
-            Cell cell = headerRow.createCell(i);
-            cell.setCellValue(headers[i]);
+            if (requirementDocuments.isEmpty()) {
+                responseDtos.add(projectMapper.toMappingDocs(null));
+                continue;
+            }
+            for (RequirementDocument requirementDocument : requirementDocuments) {
+                responseDtos.add(projectMapper.toMappingDocs(requirementDocument));
+            }
+
+            result.add(projectMapper.toMappingTable(requirement, responseDtos));
         }
-
-        // 2. 내용 채우기
-        int rowIdx = 1;
-        for (MappingTableResponseDto dto : list) {
-            Row row = sheet.createRow(rowIdx++);
-            row.createCell(0).setCellValue(dto.req_code());
-            row.createCell(1).setCellValue(dto.name());
-            row.createCell(2).setCellValue(dto.description());
-            row.createCell(3).setCellValue(dto.docName());
-            row.createCell(4).setCellValue(dto.pageNum());
-            row.createCell(5).setCellValue(dto.relSentence());
-        }
-
-        // 3. 엑셀 파일을 byte[]로 변환 (서버에서 다운로드 응답용)
-        ByteArrayOutputStream out = new ByteArrayOutputStream();
-        workbook.write(out);
-        workbook.close();
-        return out.toByteArray();
+        return result.stream().sorted(Comparator.comparing(MappingTableResponseDto::req_code)).toList();
     }
 }
