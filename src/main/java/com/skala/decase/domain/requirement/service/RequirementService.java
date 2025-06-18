@@ -322,19 +322,19 @@ public class RequirementService {
      * 사용자가 직접 화면에서 요구사항 정의서 내용을 삭제할때 리비전 업데이트 x
      */
     @Transactional
-    public String deleteRequirement(Long projectId, Long reqPk) {
-        Project project = projectService.findByProjectId(projectId);
+    public void deleteRequirement(Long projectId, Long reqPk, String reason, Long memberId) {
+        projectService.findByProjectId(projectId);
 
         Requirement requirement = requirementRepository.findById(reqPk)
                 .orElseThrow(() -> new RequirementException("해당 요구사항이 존재하지 않습니다.", HttpStatus.NOT_FOUND));
 
-        int maxRevision = Optional.ofNullable(requirementRepository.getMaxRevisionCount(project)).orElse(0);
+        Member member = memberRepository.findById(memberId)
+                .orElseThrow(() -> new MemberException("해당 멤버가 존재하지 않습니다.", HttpStatus.NOT_FOUND));
 
-        // 기존 요구사항 soft delete 정보 입력
-        requirement.setDeleted(true);
-        requirement.setDeletedRevision(maxRevision);
+        PendingRequirement pendingRequirement = new PendingRequirement();
+        pendingRequirement.createPendingRequirementDelete(requirement, reason, member); // 변경 사항 업데이트
 
-        return "요구사항이 삭제되었습니다.";
+        pendingRequirementRepository.save(pendingRequirement);
     }
 }
 

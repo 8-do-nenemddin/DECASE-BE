@@ -5,6 +5,7 @@ import com.skala.decase.domain.project.domain.Project;
 import com.skala.decase.domain.requirement.controller.dto.request.UpdateRequirementDto;
 import jakarta.persistence.*;
 import lombok.Data;
+import org.aspectj.apache.bcel.classfile.Module;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
@@ -63,6 +64,8 @@ public class PendingRequirement {
 
 	private Boolean status;
 
+	private Boolean isDelete;
+
 	public void createPendingRequirement(UpdateRequirementDto req, String reqIdCode, Project project, Member createdBy) {
 		this.project = project;
 		this.reqIdCode = reqIdCode;
@@ -78,5 +81,24 @@ public class PendingRequirement {
 		this.modifiedDate = LocalDateTime.now();
 		this.modReason = req.getModReason();
 		this.status = false;
+		this.isDelete = req.isDeleted();
+	}
+
+	public void createPendingRequirementDelete(Requirement req, String modReason, Member createdBy) {
+		this.project = req.getProject();
+		this.reqIdCode = req.getReqIdCode();
+		this.name = req.getName();
+		this.description = req.getDescription();
+		this.type = req.getType();
+		this.level1 = req.getLevel1();
+		this.level2 = req.getLevel2();
+		this.level3 = req.getLevel3();
+		this.priority = req.getPriority();
+		this.difficulty = req.getDifficulty();
+		this.createdBy = createdBy;
+		this.modifiedDate = LocalDateTime.now();
+		this.modReason = modReason;
+		this.status = false;
+		this.isDelete = true;
 	}
 }

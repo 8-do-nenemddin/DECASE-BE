@@ -16,6 +16,7 @@ import jakarta.persistence.Table;
 import java.util.List;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 import org.hibernate.envers.Audited;
 import org.hibernate.envers.NotAudited;
 
@@ -23,6 +24,7 @@ import org.hibernate.envers.NotAudited;
 @Audited
 @Table(name = "TN_MEMBERS")
 @Getter
+@Setter
 @NoArgsConstructor
 public class Member {
 
@@ -56,6 +58,9 @@ public class Member {
     @OneToMany(mappedBy = "member", fetch = FetchType.LAZY)
     private List<MemberProject> membersProjects;
 
+    @Column(name = "is_deleted", nullable = false)
+    private Boolean isDeleted;
+
     // 회원가입 용 생성자
     public Member(String id, String password, String name, String email, Company company, Department department) {
         this.id = id;
@@ -64,5 +69,6 @@ public class Member {
         this.email = email;
         this.company = company;
         this.department = department;
+        this.isDeleted = false;
     }
 }

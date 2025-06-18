@@ -1,5 +1,6 @@
 package com.skala.decase.domain.requirement.controller;
 
+import com.skala.decase.domain.requirement.controller.dto.request.DeleteRequestDto;
 import com.skala.decase.domain.requirement.controller.dto.request.RequirementDto;
 import com.skala.decase.domain.requirement.controller.dto.request.RequirementRevisionDto;
 import com.skala.decase.domain.requirement.controller.dto.request.UpdateRequirementDto;
@@ -37,7 +38,6 @@ public class RequirementController {
 
     private final RequirementService requirementService;
     private final ExelExportService exelExportService;
-
 
     @Operation(summary = "요구사항 정의서 버전별 미리보기", description = "특정 리비전의 요구사항 정의서 미리보기를 지원합니다.")
     @GetMapping("/{projectId}/requirements/generated")
@@ -112,7 +112,6 @@ public class RequirementController {
         return ResponseEntity.ok(result);
     }
 
-
     @GetMapping("/{projectId}/revision")
     public ResponseEntity<List<RequirementRevisionDto>> getRequirementVersion(
             @PathVariable Long projectId) {
@@ -131,9 +130,11 @@ public class RequirementController {
     }
 
     @PatchMapping("{projectId}/requirments/{reqPk}/delete")
-    public String deleteRequirement(
+    public ResponseEntity<ApiResponse<String>> deleteRequirement(
             @PathVariable Long projectId,
-            @PathVariable Long reqPk) {
-        return requirementService.deleteRequirement(projectId, reqPk);
+            @PathVariable Long reqPk,
+            @RequestBody DeleteRequestDto reasonDto) {
+        requirementService.deleteRequirement(projectId, reqPk, reasonDto.getReason(), reasonDto.getMemberId());
+        return ResponseEntity.ok().body(ApiResponse.success("변경 내역이 저장되었습니다."));
     }
 }
