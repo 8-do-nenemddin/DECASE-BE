@@ -18,13 +18,10 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.util.List;
-import java.util.Map;
 
 @Tag(name = "Mockup API", description = "목업 관리를 위한 api 입니다.")
 @RestController
@@ -87,19 +84,18 @@ public class MockupController {
     @PostMapping(path = "/{revisionCount}")
     public ResponseEntity<ApiResponse<String>> createMockups(
             @PathVariable Long projectId,
-            @PathVariable Integer revisionCount,
-            @RequestParam("outputFolderName") String outputFolderName
+            @PathVariable Integer revisionCount
     ) {
-        createMockupService.createMockUpAsync(projectId, revisionCount, outputFolderName);
+        createMockupService.createMockUpAsync(projectId, revisionCount);
 
-        return ResponseEntity.ok().body(ApiResponse.success("목업이 생성되었습니다."));
+        return ResponseEntity.ok().body(ApiResponse.success("목업 생성이 요청되었습니다."));
     }
 
-	@Operation(summary = "해당 프로젝트 요구사항 리비전에 목업이 생성되었는지 유무 반환")
-	@GetMapping("{revisionCount}/exist")
-	public ResponseEntity<MockupExistDto> mockupExists(
-			@PathVariable Long projectId,
-			@PathVariable Integer revisionCount) {
-		return ResponseEntity.ok(mockupService.mockupExists(projectId, revisionCount));
-	}
+    @Operation(summary = "해당 프로젝트 요구사항 리비전에 목업이 생성되었는지 유무 반환")
+    @GetMapping("{revisionCount}/exist")
+    public ResponseEntity<MockupExistDto> mockupExists(
+            @PathVariable Long projectId,
+            @PathVariable Integer revisionCount) {
+        return ResponseEntity.ok(mockupService.mockupExists(projectId, revisionCount));
+    }
 }
