@@ -12,6 +12,7 @@ import com.skala.decase.domain.requirement.repository.RequirementRepository;
 import com.skala.decase.domain.source.domain.Source;
 import com.skala.decase.domain.source.service.SourceRepository;
 import lombok.RequiredArgsConstructor;
+import org.hibernate.Hibernate;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -98,8 +99,18 @@ public class PendingRequirementService {
                     originalRequirement.setModifiedDate(pendingRequirement.getModifiedDate());
                     originalRequirement.setModReason(pendingRequirement.getModReason());
                     originalRequirement.setModifiedBy(pendingRequirement.getCreatedBy());
-                    requirementRepository.delete(originalRequirement);
 
+                    // ✅ Envers 스냅샷 찍기 전에 연관 객체 강제 초기화
+                    Hibernate.initialize(originalRequirement.getCreatedBy());
+                    Hibernate.initialize(originalRequirement.getModifiedBy());
+
+                    System.out.println("createdBy initialized? " + Hibernate.isInitialized(originalRequirement.getCreatedBy()));
+                    System.out.println("modifiedBy initialized? " + Hibernate.isInitialized(originalRequirement.getModifiedBy()));
+
+
+                    requirementRepository.save(originalRequirement);
+                    requirementRepository.flush(); // 이 시점에서 초기화된 필드까지 Envers가 추적
+                    requirementRepository.delete(originalRequirement);
                 } else {
                     // 승인 처리: Pending 값으로 원본 Requirement 필드 덮어쓰기
                     originalRequirement.updateFromPending(
