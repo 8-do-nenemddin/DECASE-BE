@@ -25,4 +25,5 @@ public class RequirementDto {
 	private String modifiedDate;
 	private String modifier;
 	private String reason;
+	private Boolean isDelete;
 }

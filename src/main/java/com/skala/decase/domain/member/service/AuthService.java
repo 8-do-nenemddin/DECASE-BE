@@ -18,6 +18,7 @@ import com.skala.decase.domain.member.exception.MemberException;
 import com.skala.decase.domain.member.mapper.CheckDuplicationMapper;
 import com.skala.decase.domain.member.mapper.DeleteMapper;
 import com.skala.decase.domain.member.mapper.MemberMapper;
+import com.skala.decase.domain.member.repository.MemberProjectRepository;
 import com.skala.decase.domain.member.repository.MemberRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -36,6 +37,7 @@ public class AuthService {
     private final MemberMapper memberMapper;
     private final DeleteMapper deleteMapper;
     private final CheckDuplicationMapper checkDuplicationMapper;
+    private final MemberProjectRepository memberProjectRepository;
 
     /**
      * 회원가입
@@ -81,8 +83,14 @@ public class AuthService {
         if (!member.getPassword().equals(request.password())) {
             throw new MemberException("비밀번호 불일치", HttpStatus.BAD_REQUEST);
         }
-        memberRepository.delete(member);
-        return deleteMapper.success();
+
+        if (memberProjectRepository.existsByMemberAndIsAdminTrue(member)) {
+            throw new MemberException("프로젝트의 어드민 입니다.", HttpStatus.BAD_REQUEST);
+        } else {
+            member.setIsDeleted(true);
+            memberRepository.save(member);
+            return deleteMapper.success();
+        }
     }
 
     public DuplicationCheckResponse checkDuplication(DuplicationCheckRequest request) {

@@ -3,6 +3,7 @@ package com.skala.decase.domain.mockup.mapper;
 import com.skala.decase.domain.mockup.controller.dto.response.CreateMockUpRequest;
 import com.skala.decase.domain.requirement.controller.dto.response.RequirementWithSourceResponse;
 import com.skala.decase.domain.requirement.controller.dto.response.SourceResponse;
+import com.skala.decase.domain.requirement.domain.RequirementType;
 import com.skala.decase.domain.requirement.service.dto.response.CreateRfpResponse;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -18,9 +19,11 @@ public class MockupMapper {
             return null;
         }
 
+        String typeKor = RequirementType.toKorean(requirement.type());
+
         return new CreateMockUpRequest(
                 requirement.name(),
-                requirement.type(),
+                typeKor,
                 requirement.description(),
                 extractRawText(requirement.sources()),
                 0,
