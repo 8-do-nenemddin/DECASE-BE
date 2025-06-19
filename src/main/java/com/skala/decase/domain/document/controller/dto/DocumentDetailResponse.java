@@ -9,6 +9,7 @@ import lombok.Data;
 public class DocumentDetailResponse {
     String docId;
     String name;
+    String docDescription;
     LocalDateTime createdDate;
     String createdBy;
 }

@@ -4,15 +4,14 @@ import com.skala.decase.domain.document.controller.dto.DocumentDetailResponse;
 import com.skala.decase.domain.document.controller.dto.DocumentResponse;
 import com.skala.decase.domain.document.domain.Document;
 import com.skala.decase.domain.document.exception.DocumentException;
+import com.skala.decase.domain.document.mapper.DocumentMapper;
 import com.skala.decase.domain.document.repository.DocumentRepository;
 import com.skala.decase.domain.member.domain.Member;
 import com.skala.decase.domain.member.exception.MemberException;
 import com.skala.decase.domain.member.repository.MemberRepository;
-import com.skala.decase.domain.member.service.MemberService;
 import com.skala.decase.domain.project.domain.Project;
 import com.skala.decase.domain.project.exception.ProjectException;
 import com.skala.decase.domain.project.repository.ProjectRepository;
-import com.skala.decase.domain.project.service.ProjectService;
 import java.io.IOException;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
@@ -20,7 +19,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
-import java.nio.file.StandardOpenOption;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -29,6 +27,7 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.UrlResource;
 import org.springframework.http.HttpHeaders;
@@ -48,9 +47,13 @@ public class DocumentService {
     private final DocumentRepository documentRepository;
     private final ProjectRepository projectRepository;
     private final MemberRepository memberRepository;
+    private final DocumentMapper documentMapper;
 
     // 로컬 파일 업로드 경로
-    private final static String BASE_UPLOAD_PATH = "DECASE/upload";
+    @Value("${file.upload.upload-path}")
+    private String BASE_UPLOAD_PATH;
+    @Value("${file.upload.asis-path}")
+    private String BASE_ASIS_PATH;
 
     // 문서 타입 매핑
     private static final Map<Integer, String> TYPE_PREFIX_MAP = Map.of(
@@ -79,18 +82,19 @@ public class DocumentService {
      * @param file
      * @return
      */
-    private Document uploadDocument(MultipartFile file, int docTypeIdx, Project project, Member member) {
+    private Document uploadDocument(String uploadPath, MultipartFile file, int docTypeIdx, Project project,
+                                    Member member) {
         String fileName = System.currentTimeMillis() + "_" + StringUtils.cleanPath(file.getOriginalFilename());
-        Path uploadPath = Paths.get(BASE_UPLOAD_PATH);
-        if (!Files.exists(uploadPath)) {
+        Path path = Paths.get(uploadPath);
+        if (!Files.exists(path)) {
             try {
-                Files.createDirectories(uploadPath);
+                Files.createDirectories(path);
             } catch (IOException e) {
                 throw new DocumentException("파일 uploadPath를 만들 수 없습니다.", HttpStatus.INTERNAL_SERVER_ERROR);
             }
         }
 
-        Path filePath = uploadPath.resolve(fileName);
+        Path filePath = path.resolve(fileName);
         try {
             Files.copy(file.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
         } catch (IOException e) {
@@ -138,6 +142,11 @@ public class DocumentService {
 
         List<DocumentResponse> responses = new ArrayList<>();
 
+        Project project = projectRepository.findById(projectId)
+                .orElseThrow(() -> new DocumentException("유효하지 않은 프로젝트 ID: " + projectId, HttpStatus.NOT_FOUND));
+        Member member = memberRepository.findById(memberId)
+                .orElseThrow(() -> new MemberException("유효하지 않은 사용자 ID: " + memberId, HttpStatus.NOT_FOUND));
+
         for (int i = 0; i < files.size(); i++) {
             MultipartFile file = files.get(i);
             int iType = types.get(i);
@@ -146,15 +155,15 @@ public class DocumentService {
                 throw new DocumentException("유효하지 않은 문서 타입: " + iType, HttpStatus.BAD_REQUEST);
             }
 
-            Project project = projectRepository.findById(projectId)
-                    .orElseThrow(() -> new DocumentException("유효하지 않은 프로젝트 ID: " + projectId, HttpStatus.NOT_FOUND));
-            Member member = memberRepository.findById(memberId)
-                    .orElseThrow(() -> new MemberException("유효하지 않은 사용자 ID: " + memberId, HttpStatus.NOT_FOUND));
             // 파일 저장
-            Document doc = uploadDocument(file, iType, project, member);
+            Document doc = uploadDocument(BASE_UPLOAD_PATH, file, iType, project, member);
 
-            responses.add(new DocumentResponse(doc.getDocId(), doc.getName()));
+            responses.add(documentMapper.toResponse(doc));
         }
+
+        // 프로젝트 리비전 증가
+        project.setRevisionCount(project.getRevisionCount() + 1);
+        projectRepository.save(project);
 
         return responses;
     }
@@ -164,14 +173,14 @@ public class DocumentService {
      **/
     @Transactional
     public Document uploadRFP(Project project, Member member, MultipartFile RFPfile) {
-        return uploadDocument(RFPfile, 1, project, member);
+        return uploadDocument(BASE_UPLOAD_PATH, RFPfile, 1, project, member);
     }
 
     /**
      * AS-IS 단건 파일 업로드 -> 최초 요구사항 정의서 생성시 사용
      **/
     public Document uploadASIS(Project project, Member member, MultipartFile ASISfile) {
-        return uploadDocument(ASISfile, 8, project, member);
+        return uploadDocument(BASE_ASIS_PATH, ASISfile, 8, project, member);
     }
 
     // 사용자 업로드 파일 삭제
@@ -265,56 +274,11 @@ public class DocumentService {
         List<Document> documents = documentRepository.findAllByProjectAndIsMemberUploadTrue(project);
 
         List<DocumentResponse> responseList = documents.stream()
-                .map(doc -> new DocumentResponse(doc.getDocId(), doc.getName()))
+                .map(documentMapper::toResponse)
                 .collect(Collectors.toList());
 
         return ResponseEntity.ok(responseList);
     }
 
-    /**
-     * byte[] 배열을 파일로 저장하고 Document 엔티티 생성
-     */
-    public Document uploadDocumentFromBytes(byte[] content, String originalFileName, int docTypeIdx, Project project,
-                                            Member member) {
-        try {
-            String fileName = saveFileFromBytes(content, originalFileName);
-            Path filePath = Paths.get(BASE_UPLOAD_PATH).resolve(fileName);
-
-            Document doc = new Document();
-            doc.setDocId(generateDocId(TYPE_PREFIX_MAP.get(docTypeIdx)));
-            doc.setName(originalFileName);
-            doc.setPath(filePath.toString());
-            doc.setCreatedDate(LocalDateTime.now());
-            doc.setMemberUpload(true);
-            doc.setCreatedBy(member);
-            doc.setProject(project);
-
-            return documentRepository.save(doc);
-        } catch (IOException e) {
-            throw new DocumentException("파일 저장 중 오류가 발생했습니다.", HttpStatus.INTERNAL_SERVER_ERROR);
-        }
-    }
-
-    /**
-     * byte[] 배열을 파일로 저장
-     */
-    private String saveFileFromBytes(byte[] content, String originalFileName) throws IOException {
-        // 고유한 파일명 생성
-        String fileName = System.currentTimeMillis() + "_" + StringUtils.cleanPath(originalFileName);
-
-        // 업로드 디렉토리 생성
-        Path uploadPath = Paths.get(BASE_UPLOAD_PATH);
-        if (!Files.exists(uploadPath)) {
-            Files.createDirectories(uploadPath);
-            log.info("업로드 디렉토리 생성: {}", uploadPath);
-        }
-
-        // 파일 저장
-        Path filePath = uploadPath.resolve(fileName);
-        Files.write(filePath, content, StandardOpenOption.CREATE, StandardOpenOption.WRITE);
-
-        log.info("파일 저장 완료: {}", filePath);
-        return fileName;
-    }
 
 }

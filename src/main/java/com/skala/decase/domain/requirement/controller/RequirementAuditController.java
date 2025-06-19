@@ -55,20 +55,22 @@ public class RequirementAuditController {
                 .body(ApiResponse.success(response));
     }
 
-    @GetMapping("/projects/{projectId}/excel")
+    @GetMapping("/projects/{projectId}/downloads")
     public ResponseEntity<ByteArrayResource> downloadMatrix(@PathVariable("projectId") long projectId) {
         try {
             List<MatrixResponse> matrixList = requirementAuditService.createMatrix(projectId);
             byte[] excelBytes = exelExportService.generateMatrixExcelFile(matrixList); // 메서드 직접 구현
 
-            String fileName = "Requirement-Matrix.xlsx";
+            String fileName = String.format("%s.xlsx", "Requirement-Matrix");
+            ByteArrayResource resource = new ByteArrayResource(excelBytes);
+
             String encodedFileName = URLEncoder.encode(fileName, StandardCharsets.UTF_8)
                     .replaceAll("\\+", "%20");
 
             return ResponseEntity.ok()
                     .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename*=UTF-8''" + encodedFileName)
                     .header(HttpHeaders.CONTENT_TYPE, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
-                    .body(new ByteArrayResource(excelBytes));
+                    .body(resource);
 
         } catch (Exception e) {
             log.error("Matrix Excel 다운로드 실패", e);

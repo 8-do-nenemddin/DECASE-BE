@@ -9,6 +9,7 @@ import lombok.Data;
 public class DocumentPreviewDto {
     private String fileType;
     private String fileName;
+    private String docDescription;
     private Long fileSize;
     private String previewUrl;
     private String htmlContent;

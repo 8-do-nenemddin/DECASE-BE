@@ -85,6 +85,10 @@ public class Requirement {
     @JoinColumn(name = "member_id", nullable = false)
     private Member createdBy;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "member_id_mod", nullable = true)
+    private Member modifiedBy;
+
     @LastModifiedDate
     private LocalDateTime modifiedDate;
 

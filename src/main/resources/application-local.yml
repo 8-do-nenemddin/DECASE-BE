@@ -26,7 +26,8 @@ spring:
     properties:
       hibernate:
         dialect: org.hibernate.dialect.MariaDBDialect # mariadb
-#            dialect: org.hibernate.dialect.MySQL8Dialect # mysql
+#          dialect: org.hibernate.dialect.MySQL8Dialect # mysql
+      org.hibernate.envers.store_data_at_delete: true
     show-sql: true
 
   mail:
@@ -48,3 +49,14 @@ management:
     web:
       exposure:
         include: health
+
+file:
+  upload:
+    # base-path: ${FILE_STORAGE_PATH:/shared/documents}
+    # mockup-path: ${file.upload.base-path}/mockup
+    # asis-path: ${file.upload.base-path}/asis
+    # upload-path: ${file.upload.base-path}/uploads
+    base-path: ${FILE_STORAGE_PATH}
+    mockup-path: ${MOCKUP_STORAGE_PATH}
+    asis-path: ${ASIS_STORAGE_PATH}
+    upload-path: ${UPLOADS_STORAGE_PATH}
