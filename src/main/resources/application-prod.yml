@@ -9,7 +9,7 @@ spring:
   
   springdoc:
     api-docs:
-      path: /api-docs # OpenAPI spec JSON 위치
+      path: /v3/api-docs # OpenAPI spec JSON 위치
     swagger-ui:
       path: /swagger-ui # 접속 경로
 
