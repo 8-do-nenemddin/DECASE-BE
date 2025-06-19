@@ -10,7 +10,7 @@ public enum RequirementType {
         if (value == null) {
             return null; // 또는 기본값 반환
         }
-        
+
         return switch (value) {
             case "기능" -> FR;
             case "비기능" -> NFR;
@@ -27,5 +27,14 @@ public enum RequirementType {
         } else {
             return type;
         }
+    }
+
+    public static RequirementType fromOrdinal(int ordinal) {
+        return switch (ordinal) {
+            case 0 -> FR;
+            case 1 -> NFR;
+            default -> throw new RequirementTypeException("Unknown requirement type ordinal: " + ordinal,
+                    HttpStatus.BAD_REQUEST);
+        };
     }
 }
