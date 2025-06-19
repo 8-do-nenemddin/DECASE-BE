@@ -14,7 +14,7 @@ public class DocumentMapper {
         return DocumentDetailResponse.builder()
                 .docId(document.getDocId())
                 .name(document.getName())
-                .docDescription(document.getDocDescription())
+                .docDescription(document.getDocDescription() == null ? "" : document.getDocDescription())
                 .createdDate(document.getCreatedDate())
                 .createdBy(document.getCreatedBy().getName())
                 .build();
@@ -24,7 +24,7 @@ public class DocumentMapper {
         return new DocumentResponse(
                 document.getDocId(),
                 document.getName(),
-                document.getDocDescription()
+                document.getDocDescription() != null ? document.getDocDescription() : ""
         );
     }
 }
