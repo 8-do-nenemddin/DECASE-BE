@@ -85,7 +85,7 @@ public class DocumentService {
     private Document uploadDocument(String uploadPath, MultipartFile file, int docTypeIdx, Project project,
                                     Member member) {
         String fileName = System.currentTimeMillis() + "_" + StringUtils.cleanPath(file.getOriginalFilename());
-        Path path = Paths.get(uploadPath);
+        Path path = Paths.get(BASE_UPLOAD_PATH);
         if (!Files.exists(path)) {
             try {
                 Files.createDirectories(path);
@@ -255,6 +255,7 @@ public class DocumentService {
         DocumentDetailResponse docDetailResponse = DocumentDetailResponse.builder()
                 .docId(doc.getDocId())
                 .name(doc.getName())
+                .docDescription(doc.getDocDescription() == null ? "" : doc.getDocDescription())
                 .createdDate(doc.getCreatedDate())
                 .build();
 
