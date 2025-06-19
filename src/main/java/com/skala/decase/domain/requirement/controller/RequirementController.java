@@ -1,7 +1,6 @@
 package com.skala.decase.domain.requirement.controller;
 
 import com.skala.decase.domain.requirement.controller.dto.request.DeleteRequestDto;
-import com.skala.decase.domain.requirement.controller.dto.request.RequirementDto;
 import com.skala.decase.domain.requirement.controller.dto.request.RequirementRevisionDto;
 import com.skala.decase.domain.requirement.controller.dto.request.UpdateRequirementDto;
 import com.skala.decase.domain.requirement.controller.dto.response.RequirementWithSourceResponse;
@@ -94,10 +93,11 @@ public class RequirementController {
         return ResponseEntity.ok(requirementService.getRequirementCategory(projectId, revisionCount));
     }
 
-    // 프로젝트의 쿼리 및 카테고리 별 검색
-    @GetMapping("/{projectId}/documents/search")
-    public ResponseEntity<List<RequirementDto>> getGeneratedRequirements(
+    @Operation(summary = "요구사항 정의서 버전 별 검색", description = "요구사항 정의서 버전 별 검색")
+    @GetMapping("/{projectId}/documents/{revisionCount}/search")
+    public ResponseEntity<ApiResponse<List<RequirementWithSourceResponse>>> getGeneratedRequirements(
             @PathVariable Long projectId,
+            @PathVariable int revisionCount,
             @RequestParam(required = false) String query,
             @RequestParam(required = false) String level1,
             @RequestParam(required = false) String level2,
@@ -106,10 +106,10 @@ public class RequirementController {
             @RequestParam(required = false) Integer difficulty,
             @RequestParam(required = false) Integer priority,
             @RequestParam(required = false) List<String> docType) {
-        List<RequirementDto> result = requirementService.getFilteredRequirements(
-                projectId, query, level1, level2, level3, type, difficulty, priority, docType);
+        List<RequirementWithSourceResponse> result = requirementService.getFilteredRequirements(
+                projectId, revisionCount, query, level1, level2, level3, type, difficulty, priority, docType);
 
-        return ResponseEntity.ok(result);
+        return ResponseEntity.ok().body(ApiResponse.success(result));
     }
 
     @GetMapping("/{projectId}/revision")

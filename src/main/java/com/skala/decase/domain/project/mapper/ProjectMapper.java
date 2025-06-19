@@ -7,12 +7,12 @@ import com.skala.decase.domain.project.controller.dto.response.MappingTableRespo
 import com.skala.decase.domain.project.controller.dto.response.ProjectDetailResponseDto;
 import com.skala.decase.domain.project.controller.dto.response.ProjectResponse;
 import com.skala.decase.domain.project.domain.Project;
+import com.skala.decase.domain.source.domain.Source;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 
 import com.skala.decase.domain.requirement.domain.Requirement;
-import com.skala.decase.domain.requirement.domain.RequirementDocument;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -65,11 +65,11 @@ public class ProjectMapper {
         );
     }
 
-    public DocumentResponse toMappingDocs(RequirementDocument document) {
+    public DocumentResponse toMappingDocs(Source source) {
         return new DocumentResponse(
-                document.getDocument().getName(),
-                document.getPageNum(),
-                document.getRelSentence()
+                source.getDocument().getName(),
+                source.getPageNum(),
+                source.getRelSentence()
         );
     }
 

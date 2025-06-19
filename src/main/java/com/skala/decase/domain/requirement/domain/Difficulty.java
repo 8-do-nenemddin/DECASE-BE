@@ -14,4 +14,13 @@ public enum Difficulty {
             default -> throw new DifficultyException("Unknown difficulty value: " + value, HttpStatus.BAD_REQUEST);
         };
     }
+
+    public static Difficulty fromOrdinal(int ordinal) {
+        return switch (ordinal) {
+            case 0 -> HIGH;
+            case 1 -> MIDDLE;
+            case 2 -> LOW;
+            default -> throw new DifficultyException("Unknown difficulty ordinal: " + ordinal, HttpStatus.BAD_REQUEST);
+        };
+    }
 }
