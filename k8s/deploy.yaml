@@ -21,7 +21,7 @@ spec:
       serviceAccountName: default
       containers:
       - name: decase
-        image: amdp-registry.skala-ai.com/skala25a/sk-team-08-decase:1.0.0-27-a3d93ee773bf
+        image: amdp-registry.skala-ai.com/skala25a/sk-team-08-decase:1.0.0-28-725cbbf1d5fb
         imagePullPolicy: Always
         env:
         - name: MARIA_DATABASE_URL
