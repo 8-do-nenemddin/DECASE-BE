@@ -13,7 +13,7 @@ EXPOSE 8081
 
 # 애플리케이션의 jar 파일을 컨테이너에 추가
 #ADD ${JAR_FILE} app.jar
-ADD ./target/*.jar app.jar
+ADD ./build/libs/decase-0.0.1-SNAPSHOT.jar app.jar
 
 # 애플리케이션 실행
 ENTRYPOINT ["java","-Djava.security.egd=file:/dev/./urandom","-Dspring.profiles.active=prod","-jar","app.jar"]

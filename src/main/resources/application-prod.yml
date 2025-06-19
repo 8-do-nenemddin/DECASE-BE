@@ -1,0 +1,60 @@
+spring:
+  config:
+    activate:
+      on-profile: prod
+    servlet:
+      multipart:
+        max-file-size: 1GB
+        max-request-size: 1GB
+  
+  springdoc:
+    api-docs:
+      path: /swagger/api-docs # OpenAPI spec JSON 위치
+    swagger-ui:
+      path: /swagger/swagger-ui # 접속 경로
+
+  datasource:
+#    driver-class-name: com.mysql.cj.jdbc.Driver
+    driver-class-name: org.mariadb.jdbc.Driver
+    url: ${MARIA_DATABASE_URL}
+    username: ${MARIA_USER}
+    password: ${MARIA_PASSWORD}
+    hikari:
+      maximum-pool-size: 20
+      minimum-idle: 5
+      connection-timeout: 30000
+      idle-timeout: 600000
+      max-lifetime: 1800000
+      auto-commit: false
+      pool-name: HikariCP-Local
+      leak-detection-threshold: 60000
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MariaDBDialect # mariadb
+#            dialect: org.hibernate.dialect.MySQL8Dialect # mysql
+    show-sql: true
+
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: ${MAIL_ADDRESS}
+    password: ${MAIL_PASSWORD}
+    properties:
+      mail:
+        debug: true
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+            required: true
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
