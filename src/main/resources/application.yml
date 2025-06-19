@@ -2,7 +2,7 @@ spring:
   application:
     name: decase
   profiles:
-    active: local
+    active: prod
   config:
     import: optional:file:.env.properties
   servlet:
