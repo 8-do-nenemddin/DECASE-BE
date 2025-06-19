@@ -9,10 +9,12 @@ import com.skala.decase.domain.requirement.controller.dto.request.RequirementDto
 import com.skala.decase.domain.requirement.controller.dto.request.RequirementRevisionDto;
 import com.skala.decase.domain.requirement.controller.dto.request.UpdateRequirementDto;
 import com.skala.decase.domain.requirement.controller.dto.response.RequirementWithSourceResponse;
+import com.skala.decase.domain.requirement.domain.PendingRequirement;
 import com.skala.decase.domain.requirement.domain.Requirement;
 import com.skala.decase.domain.requirement.domain.RequirementType;
 import com.skala.decase.domain.requirement.exception.RequirementException;
 import com.skala.decase.domain.requirement.mapper.RequirementServiceMapper;
+import com.skala.decase.domain.requirement.repository.PendingRequirementRepository;
 import com.skala.decase.domain.requirement.repository.RequirementRepository;
 import com.skala.decase.domain.source.domain.Source;
 import com.skala.decase.domain.source.service.SourceRepository;
@@ -39,6 +41,7 @@ public class RequirementService {
     private final ProjectService projectService;
     private final SourceRepository sourceRepository;
     private final MemberRepository memberRepository;
+    private final PendingRequirementRepository pendingRequirementRepository;
 
     // 리버전 기본값 1로 받도록 하기 위함
     public List<RequirementWithSourceResponse> getGeneratedRequirements(Long projectId) {
@@ -290,27 +293,28 @@ public class RequirementService {
                 throw new RequirementException("해당 프로젝트의 요구사항이 아닙니다.", HttpStatus.BAD_REQUEST);
             }
 
-            requirement.update(req, member); // 변경 사항 업데이트
+            PendingRequirement pendingRequirement = new PendingRequirement();
+            pendingRequirement.createPendingRequirement(req,requirement.getReqIdCode(), project, member); // 변경 사항 업데이트
 
-            Requirement savedReq = requirementRepository.save(requirement);
+            pendingRequirementRepository.save(pendingRequirement);
 
             // 기존 Source를 새로운 요구사항과 연결
-            List<Source> sources = sourceRepository.findAllByRequirement(requirement);
-            List<Source> newSources = sources.stream()
-                    .map(oldSource -> {
-                        // 기존 Source 정보를 바탕으로 새로운 Source 생성
-                        Source newSource = new Source();
-                        newSource.createSource(
-                                savedReq,  // 새로운 요구사항과 연결
-                                oldSource.getDocument(),  // 기존 문서 정보 유지
-                                oldSource.getPageNum(),   // 기존 페이지 번호 유지
-                                oldSource.getRelSentence()  // 기존 관련 문장 유지
-                        );
-                        return newSource;
-                    })
-                    .toList();
-
-            sourceRepository.saveAll(newSources);
+//            List<Source> sources = sourceRepository.findAllByRequirement(requirement);
+//            List<Source> newSources = sources.stream()
+//                    .map(oldSource -> {
+//                        // 기존 Source 정보를 바탕으로 새로운 Source 생성
+//                        Source newSource = new Source();
+//                        newSource.createSource(
+//                                savedReq,  // 새로운 요구사항과 연결
+//                                oldSource.getDocument(),  // 기존 문서 정보 유지
+//                                oldSource.getPageNum(),   // 기존 페이지 번호 유지
+//                                oldSource.getRelSentence()  // 기존 관련 문장 유지
+//                        );
+//                        return newSource;
+//                    })
+//                    .toList();
+//
+//            sourceRepository.saveAll(newSources);
         }
     }
 
@@ -318,19 +322,19 @@ public class RequirementService {
      * 사용자가 직접 화면에서 요구사항 정의서 내용을 삭제할때 리비전 업데이트 x
      */
     @Transactional
-    public String deleteRequirement(Long projectId, Long reqPk) {
-        Project project = projectService.findByProjectId(projectId);
+    public void deleteRequirement(Long projectId, Long reqPk, String reason, Long memberId) {
+        projectService.findByProjectId(projectId);
 
         Requirement requirement = requirementRepository.findById(reqPk)
                 .orElseThrow(() -> new RequirementException("해당 요구사항이 존재하지 않습니다.", HttpStatus.NOT_FOUND));
 
-        int maxRevision = Optional.ofNullable(requirementRepository.getMaxRevisionCount(project)).orElse(0);
+        Member member = memberRepository.findById(memberId)
+                .orElseThrow(() -> new MemberException("해당 멤버가 존재하지 않습니다.", HttpStatus.NOT_FOUND));
 
-        // 기존 요구사항 soft delete 정보 입력
-        requirement.setDeleted(true);
-        requirement.setDeletedRevision(maxRevision);
+        PendingRequirement pendingRequirement = new PendingRequirement();
+        pendingRequirement.createPendingRequirementDelete(requirement, reason, member); // 변경 사항 업데이트
 
-        return "요구사항이 삭제되었습니다.";
+        pendingRequirementRepository.save(pendingRequirement);
     }
 }
 

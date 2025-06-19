@@ -31,9 +31,16 @@ public class RequirementAuditMapper {
     public RequirementAuditResponse toResponse(RequirementAuditDTO requirementAuditDTO) {
         return new RequirementAuditResponse(
                 requirementAuditDTO.getRevisionNumber(),
+                requirementAuditDTO.getRequirement().getRevisionCount(),
                 requirementAuditDTO.getRequirement().getReqIdCode(),
+                requirementAuditDTO.getRequirement().getType(),
                 requirementAuditDTO.getRequirement().getName(),
                 requirementAuditDTO.getRequirement().getDescription(),
+                requirementAuditDTO.getRequirement().getLevel1(),
+                requirementAuditDTO.getRequirement().getLevel2(),
+                requirementAuditDTO.getRequirement().getLevel3(),
+                requirementAuditDTO.getRequirement().getPriority(),
+                requirementAuditDTO.getRequirement().getDifficulty(),
                 requirementAuditDTO.getRequirement().getModReason(),
                 requirementAuditDTO.getRevisionDate(),
                 requirementAuditDTO.getRequirement().getCreatedBy().getId(),

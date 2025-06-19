@@ -85,6 +85,10 @@ public class Requirement {
     @JoinColumn(name = "member_id", nullable = false)
     private Member createdBy;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "member_id_mod", nullable = true)
+    private Member modifiedBy;
+
     @LastModifiedDate
     private LocalDateTime modifiedDate;
 
@@ -182,5 +186,19 @@ public class Requirement {
         this.priority = Priority.fromKorean(response.importance());
         this.difficulty = Difficulty.fromKorean(response.difficulty());
         this.createdBy = createdBy;
+    }
+
+    public void updateFromPending(RequirementType type, String level1, String level2, String level3, String name, String description, Priority priority, Difficulty difficulty, String modReason, Member createdBy) {
+        this.type = type;
+        this.level1 = level1;
+        this.level2 = level2;
+        this.level3 = level3;
+        this.name = name;
+        this.description = description;
+        this.priority = priority;
+        this.difficulty = difficulty;
+        this.modReason = modReason;
+        this.createdBy = createdBy;
+        this.modifiedDate = LocalDateTime.now();
     }
 }

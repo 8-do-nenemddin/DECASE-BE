@@ -1,11 +1,17 @@
 package com.skala.decase.domain.requirement.service;
 
+import com.skala.decase.domain.project.controller.dto.response.DocumentResponse;
+import com.skala.decase.domain.project.controller.dto.response.MappingTableResponseDto;
+import com.skala.decase.domain.requirement.controller.dto.response.MatrixResponse;
 import com.skala.decase.domain.requirement.controller.dto.response.RequirementWithSourceResponse;
 import com.skala.decase.domain.requirement.controller.dto.response.SourceResponse;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.List;
 import java.util.stream.Collectors;
+
+import com.skala.decase.domain.requirement.domain.Reception;
+import com.skala.decase.domain.requirement.domain.RequirementDocument;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.poi.ss.usermodel.BorderStyle;
 import org.apache.poi.ss.usermodel.Cell;
@@ -18,6 +24,7 @@ import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.VerticalAlignment;
 import org.apache.poi.ss.usermodel.Workbook;
+import org.apache.poi.ss.util.CellRangeAddress;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -133,6 +140,13 @@ public class ExelExportService {
         return type;
     }
 
+    private String convertAcceptedTypeToKorean(Reception reception) {
+        if (reception == Reception.ACCEPTED) {
+            return "수용";
+        }
+        return "미수용";
+    }
+
     /**
      * 우선순위를 한글로 변환
      */
@@ -215,5 +229,183 @@ public class ExelExportService {
             return "";
         }
         return dateString.replace("-", ".");
+    }
+
+    public byte[] generateMatrixExcelFile(List<MatrixResponse> responses) throws IOException {
+        Workbook workbook = new XSSFWorkbook();
+        Sheet sheet = workbook.createSheet("요구사항 추적 매트릭스");
+
+        // 헤더 스타일 생성
+        CellStyle headerStyle = workbook.createCellStyle();
+        Font headerFont = workbook.createFont();
+        headerFont.setBold(true);
+        headerFont.setFontHeightInPoints((short) 12);
+        headerStyle.setFont(headerFont);
+        headerStyle.setAlignment(HorizontalAlignment.CENTER);
+        headerStyle.setVerticalAlignment(VerticalAlignment.CENTER);
+        headerStyle.setFillForegroundColor(IndexedColors.GREY_25_PERCENT.getIndex());
+        headerStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+        headerStyle.setBorderTop(BorderStyle.THIN);
+        headerStyle.setBorderBottom(BorderStyle.THIN);
+        headerStyle.setBorderLeft(BorderStyle.THIN);
+        headerStyle.setBorderRight(BorderStyle.THIN);
+
+        // 데이터 스타일 생성
+        CellStyle dataStyle = workbook.createCellStyle();
+        dataStyle.setVerticalAlignment(VerticalAlignment.TOP);
+        dataStyle.setWrapText(true); // 텍스트 줄바꿈
+        dataStyle.setBorderTop(BorderStyle.THIN);
+        dataStyle.setBorderBottom(BorderStyle.THIN);
+        dataStyle.setBorderLeft(BorderStyle.THIN);
+        dataStyle.setBorderRight(BorderStyle.THIN);
+
+        // 헤더 행 생성
+        Row headerRow = sheet.createRow(0);
+        String[] headers = {
+                "요구 사항ID", "level1", "level2", "level3", "요구 사항명", "요구 사항 설명", "수용 여부",
+                "테이블 ID", "화면 ID", "프로그램 ID", "인터 페이스 ID", "배치 ID",
+                "단위 테스트 ID", "통합 테스트 ID", "인수 테스트 ID"
+        };
+
+        for (int i = 0; i < headers.length; i++) {
+            Cell cell = headerRow.createCell(i);
+            cell.setCellValue(headers[i]);
+            cell.setCellStyle(headerStyle);
+        }
+
+        int rowNum = 1;
+        for (MatrixResponse item : responses) {
+            Row row = sheet.createRow(rowNum++);
+            row.createCell(0).setCellValue(item.getReqIdCode());
+            row.createCell(1).setCellValue(item.getLevel1());
+            row.createCell(2).setCellValue(item.getLevel2());
+            row.createCell(3).setCellValue(item.getLevel3());
+            row.createCell(4).setCellValue(item.getName());
+            row.createCell(5).setCellValue(item.getDescription());
+            row.createCell(6).setCellValue(convertAcceptedTypeToKorean(item.getReception()));
+            row.createCell(7).setCellValue(item.getTableId());
+            row.createCell(8).setCellValue(item.getUiId());
+            row.createCell(9).setCellValue(item.getProgramId());
+            row.createCell(10).setCellValue(item.getBatchId());
+            row.createCell(11).setCellValue(item.getUnitTestId());
+            row.createCell(12).setCellValue(item.getIntegrationTest());
+            row.createCell(13).setCellValue(item.getAcceptanceTest());
+        }
+
+        // 컬럼 너비 자동 조정
+        for (int i = 0; i < headers.length; i++) {
+            sheet.autoSizeColumn(i);
+            // 최대 너비 제한 (너무 넓어지는 것 방지)
+            int currentWidth = sheet.getColumnWidth(i);
+            if (currentWidth > 15000) { // 약 100글자 정도
+                sheet.setColumnWidth(i, 15000);
+            }
+        }
+
+        // 행 높이 설정 (내용이 많은 경우를 위해)
+        sheet.setDefaultRowHeight((short) 600); // 기본 행 높이 설정
+
+        // Excel 파일을 바이트 배열로 변환
+        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+        workbook.write(outputStream);
+        workbook.close();
+
+        return outputStream.toByteArray();
+    }
+
+    // 조견표 출력
+    public byte[] createMappingTableToExcel(List<MappingTableResponseDto> responses) throws IOException {
+        Workbook workbook = new XSSFWorkbook();
+        Sheet sheet = workbook.createSheet("조견표");
+
+        CellStyle headerStyle = workbook.createCellStyle();
+        Font headerFont = workbook.createFont();
+        headerFont.setBold(true);
+        headerFont.setFontHeightInPoints((short) 12);
+        headerStyle.setFont(headerFont);
+        headerStyle.setAlignment(HorizontalAlignment.CENTER);
+        headerStyle.setVerticalAlignment(VerticalAlignment.CENTER);
+        headerStyle.setFillForegroundColor(IndexedColors.GREY_25_PERCENT.getIndex());
+        headerStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+        headerStyle.setBorderTop(BorderStyle.THIN);
+        headerStyle.setBorderBottom(BorderStyle.THIN);
+        headerStyle.setBorderLeft(BorderStyle.THIN);
+        headerStyle.setBorderRight(BorderStyle.THIN);
+
+        // 데이터 스타일 생성
+        CellStyle dataStyle = workbook.createCellStyle();
+        dataStyle.setVerticalAlignment(VerticalAlignment.TOP);
+        dataStyle.setWrapText(true); // 텍스트 줄바꿈
+        dataStyle.setBorderTop(BorderStyle.THIN);
+        dataStyle.setBorderBottom(BorderStyle.THIN);
+        dataStyle.setBorderLeft(BorderStyle.THIN);
+        dataStyle.setBorderRight(BorderStyle.THIN);
+
+        // 1. 헤더 작성
+        Row headerRow = sheet.createRow(0);
+        String[] headers = {"요구사항 ID", "요구사항명", "설명", "출처 문서명", "페이지 번호", "관련 문장"};
+        for (int i = 0; i < headers.length; i++) {
+            Cell cell = headerRow.createCell(i);
+            cell.setCellValue(headers[i]);
+            cell.setCellStyle(headerStyle);
+        }
+
+        // 2. 내용 채우기
+        int rowIdx = 1;
+        for (MappingTableResponseDto dto : responses) {
+            List<DocumentResponse> docs = dto.document();
+            if (docs == null || docs.isEmpty()) {
+                // 문서가 없을 때 한 줄만 작성
+                Row row = sheet.createRow(rowIdx++);
+                row.createCell(0).setCellValue(dto.req_code());
+                row.createCell(1).setCellValue(dto.name());
+                row.createCell(2).setCellValue(dto.description());
+                row.createCell(3).setCellValue("");
+                row.createCell(4).setCellValue("");
+                row.createCell(5).setCellValue("");
+            } else {
+                int startRow = rowIdx; // 병합 시작 행
+
+                for (DocumentResponse doc : docs) {
+                    Row row = sheet.createRow(rowIdx++);
+                    row.createCell(3).setCellValue(doc.docName());
+                    row.createCell(4).setCellValue(doc.pageNum());
+                    row.createCell(5).setCellValue(doc.relSentence());
+                }
+
+                // 병합할 행이 여러 줄일 때만 병합 처리
+                if (docs.size() > 1) {
+                    sheet.addMergedRegion(new CellRangeAddress(startRow, rowIdx - 1, 0, 0)); // req_code
+                    sheet.addMergedRegion(new CellRangeAddress(startRow, rowIdx - 1, 1, 1)); // name
+                    sheet.addMergedRegion(new CellRangeAddress(startRow, rowIdx - 1, 2, 2)); // description
+                }
+
+                // 병합 셀은 첫 줄에만 값 넣기
+                Row firstRow = sheet.getRow(startRow);
+                firstRow.createCell(0).setCellValue(dto.req_code());
+                firstRow.createCell(1).setCellValue(dto.name());
+                firstRow.createCell(2).setCellValue(dto.description());
+            }
+        }
+
+        // 컬럼 너비 자동 조정
+        for (int i = 0; i < headers.length; i++) {
+            sheet.autoSizeColumn(i);
+            // 최대 너비 제한 (너무 넓어지는 것 방지)
+            int currentWidth = sheet.getColumnWidth(i);
+            if (currentWidth > 15000) { // 약 100글자 정도
+                sheet.setColumnWidth(i, 15000);
+            }
+        }
+
+        // 행 높이 설정 (내용이 많은 경우를 위해)
+        sheet.setDefaultRowHeight((short) 600); // 기본 행 높이 설정
+
+        // 3. 엑셀 파일을 byte[]로 변환 (서버에서 다운로드 응답용)
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        workbook.write(out);
+        workbook.close();
+
+        return out.toByteArray();
     }
 }

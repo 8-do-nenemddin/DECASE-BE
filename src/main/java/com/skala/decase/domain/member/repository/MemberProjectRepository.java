@@ -121,4 +121,7 @@ public interface MemberProjectRepository extends JpaRepository<MemberProject, Lo
 
     // 프로젝트 삭제를 위한 member_project 삭제
     void deleteByProject_ProjectId(Long projectId);
+
+    // 어드민 여부 조회
+    Boolean existsByMemberAndIsAdminTrue(Member member);
 }

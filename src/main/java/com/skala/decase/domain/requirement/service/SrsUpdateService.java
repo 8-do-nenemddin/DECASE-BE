@@ -159,7 +159,7 @@ public class SrsUpdateService {
             }
 
             if (UpdateStatus.fromAI(response.status()).equals(UpdateStatus.UPDATE)) {
-                Requirement requirement = requirementRepository.findByReqIdCode(response.id())
+                Requirement requirement = requirementRepository.findByProjectIdAndReqIdCode(projectId, response.id())
                         .orElseThrow(() -> new RequirementException("요구사항이 존재하지 않습니다.", HttpStatus.BAD_REQUEST));
                 if (requirement != null) {
                     // 기존 요구사항이 있으면 수정해서 저장
@@ -172,7 +172,7 @@ public class SrsUpdateService {
             }
 
             if (UpdateStatus.fromAI(response.status()).equals(UpdateStatus.DELETE)) {
-                Requirement requirement = requirementRepository.findByReqIdCode(response.id())
+                Requirement requirement = requirementRepository.findByProjectIdAndReqIdCode(projectId, response.id())
                         .orElseThrow(() -> new RequirementException("요구사항이 존재하지 않습니다.", HttpStatus.BAD_REQUEST));
                 requirementRepository.delete(requirement);
             }
