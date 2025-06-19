@@ -18,4 +18,14 @@ public enum RequirementType {
                     HttpStatus.BAD_REQUEST);
         };
     }
+
+    public static String toKorean(String type) {
+        if ("FR".equals(type)) {
+            return "기능";
+        } else if ("NFR".equals(type)) {
+            return "비기능";
+        } else {
+            return type;
+        }
+    }
 }
