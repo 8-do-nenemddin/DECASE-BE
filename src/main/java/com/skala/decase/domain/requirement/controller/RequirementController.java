@@ -129,7 +129,7 @@ public class RequirementController {
         return ResponseEntity.ok().body(ApiResponse.success("변경 내역이 저장되었습니다."));
     }
 
-    @PatchMapping("{projectId}/requirments/{reqPk}/delete")
+    @PatchMapping("{projectId}/requirements/{reqPk}/delete")
     public ResponseEntity<ApiResponse<String>> deleteRequirement(
             @PathVariable Long projectId,
             @PathVariable Long reqPk,
