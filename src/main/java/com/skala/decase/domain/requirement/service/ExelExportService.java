@@ -11,7 +11,6 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import com.skala.decase.domain.requirement.domain.Reception;
-import com.skala.decase.domain.requirement.domain.RequirementDocument;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.poi.ss.usermodel.BorderStyle;
 import org.apache.poi.ss.usermodel.Cell;
