@@ -1,6 +1,7 @@
 package com.skala.decase.domain.document.mapper;
 
 import com.skala.decase.domain.document.controller.dto.DocumentDetailResponse;
+import com.skala.decase.domain.document.controller.dto.DocumentResponse;
 import com.skala.decase.domain.document.domain.Document;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -13,10 +14,17 @@ public class DocumentMapper {
         return DocumentDetailResponse.builder()
                 .docId(document.getDocId())
                 .name(document.getName())
+                .docDescription(document.getDocDescription())
                 .createdDate(document.getCreatedDate())
                 .createdBy(document.getCreatedBy().getName())
                 .build();
     }
 
-
+    public DocumentResponse toResponse(Document document) {
+        return new DocumentResponse(
+                document.getDocId(),
+                document.getName(),
+                document.getDocDescription()
+        );
+    }
 }

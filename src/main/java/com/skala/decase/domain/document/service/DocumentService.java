@@ -4,6 +4,7 @@ import com.skala.decase.domain.document.controller.dto.DocumentDetailResponse;
 import com.skala.decase.domain.document.controller.dto.DocumentResponse;
 import com.skala.decase.domain.document.domain.Document;
 import com.skala.decase.domain.document.exception.DocumentException;
+import com.skala.decase.domain.document.mapper.DocumentMapper;
 import com.skala.decase.domain.document.repository.DocumentRepository;
 import com.skala.decase.domain.member.domain.Member;
 import com.skala.decase.domain.member.exception.MemberException;
@@ -46,6 +47,7 @@ public class DocumentService {
     private final DocumentRepository documentRepository;
     private final ProjectRepository projectRepository;
     private final MemberRepository memberRepository;
+    private final DocumentMapper documentMapper;
 
     // 로컬 파일 업로드 경로
     @Value("${file.upload.upload-path}")
@@ -156,7 +158,7 @@ public class DocumentService {
             // 파일 저장
             Document doc = uploadDocument(BASE_UPLOAD_PATH, file, iType, project, member);
 
-            responses.add(new DocumentResponse(doc.getDocId(), doc.getName()));
+            responses.add(documentMapper.toResponse(doc));
         }
 
         // 프로젝트 리비전 증가
@@ -272,7 +274,7 @@ public class DocumentService {
         List<Document> documents = documentRepository.findAllByProjectAndIsMemberUploadTrue(project);
 
         List<DocumentResponse> responseList = documents.stream()
-                .map(doc -> new DocumentResponse(doc.getDocId(), doc.getName()))
+                .map(documentMapper::toResponse)
                 .collect(Collectors.toList());
 
         return ResponseEntity.ok(responseList);

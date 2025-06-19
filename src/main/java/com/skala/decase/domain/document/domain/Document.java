@@ -44,6 +44,9 @@ public class Document {
     @Column(name = "name", length = 100, nullable = false)
     private String name;
 
+    @Column(name = "doc_description", length = 5000)
+    private String docDescription;
+
     @Column(nullable = false)
     private LocalDateTime createdDate;
 
