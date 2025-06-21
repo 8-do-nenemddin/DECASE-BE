@@ -13,7 +13,7 @@ import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -31,6 +31,9 @@ public class SrsProcessingService {
     private final MemberService memberService;
     private final DocumentService documentService;
     private final EntityManager entityManager;
+
+    @Value("${asis.callback-url}")
+    private String asisCallbackUrl;
 
     /**
      * 요구사항 정의서 최초 생성
@@ -56,8 +59,10 @@ public class SrsProcessingService {
      */
     public void processInParallel(MultipartFile file, Long projectId, Long memberId, String rfpDocId) {
         log.info("병렬 처리 시작 - 프로젝트: {}", projectId);
+        String formattedCallbackUrl = asisCallbackUrl.replace("{projectId}", projectId.toString());
 
-        CompletableFuture<Void> asisFuture = srsProcessor.processASIS(projectId, memberId, rfpDocId, file);
+        CompletableFuture<Map> asisFuture = srsProcessor.processASIS(projectId, memberId, rfpDocId, file,
+            formattedCallbackUrl);
         CompletableFuture<Map> requirementsFuture = srsProcessor.processRequirements(file, projectId, memberId,
                 rfpDocId);
 
@@ -70,5 +75,26 @@ public class SrsProcessingService {
 
         // 즉시 반환 (블로킹하지 않음)
         log.info("병렬 처리 요청 완료 - 프로젝트: {} (백그라운드에서 계속 진행)", projectId);
+    }
+
+    /**
+     * AS-IS 분석 결과 저장
+     *
+     * @param projectId
+     * @param memberId
+     * @param file      AS-IS 분석 결과 PDF 파일
+     */
+    @Transactional
+    public void saveAsIsAnalysis(Long projectId, Long memberId, MultipartFile file, String status) {
+        Project project = projectService.findByProjectId(projectId);
+        Member member = memberService.findByMemberId(memberId);
+        
+        if (status.equals("PROCESSING")) {
+            documentService.uploadASIS(project, member, file);
+            log.info("AS-IS 분석 결과 파일 저장 완료 - 프로젝트 ID: {}", projectId);
+        } else {
+            throw new RequirementException("AS-IS 분석 실패. 상태: " + status + " - 프로젝트 ID: " + projectId,
+                    HttpStatus.INTERNAL_SERVER_ERROR);
+        }
     }
 }
