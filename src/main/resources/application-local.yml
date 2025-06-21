@@ -51,11 +51,13 @@ management:
 
 file:
   upload:
-    # base-path: ${FILE_STORAGE_PATH:/shared/documents}
-    # mockup-path: ${file.upload.base-path}/mockup
-    # asis-path: ${file.upload.base-path}/asis
-    # upload-path: ${file.upload.base-path}/uploads
-    base-path: ${FILE_STORAGE_PATH}
-    mockup-path: ${MOCKUP_STORAGE_PATH}
-    asis-path: ${ASIS_STORAGE_PATH}
-    upload-path: ${UPLOADS_STORAGE_PATH}
+    base-path: ./storage
+    mockup-path: ./storage/mockups
+    asis-path: ./storage/asis
+    upload-path: ./storage/uploads
+
+mockup:
+  callback-url: "http://localhost:8080/api/v1/projects/{projectId}/mockups/callback"
+
+asis:
+  callback-url: "http://localhost:8080/api/v1/projects/{projectId}/asis/callback"
