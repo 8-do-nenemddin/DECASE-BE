@@ -33,7 +33,7 @@ public class SrsProcessingController {
      * @param file      사용자 업로드 파일
      * @return
      */
-    @Operation(summary = "요구사항 정의서 생성", description = "업로드된 RFP DB에 저장 후 as-is, 요구사항 도출 fast api를 병렬적으로 호출합니다.")
+    @Operation(summary = "요구사항 정의서 최초 생성", description = "업로드된 RFP DB에 저장 후 as-is, 요구사항 도출 fast api를 병렬적으로 호출합니다.")
     @PostMapping(path = "/{projectId}/requirement-documents",
             consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<ApiResponse<String>> processRfpFile(@PathVariable Long projectId,
