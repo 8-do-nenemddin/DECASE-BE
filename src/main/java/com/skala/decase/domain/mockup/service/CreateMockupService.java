@@ -2,7 +2,7 @@ package com.skala.decase.domain.mockup.service;
 
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.skala.decase.domain.mockup.controller.dto.response.CreateMockUpRequest;
+import com.skala.decase.domain.mockup.controller.dto.request.CreateMockUpRequest;
 import com.skala.decase.domain.mockup.domain.Mockup;
 import com.skala.decase.domain.mockup.exception.MockupException;
 import com.skala.decase.domain.mockup.mapper.MockupMapper;

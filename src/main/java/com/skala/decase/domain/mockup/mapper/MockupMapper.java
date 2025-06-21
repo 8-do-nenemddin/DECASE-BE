@@ -1,10 +1,13 @@
 package com.skala.decase.domain.mockup.mapper;
 
-import com.skala.decase.domain.mockup.controller.dto.response.CreateMockUpRequest;
+import com.skala.decase.domain.mockup.controller.dto.request.CreateMockUpRequest;
+import com.skala.decase.domain.mockup.controller.dto.request.CreateMockUpSourceRequest;
 import com.skala.decase.domain.requirement.controller.dto.response.RequirementWithSourceResponse;
 import com.skala.decase.domain.requirement.controller.dto.response.SourceResponse;
 import com.skala.decase.domain.requirement.domain.RequirementType;
 import com.skala.decase.domain.requirement.service.dto.response.CreateRfpResponse;
+
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 import org.springframework.stereotype.Component;
@@ -21,18 +24,25 @@ public class MockupMapper {
 
         String typeKor = RequirementType.toKorean(requirement.type());
 
+        // SourceResponse -> CreateMockUpSourceRequest 변환
+        List<CreateMockUpSourceRequest> sources = null;
+        if (requirement.sources() != null) {
+            sources = requirement.sources().stream()
+                    .map(src -> new CreateMockUpSourceRequest(src.pageNum(), src.relSentence()))
+                    .collect(Collectors.toList());
+        }
+
         return new CreateMockUpRequest(
-                requirement.name(),
-                typeKor,
-                requirement.description(),
-                extractRawText(requirement.sources()),
-                0,
-                "", //업무 상세 없음
-                requirement.level1(),
-                requirement.level2(),
-                requirement.level3(),
-                requirement.difficulty(),
-                requirement.priority()
+                requirement.name(), // requirement_name
+                typeKor, // type
+                sources, // sources
+                requirement.description(), // description
+                requirement.level1(), // category_large
+                requirement.level2(), // category_medium
+                requirement.level3(), // category_small
+                requirement.priority(), // importance
+                requirement.difficulty(), // difficulty
+                requirement.reqIdCode() // requirement_id
         );
     }
 
@@ -41,7 +51,7 @@ public class MockupMapper {
      */
     public List<CreateMockUpRequest> toCreateMockUpRequestList(List<RequirementWithSourceResponse> requirements) {
         if (requirements == null) {
-            return null;
+            return new ArrayList<>();
         }
 
         return requirements.stream()
