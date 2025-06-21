@@ -14,7 +14,6 @@ spring:
       path: /swagger/swagger-ui # 접속 경로
 
   datasource:
-#    driver-class-name: com.mysql.cj.jdbc.Driver
     driver-class-name: org.mariadb.jdbc.Driver
     url: ${MARIA_DATABASE_URL}
     username: ${MARIA_USER}
@@ -36,7 +35,6 @@ spring:
     properties:
       hibernate:
         dialect: org.hibernate.dialect.MariaDBDialect # mariadb
-#            dialect: org.hibernate.dialect.MySQL8Dialect # mysql
     show-sql: true
 
   mail:
@@ -58,3 +56,16 @@ management:
     web:
       exposure:
         include: health
+
+file:
+  upload:
+    base-path: ./storage
+    mockup-path: ./storage/mockups
+    asis-path: ./storage/asis
+    upload-path: ./storage/uploads
+
+mockup:
+  callback-url: "https://decase.skala25a.project.skala-ai.com/api/v1/projects/{projectId}/mockups/callback"
+
+asis:
+  callback-url: "https://decase.skala25a.project.skala-ai.com/api/v1/projects/{projectId}/asis/callback"
