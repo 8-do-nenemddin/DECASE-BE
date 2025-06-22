@@ -4,6 +4,7 @@ import com.skala.decase.domain.mockup.controller.dto.request.CreateMockUpRequest
 import com.skala.decase.domain.mockup.controller.dto.request.CreateMockUpSourceRequest;
 import com.skala.decase.domain.requirement.controller.dto.response.RequirementWithSourceResponse;
 import com.skala.decase.domain.requirement.controller.dto.response.SourceResponse;
+import com.skala.decase.domain.requirement.domain.Requirement;
 import com.skala.decase.domain.requirement.domain.RequirementType;
 import com.skala.decase.domain.requirement.service.dto.response.CreateRfpResponse;
 
@@ -43,6 +44,38 @@ public class MockupMapper {
                 requirement.priority(), // importance
                 requirement.difficulty(), // difficulty
                 requirement.reqIdCode() // requirement_id
+        );
+    }
+
+    /**
+     * Requirement를 CreateMockUpRequest로 변환
+     */
+    public CreateMockUpRequest toCreateMockUpRequest(Requirement requirement) {
+        if (requirement == null) {
+            return null;
+        }
+
+        String typeKor = RequirementType.toKorean(requirement.getType().name());
+
+        // Source -> CreateMockUpSourceRequest 변환
+        List<CreateMockUpSourceRequest> sources = null;
+        if (requirement.getSources() != null) {
+            sources = requirement.getSources().stream()
+                    .map(src -> new CreateMockUpSourceRequest(src.getPageNum(), src.getRelSentence()))
+                    .collect(Collectors.toList());
+        }
+
+        return new CreateMockUpRequest(
+                requirement.getName(),
+                typeKor,
+                sources,
+                requirement.getDescription(),
+                requirement.getLevel1(),
+                requirement.getLevel2(),
+                requirement.getLevel3(),
+                requirement.getPriority().name(),
+                requirement.getDifficulty().name(),
+                requirement.getReqIdCode()
         );
     }
 

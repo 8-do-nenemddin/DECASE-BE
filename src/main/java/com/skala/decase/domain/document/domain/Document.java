@@ -63,4 +63,14 @@ public class Document {
 
     @OneToMany(mappedBy = "document", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Source> sources;  // 출처
+
+    public Document(String docId, String name, String path, boolean isMemberUpload, Project project, Member createdBy) {
+        this.docId = docId;
+        this.name = name;
+        this.path = path;
+        this.createdDate = LocalDateTime.now();
+        this.isMemberUpload = isMemberUpload;
+        this.createdBy = createdBy;
+        this.project = project;
+    }
 }

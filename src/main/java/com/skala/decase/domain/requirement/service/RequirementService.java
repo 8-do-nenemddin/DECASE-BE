@@ -3,6 +3,8 @@ package com.skala.decase.domain.requirement.service;
 import com.skala.decase.domain.member.domain.Member;
 import com.skala.decase.domain.member.exception.MemberException;
 import com.skala.decase.domain.member.repository.MemberRepository;
+import com.skala.decase.domain.mockup.controller.dto.request.CreateMockUpRequest;
+import com.skala.decase.domain.mockup.mapper.MockupMapper;
 import com.skala.decase.domain.project.domain.Project;
 import com.skala.decase.domain.project.service.ProjectService;
 import com.skala.decase.domain.requirement.controller.dto.request.RequirementRevisionDto;
@@ -43,6 +45,7 @@ public class RequirementService {
     private final SourceRepository sourceRepository;
     private final MemberRepository memberRepository;
     private final PendingRequirementRepository pendingRequirementRepository;
+    private final MockupMapper mockupMapper;
 
     // 리버전 기본값 1로 받도록 하기 위함
     public List<RequirementWithSourceResponse> getGeneratedRequirements(Long projectId) {
@@ -147,6 +150,69 @@ public class RequirementService {
                         .thenComparing(RequirementWithSourceResponse::reqIdCode))
                 .toList();
 
+    }
+
+    /**
+     * 특정 버전의 기능적 요구사항을 불러옵니다.
+     *
+     * @param projectId
+     * @param revisionCount
+     * @return
+     */
+    public List<CreateMockUpRequest> getFunctionalRequirements(Long projectId, int revisionCount) {
+        Project project = projectService.findByProjectId(projectId);
+
+        //유효한 기능적 요구사항 리스트 조회
+        List<Requirement> requirements = requirementRepository.findValidFRsByProjectAndRevision(
+                projectId, revisionCount);
+        //요구사항이 없는 경우
+        if (requirements.isEmpty()) {
+            throw new RequirementException("기능적 요구사항이 존재하지 않습니다.", HttpStatus.NOT_FOUND);
+        }
+        // reqIdCode + revisionCount 조합별로 createdDate 기준 최신 요구사항만 필터링
+        List<Requirement> latestRequirements = requirements.stream()
+                .collect(Collectors.groupingBy(
+                        req -> req.getReqIdCode() + "_" + req.getRevisionCount(),
+                        Collectors.maxBy(Comparator.comparing(Requirement::getCreatedDate))
+                ))
+                .values()
+                .stream()
+                .filter(Optional::isPresent)
+                .map(Optional::get)
+                .toList();
+
+        // 유효한 요구사항 PK 목록 추출
+        List<Long> reqPks = latestRequirements.stream()
+                .map(Requirement::getReqPk)
+                .toList();
+
+        // 해당 req_id_code 들의 특정 버전 이하 모든 요구사항 조회 -> source 용
+        List<Requirement> allRelatedReq = requirementRepository
+                .findRequirementsByReqPksAndRevision(reqPks, revisionCount);
+
+        // 특정 버전 이하 모든 요구사항 PK 목록 추출
+        List<Long> allRelatedReqPks = allRelatedReq.stream()
+                .map(Requirement::getReqPk)
+                .toList();
+
+        // 해당 요구사항들의 Source 정보 일괄 조회
+        List<Source> sources = sourceRepository.findByRequirementReqPks(allRelatedReqPks);
+
+        // 요구사항별로 Source 그룹화
+        Map<String, List<Source>> sourcesByReqIdCode = sources.stream()
+                .collect(Collectors.groupingBy(Source::getReqIdCode));
+
+        // 각 요구사항에 해당하는 Source 리스트 설정
+        latestRequirements.forEach(requirement -> {
+            List<Source> reqSources = sourcesByReqIdCode.getOrDefault(requirement.getReqIdCode(), new ArrayList<>());
+            // 여기서는 기존 sources 리스트를 clear하고 새로 추가
+            requirement.getSources().clear();
+            requirement.getSources().addAll(reqSources);
+        });
+
+        return latestRequirements.stream()
+                .map(mockupMapper::toCreateMockUpRequest)
+                .toList();
     }
 
     public Map<String, List<String>> getRequirementCategory(Long projectId, int revisionCount) {

@@ -29,6 +29,26 @@ public interface RequirementRepository extends JpaRepository<Requirement, Long> 
     List<Requirement> findValidRequirementsByProjectAndRevision(@Param("projectId") Long projectId,
                                                                 @Param("revisionCount") int revisionCount);
 
+    /**
+     * 특정 버전의 유효한 기능적 요구사항 목록 불러오기 deletedRevision이 특정 버전 이하인 정보를 불러옵니다.
+     *
+     * @return 특정 버전에서 유효한 기능적 요구사항 목록
+     */
+    @Query(value = """
+            SELECT *
+            FROM td_requirements r
+            WHERE r.project_id = :projectId AND type = 'FR'
+              AND (r.req_id_code, r.revision_count) IN (
+                  SELECT r2.req_id_code, MAX(r2.revision_count)
+                  FROM td_requirements r2
+                  WHERE r2.project_id = :projectId
+                    AND r2.revision_count <= :revisionCount
+                  GROUP BY r2.req_id_code
+              )
+            """, nativeQuery = true)
+    List<Requirement> findValidFRsByProjectAndRevision(@Param("projectId") Long projectId,
+                                                       @Param("revisionCount") int revisionCount);
+
     List<Requirement> findByProject_AndIsDeletedFalse(Project project);
 
     @Query("SELECT MAX(r.revisionCount) FROM Requirement r WHERE r.project = :project")
@@ -55,17 +75,17 @@ public interface RequirementRepository extends JpaRepository<Requirement, Long> 
     Optional<Requirement> findByReqIdCodeAndIsDeletedFalse(@Param("reqIdCode") String id);
 
     @Query(value = """
-    SELECT r.*
-    FROM td_requirements r
-    INNER JOIN (
-        SELECT r2.req_id_code
-        FROM td_requirements r2
-        WHERE r2.req_pk IN :reqPks
-    ) target_codes ON r.req_id_code = target_codes.req_id_code
-    WHERE r.revision_count <= :revisionCount
-    """, nativeQuery = true)
+            SELECT r.*
+            FROM td_requirements r
+            INNER JOIN (
+                SELECT r2.req_id_code
+                FROM td_requirements r2
+                WHERE r2.req_pk IN :reqPks
+            ) target_codes ON r.req_id_code = target_codes.req_id_code
+            WHERE r.revision_count <= :revisionCount
+            """, nativeQuery = true)
     List<Requirement> findRequirementsByReqPksAndRevision(@Param("reqPks") List<Long> reqPks,
-                                                   @Param("revisionCount") int revisionCount);
+                                                          @Param("revisionCount") int revisionCount);
 
     @Query("SELECT r FROM Requirement r WHERE r.reqIdCode = :reqIdCode")
     Optional<Requirement> findByReqIdCode(@Param("reqIdCode") String id);
@@ -73,7 +93,8 @@ public interface RequirementRepository extends JpaRepository<Requirement, Long> 
     Optional<Requirement> findByProject_ProjectIdAndReqIdCode(Long projectId, String reqIdCode);
 
     @Query("SELECT r FROM Requirement r WHERE r.project.projectId = :projectId AND r.reqIdCode = :reqIdCode")
-    Optional<Requirement> findByProjectIdAndReqIdCode(@Param("projectId") long projectId, @Param("reqIdCode") String id); // project도 where 조건에 추가하기
+    Optional<Requirement> findByProjectIdAndReqIdCode(@Param("projectId") long projectId,
+                                                      @Param("reqIdCode") String id); // project도 where 조건에 추가하기
 
     @Query("SELECT r FROM Requirement r WHERE r.project.projectId = :projectId")
     Optional<List<Requirement>> findByProjectId(@Param("projectId") long project);
