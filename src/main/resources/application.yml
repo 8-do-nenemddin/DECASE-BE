@@ -2,7 +2,7 @@ spring:
   application:
     name: decase
   profiles:
-    active: local
+    active: ${SPRING_PROFILES_ACTIVE:local}
   config:
     import: optional:file:.env.properties
   servlet:
@@ -15,5 +15,4 @@ springdoc:
     path: /swagger/api-docs # OpenAPI spec JSON 위치
   swagger-ui:
     path: /swagger/swagger-ui # 접속 경로
-
 
