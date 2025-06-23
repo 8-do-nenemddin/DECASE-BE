@@ -21,7 +21,7 @@ spec:
       serviceAccountName: default
       containers:
         - name: decase
-        image: amdp-registry.skala-ai.com/skala25a/sk-team-08-decase:1.0.0-40-1eb8ac36b478
+        image: amdp-registry.skala-ai.com/skala25a/sk-team-08-decase:1.0.0-41-e7c61e855786
           imagePullPolicy: Always
           # 볼륨 마운트 설정
           volumeMounts:
