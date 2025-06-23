@@ -11,7 +11,7 @@ public class WebClientConfig {
     @Bean
     public WebClient webClient() {
         return WebClient.builder()
-                .baseUrl("http://localhost:8001") // FastAPI 서버 주소
+                .baseUrl("https://decase.skala25a.project.skala-ai.com") // ingress 주소
                 .defaultHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
                 .build();
     }
