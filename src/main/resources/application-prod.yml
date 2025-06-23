@@ -6,7 +6,7 @@ spring:
       multipart:
         max-file-size: 1GB
         max-request-size: 1GB
-  
+
   springdoc:
     api-docs:
       path: /v3/api-docs # OpenAPI spec JSON 위치
@@ -36,6 +36,7 @@ spring:
     properties:
       hibernate:
         dialect: org.hibernate.dialect.MariaDBDialect # mariadb
+        org.hibernate.envers.store_data_at_delete: true
     show-sql: true
 
   mail:
