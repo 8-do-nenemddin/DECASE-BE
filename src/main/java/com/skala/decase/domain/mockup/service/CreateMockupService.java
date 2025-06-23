@@ -2,7 +2,7 @@ package com.skala.decase.domain.mockup.service;
 
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.skala.decase.domain.mockup.controller.dto.response.CreateMockUpRequest;
+import com.skala.decase.domain.mockup.controller.dto.request.CreateMockUpRequest;
 import com.skala.decase.domain.mockup.domain.Mockup;
 import com.skala.decase.domain.mockup.exception.MockupException;
 import com.skala.decase.domain.mockup.mapper.MockupMapper;
@@ -59,9 +59,8 @@ public class CreateMockupService {
         Project project = projectService.findByProjectId(projectId);
 
         // 목업 생성시 사용할 요구사항 정의서 찾아오기
-        List<RequirementWithSourceResponse> requirementList = requirementService.getGeneratedRequirements(projectId,
+        List<CreateMockUpRequest> srsRequests = requirementService.getFunctionalRequirements(projectId,
                 revisionCount);
-        List<CreateMockUpRequest> srsRequests = mockupMapper.toCreateMockUpRequestList(requirementList);
 
         // 요구사항 리스트는 내부에서 생성하므로 null 또는 빈 리스트 전달 가능
         callFastApiMockupGenerationAsync(srsRequests, project.getName(), projectId, revisionCount);
@@ -89,20 +88,18 @@ public class CreateMockupService {
 
         log.info("FastAPI 요청 바디: {}", requestBody);
 
-        try {
-            webClient.post()
-                    .uri(uriBuilder -> uriBuilder
-                            .path("/ai/api/v1/mockup/generate-mockup")
-                            .build())
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .body(BodyInserters.fromValue(requestBody))
-                    .retrieve()
-                    .toBodilessEntity()
-                    .timeout(Duration.ofSeconds(10))
-                    .block();
-        } catch (Exception e) {
-            throw new MockupException("fast api 호출 실패 ", HttpStatus.INTERNAL_SERVER_ERROR);
-        }
+        webClient.post()
+                .uri(uriBuilder -> uriBuilder
+                        .path("/ai/api/v1/mockup/generate-mockup")
+                        .build())
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(BodyInserters.fromValue(requestBody))
+                .retrieve()
+                .toBodilessEntity()
+                .doOnError(error -> {
+                    throw new MockupException("FastAPI 목업 생성 요청 실패", HttpStatus.INTERNAL_SERVER_ERROR);
+                })
+                .subscribe(); // 비동기 실행
     }
 
     /**

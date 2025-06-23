@@ -11,44 +11,66 @@ spec:
   template:
     metadata:
       annotations:
-        prometheus.io/scrape: 'true'
-        prometheus.io/port: '8081'
-        prometheus.io/path: '/actuator/prometheus'
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "8081"
+        prometheus.io/path: "/actuator/prometheus"
         update: 5e59d2ee47d1c85987208efb0e91a711
       labels:
         app: decase
     spec:
       serviceAccountName: default
       containers:
-      - name: decase
-        image: amdp-registry.skala-ai.com/skala25a/sk-team-08-decase:1.0.0-30-987e2de58128
-        imagePullPolicy: Always
-        env:
-        - name: MARIA_DATABASE_URL
-          valueFrom:
-            secretKeyRef:
-              name: decase-secret
-              key: MARIA_DATABASE_URL
-        - name: MARIA_USER
-          valueFrom:
-            secretKeyRef:
-              name: decase-secret
-              key: MARIA_USER
-        - name: MARIA_PASSWORD
-          valueFrom:
-            secretKeyRef:
-              name: decase-secret
-              key: MARIA_PASSWORD
-        - name: MAIL_ADDRESS
-          valueFrom:
-            secretKeyRef:
-              name: decase-secret
-              key: MAIL_ADDRESS
-        - name: MAIL_PASSWORD
-          valueFrom:
-            secretKeyRef:
-              name: decase-secret
-              key: MAIL_PASSWORD
-        envFrom:
-        - secretRef:
-            name: decase-secret
+        - name: decase
+          image: amdp-registry.skala-ai.com/skala25a/sk-team-08-decase:1.0.0-15-c4780dee0c88
+          imagePullPolicy: Always
+          # 볼륨 마운트 설정
+          volumeMounts:
+            - name: storage-volume
+              mountPath: /app/storage # Spring Boot의 ./storage와 매핑
+          env:
+            # Spring Profile 설정
+            - name: SPRING_PROFILES_ACTIVE
+              value: "prod"
+            - name: MARIA_DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: decase-secret
+                  key: MARIA_DATABASE_URL
+            - name: MARIA_USER
+              valueFrom:
+                secretKeyRef:
+                  name: decase-secret
+                  key: MARIA_USER
+            - name: MARIA_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: decase-secret
+                  key: MARIA_PASSWORD
+            - name: MAIL_ADDRESS
+              valueFrom:
+                secretKeyRef:
+                  name: decase-secret
+                  key: MAIL_ADDRESS
+            - name: MAIL_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: decase-secret
+                  key: MAIL_PASSWORD
+            # 파일 업로드 설정
+            - name: FILE_UPLOAD_BASE_PATH
+              value: "/app/storage"
+            - name: FILE_UPLOAD_MOCKUP_PATH
+              value: "/app/storage/mockups"
+            - name: FILE_UPLOAD_ASIS_PATH
+              value: "/app/storage/asis"
+            - name: FILE_UPLOAD_UPLOAD_PATH
+              value: "/app/storage/uploads"
+          envFrom:
+            - secretRef:
+                name: decase-secret
+          # 볼륨 설정 (hostPath 사용)
+      volumes:
+          - name: storage-volume
+            hostPath:
+              path: /var/lib/decase-storage
+              type: DirectoryOrCreate

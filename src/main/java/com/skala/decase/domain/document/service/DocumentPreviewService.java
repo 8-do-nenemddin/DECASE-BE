@@ -75,6 +75,7 @@ public class DocumentPreviewService {
 
             DocumentPreviewDto.DocumentPreviewDtoBuilder builder = DocumentPreviewDto.builder()
                     .fileType(fileExtension)
+                    .docDescription(doc.getDocDescription())
                     .fileName(fileName)
                     .fileSize(fileSize);
 

@@ -1,34 +1,31 @@
 package com.skala.decase.domain.project.service;
 
-import com.skala.decase.domain.document.domain.Document;
 import com.skala.decase.domain.member.domain.Member;
+import com.skala.decase.domain.member.repository.MemberProjectRepository;
 import com.skala.decase.domain.member.service.MemberService;
 import com.skala.decase.domain.project.controller.dto.request.CreateProjectRequest;
-import com.skala.decase.domain.project.controller.dto.response.*;
+import com.skala.decase.domain.project.controller.dto.response.DeleteProjectResponse;
+import com.skala.decase.domain.project.controller.dto.response.DocumentResponse;
+import com.skala.decase.domain.project.controller.dto.response.EditProjectResponseDto;
+import com.skala.decase.domain.project.controller.dto.response.MappingTableResponseDto;
+import com.skala.decase.domain.project.controller.dto.response.ProjectDetailResponseDto;
+import com.skala.decase.domain.project.controller.dto.response.ProjectResponse;
 import com.skala.decase.domain.project.domain.MemberProject;
 import com.skala.decase.domain.project.domain.Project;
-import com.skala.decase.domain.project.domain.ProjectInvitation;
 import com.skala.decase.domain.project.exception.ProjectException;
 import com.skala.decase.domain.project.mapper.MemberProjectMapper;
 import com.skala.decase.domain.project.mapper.ProjectMapper;
-import com.skala.decase.domain.member.repository.MemberProjectRepository;
 import com.skala.decase.domain.project.mapper.SuccessMapper;
 import com.skala.decase.domain.project.repository.ProjectInvitationRepository;
 import com.skala.decase.domain.project.repository.ProjectRepository;
-
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
+import com.skala.decase.domain.requirement.domain.Requirement;
+import com.skala.decase.domain.source.domain.Source;
+import com.skala.decase.domain.source.service.SourceRepository;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
-
-import com.skala.decase.domain.requirement.domain.Requirement;
-import com.skala.decase.domain.requirement.domain.RequirementDocument;
-import com.skala.decase.domain.requirement.repository.RequirementDocumentRepository;
 import lombok.RequiredArgsConstructor;
-import org.apache.poi.ss.usermodel.*;
-import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -41,7 +38,7 @@ public class ProjectService {
     private final ProjectRepository projectRepository;
     private final MemberProjectRepository memberProjectRepository;
     private final ProjectInvitationRepository projectInvitationRepository;
-    private final RequirementDocumentRepository requirementDocumentRepository;
+    private final SourceRepository sourceRepository;
 
     private final MemberService memberService;
 
@@ -142,16 +139,16 @@ public class ProjectService {
         List<MappingTableResponseDto> result = new ArrayList<>();
 
         for (Requirement requirement : requirements) {
-            List<RequirementDocument> requirementDocuments = requirementDocumentRepository.findAllByRequirement(requirement);
+            List<Source> sources = sourceRepository.findAllByRequirement(requirement);
 
             List<DocumentResponse> responseDtos = new ArrayList<>();
 
-            if (requirementDocuments.isEmpty()) {
+            if (sources.isEmpty()) {
                 responseDtos.add(projectMapper.toMappingDocs(null));
                 continue;
             }
-            for (RequirementDocument requirementDocument : requirementDocuments) {
-                responseDtos.add(projectMapper.toMappingDocs(requirementDocument));
+            for (Source source : sources) {
+                responseDtos.add(projectMapper.toMappingDocs(source));
             }
 
             result.add(projectMapper.toMappingTable(requirement, responseDtos));

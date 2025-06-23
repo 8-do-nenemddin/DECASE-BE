@@ -83,7 +83,7 @@ public class DocumentService {
      * @return
      */
     private Document uploadDocument(String uploadPath, MultipartFile file, int docTypeIdx, Project project,
-                                    Member member) {
+                                    Member member, boolean isMemberUpload) {
         String fileName = System.currentTimeMillis() + "_" + StringUtils.cleanPath(file.getOriginalFilename());
         Path path = Paths.get(uploadPath);
         if (!Files.exists(path)) {
@@ -101,15 +101,15 @@ public class DocumentService {
             throw new DocumentException("파일을 저장할 수 없습니다.", HttpStatus.INTERNAL_SERVER_ERROR);
         }
 
-        // Document 저장
-        Document doc = new Document();
-        doc.setDocId(generateDocId(TYPE_PREFIX_MAP.get(docTypeIdx)));
-        doc.setName(file.getOriginalFilename());
-        doc.setPath(filePath.toString());
-        doc.setCreatedDate(LocalDateTime.now());
-        doc.setMemberUpload(true);
-        doc.setCreatedBy(member);
-        doc.setProject(project);
+        // Document 엔티티 생성 및 저장
+        Document doc = new Document(
+                generateDocId(TYPE_PREFIX_MAP.get(docTypeIdx)),
+                file.getOriginalFilename(),
+                filePath.toString(),
+                isMemberUpload,
+                project,
+                member
+        );
 
         return documentRepository.save(doc);
     }
@@ -156,7 +156,7 @@ public class DocumentService {
             }
 
             // 파일 저장
-            Document doc = uploadDocument(BASE_UPLOAD_PATH, file, iType, project, member);
+            Document doc = uploadDocument(BASE_UPLOAD_PATH, file, iType, project, member, true);
 
             responses.add(documentMapper.toResponse(doc));
         }
@@ -173,14 +173,14 @@ public class DocumentService {
      **/
     @Transactional
     public Document uploadRFP(Project project, Member member, MultipartFile RFPfile) {
-        return uploadDocument(BASE_UPLOAD_PATH, RFPfile, 1, project, member);
+        return uploadDocument(BASE_UPLOAD_PATH, RFPfile, 1, project, member, true);
     }
 
     /**
      * AS-IS 단건 파일 업로드 -> 최초 요구사항 정의서 생성시 사용
      **/
     public Document uploadASIS(Project project, Member member, MultipartFile ASISfile) {
-        return uploadDocument(BASE_ASIS_PATH, ASISfile, 8, project, member);
+        return uploadDocument(BASE_ASIS_PATH, ASISfile, 8, project, member, false);
     }
 
     // 사용자 업로드 파일 삭제
@@ -255,6 +255,7 @@ public class DocumentService {
         DocumentDetailResponse docDetailResponse = DocumentDetailResponse.builder()
                 .docId(doc.getDocId())
                 .name(doc.getName())
+                .docDescription(doc.getDocDescription() == null ? "" : doc.getDocDescription())
                 .createdDate(doc.getCreatedDate())
                 .build();
 
