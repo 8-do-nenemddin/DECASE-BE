@@ -23,9 +23,9 @@ spring:
       maximum-pool-size: 20
       minimum-idle: 5
       connection-timeout: 30000
-      idle-timeout: 600000          # 10분 (유지)
-      max-lifetime: 900000           # 15분 (기존 30분에서 단축)
-      keepalive-time: 300000         # 5분 (신규 추가) - 유휴 커넥션 타임아웃 방지
+      idle-timeout: 600000 # 10분 (유지)
+      max-lifetime: 900000 # 15분 (기존 30분에서 단축)
+      keepalive-time: 300000 # 5분 (신규 추가) - 유휴 커넥션 타임아웃 방지
       auto-commit: false
       pool-name: HikariCP-Local
       leak-detection-threshold: 60000
@@ -37,7 +37,7 @@ spring:
     properties:
       hibernate:
         dialect: org.hibernate.dialect.MariaDBDialect # mariadb
-        org.hibernate.envers.store_data_at_delete: true
+      org.hibernate.envers.store_data_at_delete: true
     show-sql: true
 
   mail:
@@ -59,6 +59,10 @@ management:
     web:
       exposure:
         include: health
+
+initializer:
+  enable: true
+
 file:
   upload:
     base-path: ./storage
