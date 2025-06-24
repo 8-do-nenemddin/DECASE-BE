@@ -36,8 +36,8 @@ public class SrsProcessor {
             //file, projectId, memberId, documentId 전달
             MultipartBodyBuilder builder = new MultipartBodyBuilder();
             builder.part("file", file.getResource());
-            builder.part("project_id", projectId.toString());  // Form 데이터로 추가
-            builder.part("member_id", memberId.toString());    // Form 데이터로 추가
+            builder.part("project_id", projectId);  // Form 데이터로 추가
+            builder.part("member_id", memberId);    // Form 데이터로 추가
             builder.part("document_id", documentId);           // Form 데이터로 추가
 
             return webClient.post()
@@ -48,7 +48,7 @@ public class SrsProcessor {
                     .bodyToMono(Map.class)
                     .timeout(Duration.ofSeconds(30))  // 즉시 응답받으므로 30초로 단축
                     .doOnSuccess(response -> {
-                        String jobId = (String) response.get("job_id");
+                        int jobId = (int) response.get("job_id");
                         String status = (String) response.get("status");
                         String message = (String) response.get("message");
                         log.info("요구사항 분석 시작, jobId: {}, 상태: {}, 메시지: {}", jobId, status, message);
@@ -79,8 +79,8 @@ public class SrsProcessor {
             //file, projectId, memberId, documentId, callback url 전달
             MultipartBodyBuilder builder = new MultipartBodyBuilder();
             builder.part("file", rfpFile.getResource());
-            builder.part("project_id", projectId.toString());  // Form 데이터로 추가
-            builder.part("member_id", memberId.toString());    // Form 데이터로 추가
+            builder.part("project_id", projectId);  // Form 데이터로 추가
+            builder.part("member_id", memberId);    // Form 데이터로 추가
             builder.part("document_id", documentId);           // Form 데이터로 추가
             builder.part("callback_url", callbackUrl);         // Form 데이터로 추가
 
@@ -92,7 +92,7 @@ public class SrsProcessor {
                 .bodyToMono(Map.class)
                 .timeout(Duration.ofSeconds(30))  // 즉시 응답받으므로 30초로 단축
                 .doOnSuccess(response -> {
-                    String jobId = (String) response.get("job_id");
+                    int jobId = (int) response.get("job_id");
                     String status = (String) response.get("status");
                     String message = (String) response.get("message");
                     log.info("현황 시스템 분석 시작, jobId: {}, 상태: {}, 메시지: {}", jobId, status, message);
