@@ -1,6 +1,8 @@
 package com.skala.decase.global.config;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.ApplicationArguments;
@@ -8,15 +10,24 @@ import org.springframework.boot.ApplicationRunner;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
 
+import jakarta.annotation.PostConstruct;
+
 import java.util.List;
 import java.util.Map;
 
+@Slf4j
 @Component
 @RequiredArgsConstructor
 public class DBInitializer implements ApplicationRunner {
 
     private static final Logger logger = LoggerFactory.getLogger(DBInitializer.class);
     private final JdbcTemplate jdbcTemplate;
+
+    @PostConstruct
+    public void init() {
+        System.out.println("[DEBUG] PostConstruct called");
+        log.info("DB 이니셜라이저가 실행되었습니다.");
+    }
 
     @Override
     public void run(ApplicationArguments args) {

@@ -35,7 +35,7 @@ spring:
     properties:
       hibernate:
         dialect: org.hibernate.dialect.MariaDBDialect # mariadb
-        org.hibernate.envers.store_data_at_delete: true
+      org.hibernate.envers.store_data_at_delete: true
     show-sql: true
 
   mail:
@@ -57,6 +57,9 @@ management:
     web:
       exposure:
         include: health
+
+initializer:
+  enable: true
 
 file:
   upload:
