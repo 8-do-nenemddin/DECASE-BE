@@ -9,9 +9,10 @@ spring:
 
   springdoc:
     api-docs:
-      path: /swagger/api-docs # OpenAPI spec JSON 위치
+      path: /v3/api-docs # OpenAPI spec JSON 위치
     swagger-ui:
-      path: /swagger/swagger-ui # 접속 경로
+      path: /swagger-ui # 접속 경로
+      config-url: /v3/api-docs/swagger-config
 
   datasource:
     driver-class-name: org.mariadb.jdbc.Driver
@@ -22,8 +23,9 @@ spring:
       maximum-pool-size: 20
       minimum-idle: 5
       connection-timeout: 30000
-      idle-timeout: 600000
-      max-lifetime: 1800000
+      idle-timeout: 600000 # 10분 (유지)
+      max-lifetime: 900000 # 15분 (기존 30분에서 단축)
+      keepalive-time: 300000 # 5분 (신규 추가) - 유휴 커넥션 타임아웃 방지
       auto-commit: false
       pool-name: HikariCP-Local
       leak-detection-threshold: 60000

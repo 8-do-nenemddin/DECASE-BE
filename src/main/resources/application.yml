@@ -9,10 +9,3 @@ spring:
     multipart:
       max-file-size: 1GB
       max-request-size: 1GB
-
-springdoc:
-  api-docs:
-    path: /swagger/api-docs # OpenAPI spec JSON 위치
-  swagger-ui:
-    path: /swagger/swagger-ui # 접속 경로
-
