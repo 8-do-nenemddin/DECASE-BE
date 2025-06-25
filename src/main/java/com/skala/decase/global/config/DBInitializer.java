@@ -32,23 +32,23 @@ public class DBInitializer implements ApplicationRunner {
     @Override
     public void run(ApplicationArguments args) {
         try {
-            logger.info("Attempting to alter TD_SOURCE table...");
-            String sql = "ALTER TABLE TD_SOURCE MODIFY COLUMN source_id BIGINT NOT NULL AUTO_INCREMENT;";
+            logger.info("Attempting to alter td_source table...");
+            String sql = "ALTER TABLE td_source MODIFY COLUMN source_id BIGINT NOT NULL AUTO_INCREMENT;";
             jdbcTemplate.execute(sql);
-            logger.info("Successfully altered TD_SOURCE table: source_id is now AUTO_INCREMENT.");
+            logger.info("Successfully altered td_source table: source_id is now AUTO_INCREMENT.");
             
             // AUTO_INCREMENT 설정 확인
             checkAutoIncrementSetting();
             
         } catch (Exception e) {
-            logger.warn("Could not alter TD_SOURCE table. This might be because it's already been altered or another issue occurred: {}", e.getMessage());
+            logger.warn("Could not alter td_source table. This might be because it's already been altered or another issue occurred: {}", e.getMessage());
         }
     }
     
     private void checkAutoIncrementSetting() {
         try {
             // MariaDB/MySQL에서 컬럼 정보 조회
-            String checkSql = "SHOW COLUMNS FROM TD_SOURCE WHERE Field = 'source_id';";
+            String checkSql = "SHOW COLUMNS FROM td_source WHERE Field = 'source_id';";
             List<Map<String, Object>> results = jdbcTemplate.queryForList(checkSql);
             
             if (!results.isEmpty()) {
@@ -57,7 +57,7 @@ public class DBInitializer implements ApplicationRunner {
                 String type = (String) columnInfo.get("Type");
                 String nullable = (String) columnInfo.get("Null");
                 
-                logger.info("TD_SOURCE.source_id column info:");
+                logger.info("td_source.source_id column info:");
                 logger.info("  - Type: {}", type);
                 logger.info("  - Nullable: {}", nullable);
                 logger.info("  - Extra: {}", extra);
@@ -68,7 +68,7 @@ public class DBInitializer implements ApplicationRunner {
                     logger.warn("⚠️ AUTO_INCREMENT is NOT set on source_id column");
                 }
             } else {
-                logger.warn("Could not find source_id column in TD_SOURCE table");
+                logger.warn("Could not find source_id column in td_source table");
             }
             
         } catch (Exception e) {
