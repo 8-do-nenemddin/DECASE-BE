@@ -1,5 +1,6 @@
 package com.skala.decase.global.config;
 
+import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -17,6 +18,11 @@ public class DBInitializer implements ApplicationRunner {
 
     private static final Logger logger = LoggerFactory.getLogger(DBInitializer.class);
     private final JdbcTemplate jdbcTemplate;
+
+    @PostConstruct
+    public void postConstruct() {
+        logger.info("✅ DBInitializer Bean 등록됨 (postConstruct)");
+    }
 
     @Override
     public void run(ApplicationArguments args) {

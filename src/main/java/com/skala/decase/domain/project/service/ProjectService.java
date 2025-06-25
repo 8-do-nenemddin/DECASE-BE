@@ -112,7 +112,7 @@ public class ProjectService {
         editProject.setModifiedDate(LocalDateTime.now()); // 수정 시각 갱신
 
         Project saved = projectRepository.save(editProject);
-        return EditProjectResponseDto.fromEntity(saved);
+        return projectMapper.toEditResponse(saved);
     }
 
     @Transactional
@@ -128,7 +128,10 @@ public class ProjectService {
     // 단일 프로젝트 상세 설명
     public ProjectDetailResponseDto getProject(Long projectId) {
         Project project = findByProjectId(projectId);
-        return projectMapper.toDetailResponse(project);
+        MemberProject memberProject = memberProjectRepository.findByProjectId(projectId)
+                .stream().filter(MemberProject::isAdmin).toList().get(0);
+        Member creator = memberService.findByMemberId(memberProject.getMember().getMemberId());
+        return projectMapper.toDetailResponse(project, creator);
     }
 
     // 조견표 리스트 생성
