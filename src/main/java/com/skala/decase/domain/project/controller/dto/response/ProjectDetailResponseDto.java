@@ -13,6 +13,7 @@ public record ProjectDetailResponseDto (
 	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
 	Date endDate,
 	String description,
-	String proposalPM
+	String proposalPM,
+	long creatorMemberId
 ) {
 }
