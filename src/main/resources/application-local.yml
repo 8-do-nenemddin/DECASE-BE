@@ -4,8 +4,8 @@ spring:
       on-profile: local
 
   datasource:
-    driver-class-name: com.mysql.cj.jdbc.Driver
-#    driver-class-name: org.mariadb.jdbc.Driver
+#    driver-class-name: com.mysql.cj.jdbc.Driver
+    driver-class-name: org.mariadb.jdbc.Driver
     url: ${MARIA_DATABASE_URL}
     username: ${MARIA_USER}
     password: ${MARIA_PASSWORD}
@@ -26,7 +26,7 @@ spring:
     properties:
       hibernate:
         dialect: org.hibernate.dialect.MariaDBDialect # mariadb
-#          dialect: org.hibernate.dialect.MySQL8Dialect # mysql
+#        dialect: org.hibernate.dialect.MySQL8Dialect # mysql
       org.hibernate.envers.store_data_at_delete: true
     show-sql: true
 
@@ -62,3 +62,6 @@ mockup:
 
 asis:
   callback-url: "http://localhost:8080/api/v1/projects/{projectId}/asis/callback"
+
+srs:
+  callback-url: "http://localhost:8080/api/v1/projects/{projectId}/srs-agent/callback"
