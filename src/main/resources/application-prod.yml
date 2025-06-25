@@ -75,3 +75,6 @@ mockup:
 
 asis:
   callback-url: "https://decase.skala25a.project.skala-ai.com/api/v1/projects/{projectId}/asis/callback"
+
+srs:
+  callback-url: "https://decase.skala25a.project.skala-ai.com/api/v1/projects/{projectId}/srs-agent/callback"

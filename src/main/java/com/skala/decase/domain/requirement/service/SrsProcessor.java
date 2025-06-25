@@ -21,6 +21,7 @@ import org.springframework.web.reactive.function.client.WebClient;
 public class SrsProcessor {
     private final WebClient webClient;
 
+
     /**
      * 요구사항 정의서 생성 agent 호출 fast-api post "/api/v1/process-rfp-file"
      *
@@ -29,7 +30,7 @@ public class SrsProcessor {
      */
     @Async
     public CompletableFuture<Map> processRequirements(MultipartFile file, Long projectId, Long memberId,
-                                                       String documentId) {
+                                                      String documentId, String callbackUrl) {
         try {
             log.info("요구사항 처리 시작 - 프로젝트: {}", projectId);
 
@@ -39,6 +40,7 @@ public class SrsProcessor {
             builder.part("project_id", projectId);  // Form 데이터로 추가
             builder.part("member_id", memberId);    // Form 데이터로 추가
             builder.part("document_id", documentId);           // Form 데이터로 추가
+            builder.part("callback_url", callbackUrl);
 
             return webClient.post()
                     .uri("/ai/api/v1/requirements/srs-agent/start")
@@ -72,7 +74,7 @@ public class SrsProcessor {
      */
     @Async
     public CompletableFuture<Map> processASIS(Long projectId, Long memberId, String documentId,
-        MultipartFile rfpFile, String callbackUrl) {
+                                              MultipartFile rfpFile, String callbackUrl) {
         try {
             log.info("ASIS 처리 시작 - 프로젝트: {}", projectId);
 
@@ -85,27 +87,27 @@ public class SrsProcessor {
             builder.part("callback_url", callbackUrl);         // Form 데이터로 추가
 
             return webClient.post()
-                .uri("/ai/api/v1/requirements/as-is/start")
-                .contentType(MediaType.MULTIPART_FORM_DATA)
-                .body(BodyInserters.fromMultipartData(builder.build()))
-                .retrieve()
-                .bodyToMono(Map.class)
-                .timeout(Duration.ofSeconds(30))  // 즉시 응답받으므로 30초로 단축
-                .doOnSuccess(response -> {
-                    int jobId = (int) response.get("job_id");
-                    String status = (String) response.get("status");
-                    String message = (String) response.get("message");
-                    log.info("현황 시스템 분석 시작, jobId: {}, 상태: {}, 메시지: {}", jobId, status, message);
-                })
-                .doOnError(error -> {
-                    log.error("현황 시스템 분석 실패 - 프로젝트: {}, 에러: {}", projectId, error.getMessage());
-                })
-                .toFuture();
+                    .uri("/ai/api/v1/requirements/as-is/start")
+                    .contentType(MediaType.MULTIPART_FORM_DATA)
+                    .body(BodyInserters.fromMultipartData(builder.build()))
+                    .retrieve()
+                    .bodyToMono(Map.class)
+                    .timeout(Duration.ofSeconds(30))  // 즉시 응답받으므로 30초로 단축
+                    .doOnSuccess(response -> {
+                        int jobId = (int) response.get("job_id");
+                        String status = (String) response.get("status");
+                        String message = (String) response.get("message");
+                        log.info("현황 시스템 분석 시작, jobId: {}, 상태: {}, 메시지: {}", jobId, status, message);
+                    })
+                    .doOnError(error -> {
+                        log.error("현황 시스템 분석 실패 - 프로젝트: {}, 에러: {}", projectId, error.getMessage());
+                    })
+                    .toFuture();
 
         } catch (Exception e) {
             log.error("AS-IS 분석 요청 실패 - 프로젝트: {}, 에러: {}", projectId, e.getMessage(), e);
             throw new RequirementException("AS-IS 분석 요청 중 오류가 발생했습니다.",
-                HttpStatus.INTERNAL_SERVER_ERROR);
+                    HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 }

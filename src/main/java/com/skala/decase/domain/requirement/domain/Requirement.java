@@ -130,6 +130,7 @@ public class Requirement {
         this.project = project;
         this.projectIdAud = project.getProjectId();
         this.createdBy = createdBy;
+        this.modifiedBy = createdBy;
         this.modReason = ""; //초기 요구사항 정의서의 수정 이유는 비워둠.
         this.sources = new ArrayList<>();
     }
@@ -188,7 +189,9 @@ public class Requirement {
         this.createdBy = createdBy;
     }
 
-    public void updateFromPending(RequirementType type, String level1, String level2, String level3, String name, String description, Priority priority, Difficulty difficulty, String modReason, Member createdBy) {
+    public void updateFromPending(RequirementType type, String level1, String level2, String level3, String name,
+                                  String description, Priority priority, Difficulty difficulty, String modReason,
+                                  Member createdBy) {
         this.type = type;
         this.level1 = level1;
         this.level2 = level2;
