@@ -96,10 +96,12 @@ public class CreateMockupService {
                 .body(BodyInserters.fromValue(requestBody))
                 .retrieve()
                 .toBodilessEntity()
-                .doOnError(error -> {
-                    throw new MockupException("FastAPI 목업 생성 요청 실패", HttpStatus.INTERNAL_SERVER_ERROR);
-                })
-                .subscribe(); // 비동기 실행
+                .subscribe(
+                        unused -> {}, // onNext (성공 시)
+                        error -> {
+                            log.error("FastAPI 목업 생성 요청 중 에러 발생", error);
+                        }
+                );
     }
 
     /**

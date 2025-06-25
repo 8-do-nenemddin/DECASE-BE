@@ -19,11 +19,28 @@ spec:
         app: decase
     spec:
       serviceAccountName: default
+      # 초기화 컨테이너로 디렉토리 생성
+      initContainers:
+        - name: init-storage
+          image: amdp-registry.skala-ai.com/skala25a/sk-team-08-decase:1.0.0-53-b36b2c995129
+          command:
+            - /bin/sh
+            - -c
+            - |
+              echo "Initializing EFS storage directories..."
+              mkdir -p /app/storage/mockups /app/storage/asis /app/storage/uploads
+              chmod -R 777 /app/storage
+              ls -la /app/storage
+              echo "EFS Storage initialization complete"
+          volumeMounts:
+            - name: storage-volume
+              mountPath: /app/storage
+
       containers:
         - name: decase
-          image: amdp-registry.skala-ai.com/skala25a/sk-team-08-decase:1.0.0-46-f8233643215a
+          image: amdp-registry.skala-ai.com/skala25a/sk-team-08-decase:1.0.0-53-b36b2c995129
           imagePullPolicy: Always
-          # 볼륨 마운트 설정
+          # 볼륨 마운트 설정 (EFS)
           volumeMounts:
             - name: storage-volume
               mountPath: /app/storage # Spring Boot의 ./storage와 매핑
@@ -68,9 +85,9 @@ spec:
           envFrom:
             - secretRef:
                 name: decase-secret
-          # 볼륨 설정 (hostPath 사용)
+
+      # 볼륨 설정 (EFS PVC 사용)
       volumes:
-          - name: storage-volume
-            hostPath:
-              path: /var/lib/decase-storage
-              type: DirectoryOrCreate
+        - name: storage-volume
+          persistentVolumeClaim:
+            claimName: decase-efs-sc-pvc
