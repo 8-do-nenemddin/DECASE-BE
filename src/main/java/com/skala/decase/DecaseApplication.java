@@ -13,7 +13,6 @@ import org.springframework.retry.annotation.EnableRetry;
 public class DecaseApplication {
 
 	public static void main(String[] args) {
-		System.setProperty("java.awt.headless", "true");
 		SpringApplication.run(DecaseApplication.class, args);
 	}
 
