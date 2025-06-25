@@ -1,6 +1,15 @@
 # 베이스 이미지로 OpenJDK 17 버전의 JRE 이미지 사용
 FROM openjdk:17-jdk-slim
 
+# 폰트 및 AWT 관련 패키지 설치
+RUN apt-get update && apt-get install -y \
+    fontconfig \
+    fonts-dejavu-core \
+    fonts-liberation \
+    fonts-noto \
+    libfontconfig1-dev \
+    && rm -rf /var/lib/apt/lists/*
+
 # 작업 디렉토리 설정
 WORKDIR /app
 
@@ -15,5 +24,5 @@ EXPOSE 8081
 #ADD ${JAR_FILE} app.jar
 ADD ./build/libs/decase-0.0.1-SNAPSHOT.jar app.jar
 
-# 애플리케이션 실행
-ENTRYPOINT ["java","-Djava.security.egd=file:/dev/./urandom","-Dspring.profiles.active=prod","-jar","app.jar"]
+# 애플리케이션 실행 (headless 옵션 추가)
+ENTRYPOINT ["java","-Djava.awt.headless=true","-Djava.security.egd=file:/dev/./urandom","-Dspring.profiles.active=prod","-jar","app.jar"]

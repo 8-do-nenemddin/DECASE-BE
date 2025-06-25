@@ -10,8 +10,6 @@ import java.util.Optional;
 public interface ProjectInvitationRepository extends JpaRepository<ProjectInvitation, Long> {
     ProjectInvitation findByToken(String token);
 
-    void deleteByProject_ProjectId(Long projectId);
-
     List<ProjectInvitation> findAllByProject(Project project);
 
     Optional<ProjectInvitation> findFirstByProjectAndEmailOrderByExpiryDateDesc(Project project, String email);

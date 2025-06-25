@@ -5,10 +5,12 @@ import com.skala.decase.domain.project.domain.Project;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.hibernate.envers.Audited;
 
 import java.time.LocalDateTime;
 
 @Entity
+@Audited
 @Table(name = "TM_JOBS")
 @Getter
 @NoArgsConstructor
