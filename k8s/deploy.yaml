@@ -85,8 +85,6 @@ spec:
           envFrom:
             - secretRef:
                 name: decase-secret
-          # 자바 폰트 에러 방지
-          args: ["-Djava.awt.headless=true"]
 
       # 볼륨 설정 (EFS PVC 사용)
       volumes:

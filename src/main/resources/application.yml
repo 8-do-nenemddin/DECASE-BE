@@ -9,3 +9,7 @@ spring:
     multipart:
       max-file-size: 1GB
       max-request-size: 1GB
+# 시스템 프로퍼티 설정 (Spring Boot 2.4+)
+management:
+  system:
+    java.awt.headless: true
