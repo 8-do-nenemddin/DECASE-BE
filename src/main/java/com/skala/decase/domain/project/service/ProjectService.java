@@ -1,5 +1,7 @@
 package com.skala.decase.domain.project.service;
 
+import com.skala.decase.domain.job.domain.Job;
+import com.skala.decase.domain.job.repository.JobRepository;
 import com.skala.decase.domain.member.domain.Member;
 import com.skala.decase.domain.member.repository.MemberProjectRepository;
 import com.skala.decase.domain.member.service.MemberService;
@@ -12,6 +14,7 @@ import com.skala.decase.domain.project.controller.dto.response.ProjectDetailResp
 import com.skala.decase.domain.project.controller.dto.response.ProjectResponse;
 import com.skala.decase.domain.project.domain.MemberProject;
 import com.skala.decase.domain.project.domain.Project;
+import com.skala.decase.domain.project.domain.ProjectInvitation;
 import com.skala.decase.domain.project.exception.ProjectException;
 import com.skala.decase.domain.project.mapper.MemberProjectMapper;
 import com.skala.decase.domain.project.mapper.ProjectMapper;
@@ -39,6 +42,7 @@ public class ProjectService {
     private final MemberProjectRepository memberProjectRepository;
     private final ProjectInvitationRepository projectInvitationRepository;
     private final SourceRepository sourceRepository;
+    private final JobRepository jobRepository;
 
     private final MemberService memberService;
 
@@ -118,10 +122,8 @@ public class ProjectService {
     @Transactional
     public DeleteProjectResponse deleteProject(Long projectId) {
         Project project = findByProjectId(projectId);
-
-        projectInvitationRepository.deleteByProject_ProjectId(projectId);
-        memberProjectRepository.deleteByProject_ProjectId(projectId);
-        projectRepository.delete(project);
+        project.delete();
+        projectRepository.save(project);
         return successMapper.toDelete();
     }
 
