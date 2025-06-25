@@ -89,7 +89,7 @@ public class SrsProcessingService {
         Project project = projectService.findByProjectId(projectId);
         Member member = memberService.findByMemberId(memberId);
         
-        if (status.equals("PROCESSING")) {
+        if (status.equals("COMPLETED")) {
             documentService.uploadASIS(project, member, file);
             log.info("AS-IS 분석 결과 파일 저장 완료 - 프로젝트 ID: {}", projectId);
         } else {
