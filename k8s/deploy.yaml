@@ -22,7 +22,7 @@ spec:
       # 초기화 컨테이너로 디렉토리 생성
       initContainers:
         - name: init-storage
-          image: amdp-registry.skala-ai.com/skala25a/sk-team-08-decase:1.0.0-3-10aef9df5ada
+          image: amdp-registry.skala-ai.com/skala25a/sk-team-08-decase:1.0.0-4-8ebde5473304
           command:
             - /bin/sh
             - -c
@@ -38,7 +38,7 @@ spec:
 
       containers:
         - name: decase
-          image: amdp-registry.skala-ai.com/skala25a/sk-team-08-decase:1.0.0-3-10aef9df5ada
+          image: amdp-registry.skala-ai.com/skala25a/sk-team-08-decase:1.0.0-4-8ebde5473304
           imagePullPolicy: Always
           # 볼륨 마운트 설정 (EFS)
           volumeMounts:
