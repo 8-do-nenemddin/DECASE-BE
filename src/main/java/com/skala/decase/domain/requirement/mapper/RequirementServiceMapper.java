@@ -25,8 +25,8 @@ public class RequirementServiceMapper {
 
     public Requirement toREQEntity(CreateRfpRequest response, Member member, Project project, LocalDateTime now) {
 
-        String description = "[문서 페이지]\n" + response.target_page() + "\n"
-                + "[대상 업무]\n" + response.description() + "\n";
+        String description = "[대상 업무]\n" + response.target_page() + "\n"
+                + "[상세 내용]\n" + response.description() + "\n";
 
         return Requirement.builder()
                 .reqIdCode(response.requirement_id())
@@ -34,6 +34,7 @@ public class RequirementServiceMapper {
                 .level1(response.category_large())
                 .level2(response.category_medium())
                 .level3(response.category_small())
+                .name(response.requirement_name())
                 .description(description)
                 .priority(Priority.fromKorean(response.importance()))
                 .difficulty(Difficulty.fromKorean(response.difficulty()))
@@ -56,10 +57,10 @@ public class RequirementServiceMapper {
         return newReq;
     }
 
-    public static RequirementWithSourceResponse toReqWithSrcResponse(Requirement requirement, List<String> modReason,
+    public RequirementWithSourceResponse toReqWithSrcResponse(Requirement requirement, List<String> modReason,
                                                                      int currentRevisionCount) {
         List<SourceResponse> sourceResponses = requirement.getSources().stream()
-                .map(RequirementServiceMapper::toSourceResponse)
+                .map(this::toSourceResponse)
                 .collect(Collectors.toList());
 
         DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd");
@@ -100,7 +101,7 @@ public class RequirementServiceMapper {
         );
     }
 
-    private static SourceResponse toSourceResponse(Source source) {
+    private SourceResponse toSourceResponse(Source source) {
         return new SourceResponse(
                 source.getSourceId(),
                 source.getDocument() != null ? source.getDocument().getDocId() : null,
