@@ -51,7 +51,7 @@ public class MailService {
     }
 
     private String getContent(ProjectInvitation projectInvitation) {
-        String link = webUrl + projectInvitation.getToken();
+        String link = webUrl + "/" + projectInvitation.getToken();
 
         return """
                 <!DOCTYPE html>
