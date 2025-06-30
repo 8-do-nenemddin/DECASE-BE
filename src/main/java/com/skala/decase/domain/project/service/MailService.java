@@ -15,6 +15,7 @@ import org.springframework.mail.javamail.JavaMailSenderImpl;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.retry.annotation.Backoff;
 import org.springframework.retry.annotation.Retryable;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -31,6 +32,7 @@ public class MailService {
     /*
         메일 전송
      */
+    @Async
     @Retryable(retryFor = {MailException.class}, maxAttempts = 3, backoff = @Backoff(delay = 2000))
     public void sendMail(ProjectInvitation projectInvitation) {
         MimeMessage mimeMailMessage = javaMailSender.createMimeMessage();
@@ -125,6 +127,7 @@ public class MailService {
                 """.formatted(link);
     }
 
+    @Async
     @Retryable(retryFor = {MailException.class}, maxAttempts = 3, backoff = @Backoff(delay = 2000))
     public void sendWelcomeMail(Member newMember, Project project) {
         MimeMessage mimeMailMessage = javaMailSender.createMimeMessage();
