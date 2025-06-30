@@ -65,3 +65,6 @@ asis:
 
 srs:
   callback-url: "http://localhost:8080/api/v1/projects/{projectId}/srs-agent/callback"
+
+invite:
+  web-url: "http://localhost:5173/invite"
