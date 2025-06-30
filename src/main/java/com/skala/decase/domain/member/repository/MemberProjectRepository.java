@@ -35,16 +35,16 @@ public interface MemberProjectRepository extends JpaRepository<MemberProject, Lo
      */
     @Query("SELECT mp FROM MemberProject mp " +
             "JOIN FETCH mp.project p " +
-            "WHERE mp.member.memberId = :memberId")
+            "WHERE mp.member.memberId = :memberId " +
+            "AND p.isDeleted = false")  // 이 조건 추가
     Page<MemberProject> findByMemberIdWithProject(@Param("memberId") Long memberId, Pageable pageable);
-
-    // 필터링이 포함된 동적 쿼리들
 
     // 1. 프로젝트명만 필터
     @Query("SELECT mp FROM MemberProject mp " +
             "JOIN FETCH mp.project p " +
             "WHERE mp.member.memberId = :memberId " +
-            "AND LOWER(p.name) LIKE LOWER(CONCAT('%', :projectName, '%'))")
+            "AND LOWER(p.name) LIKE LOWER(CONCAT('%', :projectName, '%')) " +
+            "AND p.isDeleted = false")
     Page<MemberProject> findByMemberIdAndProjectName(@Param("memberId") Long memberId,
                                                      @Param("projectName") String projectName,
                                                      Pageable pageable);
@@ -53,7 +53,8 @@ public interface MemberProjectRepository extends JpaRepository<MemberProject, Lo
     @Query("SELECT mp FROM MemberProject mp " +
             "JOIN FETCH mp.project p " +
             "WHERE mp.member.memberId = :memberId " +
-            "AND p.status = :status")
+            "AND p.status = :status " +
+            "AND p.isDeleted = false")
     Page<MemberProject> findByMemberIdAndStatus(@Param("memberId") Long memberId,
                                                 @Param("status") ProjectStatus status,
                                                 Pageable pageable);
@@ -62,7 +63,8 @@ public interface MemberProjectRepository extends JpaRepository<MemberProject, Lo
     @Query("SELECT mp FROM MemberProject mp " +
             "JOIN FETCH mp.project p " +
             "WHERE mp.member.memberId = :memberId " +
-            "AND LOWER(p.proposalPM) LIKE LOWER(CONCAT('%', :proposalPM, '%'))")
+            "AND LOWER(p.proposalPM) LIKE LOWER(CONCAT('%', :proposalPM, '%')) " +
+            "AND p.isDeleted = false")
     Page<MemberProject> findByMemberIdAndProposalPM(@Param("memberId") Long memberId,
                                                     @Param("proposalPM") String proposalPM,
                                                     Pageable pageable);
@@ -72,7 +74,8 @@ public interface MemberProjectRepository extends JpaRepository<MemberProject, Lo
             "JOIN FETCH mp.project p " +
             "WHERE mp.member.memberId = :memberId " +
             "AND LOWER(p.name) LIKE LOWER(CONCAT('%', :projectName, '%')) " +
-            "AND p.status = :status")
+            "AND p.status = :status " +
+            "AND p.isDeleted = false")
     Page<MemberProject> findByMemberIdAndProjectNameAndStatus(@Param("memberId") Long memberId,
                                                               @Param("projectName") String projectName,
                                                               @Param("status") ProjectStatus status,
@@ -83,7 +86,8 @@ public interface MemberProjectRepository extends JpaRepository<MemberProject, Lo
             "JOIN FETCH mp.project p " +
             "WHERE mp.member.memberId = :memberId " +
             "AND LOWER(p.name) LIKE LOWER(CONCAT('%', :projectName, '%')) " +
-            "AND LOWER(p.proposalPM) LIKE LOWER(CONCAT('%', :proposalPM, '%'))")
+            "AND LOWER(p.proposalPM) LIKE LOWER(CONCAT('%', :proposalPM, '%')) " +
+            "AND p.isDeleted = false")
     Page<MemberProject> findByMemberIdAndProjectNameAndProposalPM(@Param("memberId") Long memberId,
                                                                   @Param("projectName") String projectName,
                                                                   @Param("proposalPM") String proposalPM,
@@ -94,7 +98,8 @@ public interface MemberProjectRepository extends JpaRepository<MemberProject, Lo
             "JOIN FETCH mp.project p " +
             "WHERE mp.member.memberId = :memberId " +
             "AND p.status = :status " +
-            "AND LOWER(p.proposalPM) LIKE LOWER(CONCAT('%', :proposalPM, '%'))")
+            "AND LOWER(p.proposalPM) LIKE LOWER(CONCAT('%', :proposalPM, '%')) " +
+            "AND p.isDeleted = false")
     Page<MemberProject> findByMemberIdAndStatusAndProposalPM(@Param("memberId") Long memberId,
                                                              @Param("status") ProjectStatus status,
                                                              @Param("proposalPM") String proposalPM,
@@ -106,21 +111,21 @@ public interface MemberProjectRepository extends JpaRepository<MemberProject, Lo
             "WHERE mp.member.memberId = :memberId " +
             "AND LOWER(p.name) LIKE LOWER(CONCAT('%', :projectName, '%')) " +
             "AND p.status = :status " +
-            "AND LOWER(p.proposalPM) LIKE LOWER(CONCAT('%', :proposalPM, '%'))")
+            "AND LOWER(p.proposalPM) LIKE LOWER(CONCAT('%', :proposalPM, '%')) " +
+            "AND p.isDeleted = false")
     Page<MemberProject> findByMemberIdAndAllFilters(@Param("memberId") Long memberId,
                                                     @Param("projectName") String projectName,
                                                     @Param("status") ProjectStatus status,
                                                     @Param("proposalPM") String proposalPM,
                                                     Pageable pageable);
 
+    // 특정 프로젝트와 멤버 아이디로 조회 (삭제 여부 필터 필요하면 추가 가능)
     @Query("SELECT mp FROM MemberProject mp " +
             "JOIN FETCH mp.project p " +
             "WHERE p.id = :projectId " +
-            "AND mp.member.id = :id")
+            "AND mp.member.id = :id " +
+            "AND p.isDeleted = false")
     Optional<MemberProject> findByProjectIdAndId(@Param("projectId") long projectId, @Param("id") String memberId);
-
-    // 프로젝트 삭제를 위한 member_project 삭제
-    void deleteByProject_ProjectId(Long projectId);
 
     // 어드민 여부 조회
     Boolean existsByMemberAndIsAdminTrue(Member member);

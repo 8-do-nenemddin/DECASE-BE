@@ -5,17 +5,14 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.skala.decase.domain.mockup.controller.dto.request.CreateMockUpRequest;
 import com.skala.decase.domain.mockup.domain.Mockup;
 import com.skala.decase.domain.mockup.exception.MockupException;
-import com.skala.decase.domain.mockup.mapper.MockupMapper;
 import com.skala.decase.domain.mockup.repository.MockupRepository;
 import com.skala.decase.domain.project.domain.Project;
 import com.skala.decase.domain.project.service.ProjectService;
-import com.skala.decase.domain.requirement.controller.dto.response.RequirementWithSourceResponse;
 import com.skala.decase.domain.requirement.service.RequirementService;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
-import java.time.Duration;
 import java.util.List;
 import java.util.Map;
 import java.util.zip.ZipEntry;
@@ -49,7 +46,6 @@ public class CreateMockupService {
 
     private final ProjectService projectService;
     private final RequirementService requirementService;
-    private final MockupMapper mockupMapper;
     private final MockupRepository mockupRepository;
 
     /**
@@ -96,10 +92,13 @@ public class CreateMockupService {
                 .body(BodyInserters.fromValue(requestBody))
                 .retrieve()
                 .toBodilessEntity()
-                .doOnError(error -> {
-                    throw new MockupException("FastAPI 목업 생성 요청 실패", HttpStatus.INTERNAL_SERVER_ERROR);
-                })
-                .subscribe(); // 비동기 실행
+                .subscribe(
+                        unused -> {
+                        }, // onNext (성공 시)
+                        error -> {
+                            log.error("FastAPI 목업 생성 요청 중 에러 발생", error);
+                        }
+                );
     }
 
     /**

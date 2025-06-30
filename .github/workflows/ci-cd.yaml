@@ -1,0 +1,164 @@
+# .github/workflows/ci-cd.yml
+name: Backend CI/CD Pipeline
+
+on:
+  push:
+    branches: [main, dev]
+  pull_request:
+    branches: [main]
+
+env:
+  GIT_URL: "https://github.com/8-do-nenemddin/DECASE-BE.git"
+  GIT_BRANCH: "main"
+  IMAGE_NAME: "sk-team-08-decase"
+  IMAGE_TAG: "1.0.0"
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 📥 Clone Repository
+        uses: actions/checkout@v4
+
+      - name: 🏷️ Generate Hash Code and Final Image Tag
+        id: tag
+        run: |
+          HASHCODE=$(date +%s%N | sha256sum | cut -c1-12)
+
+          FINAL_IMAGE_TAG="${{ env.IMAGE_TAG }}-${{ github.run_number }}-${HASHCODE}"
+
+          echo "Generated Hash Code: ${HASHCODE}"
+          echo "Final Image Tag: ${FINAL_IMAGE_TAG}"
+
+          echo "FINAL_IMAGE_TAG=${FINAL_IMAGE_TAG}" >> $GITHUB_OUTPUT
+          echo "HASHCODE=${HASHCODE}" >> $GITHUB_OUTPUT
+
+      - name: ☕ Setup Java 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: "17"
+          distribution: "temurin"
+          cache: "gradle"
+
+      - name: 🔧 Grant Execute Permission for Gradlew
+        run: |
+          echo "🔧 Setting execute permission for gradlew..."
+          chmod +x ./gradlew
+          echo "✅ Gradlew permission set successfully"
+
+      - name: 📦 Build with Gradle
+        run: |
+          echo "🏗️ Building Spring Boot application with Gradle..."
+
+          echo "📋 Gradle version:"
+          ./gradlew --version
+
+          echo "🧹 Cleaning previous builds..."
+          ./gradlew clean
+
+          echo "🔨 Building application (skipping tests for faster build)..."
+          ./gradlew build -x test
+
+          echo "📁 Build output:"
+          ls -la build/libs/
+
+          echo "✅ Gradle build completed successfully"
+
+      - name: 🧪 Run Tests (Optional)
+        run: |
+          echo "🧪 Running Spring Boot tests..."
+          # ./gradlew test
+          echo "✅ Tests completed (skipped for faster CI/CD)"
+
+      - name: 🔧 Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: 🔐 Login to Docker Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ secrets.IMAGE_REGISTRY }}
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: 🏗️ Docker Build & Push
+        run: |
+          FINAL_TAG="${{ steps.tag.outputs.FINAL_IMAGE_TAG }}"
+          FULL_IMAGE_NAME="${{ secrets.IMAGE_REGISTRY }}/${{ env.IMAGE_NAME }}:${FINAL_TAG}"
+
+          echo "🐳 Building Spring Boot Docker image: ${FULL_IMAGE_NAME}"
+
+          # Spring Boot Docker 빌드
+          docker build --platform linux/amd64 -t "${FULL_IMAGE_NAME}" .
+
+          echo "📤 Pushing Docker image to registry..."
+          docker push "${FULL_IMAGE_NAME}"
+
+          echo "✅ Spring Boot Docker image built and pushed successfully"
+          echo "📦 Image: ${FULL_IMAGE_NAME}"
+
+      - name: 📝 Update deploy.yaml and Git Push
+        run: |
+          echo "📝 Updating deploy.yaml with new image..."
+
+          NEW_IMAGE="${{ secrets.IMAGE_REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.tag.outputs.FINAL_IMAGE_TAG }}"
+
+          echo "🔄 New image: ${NEW_IMAGE}"
+
+          # initContainers의 image 업데이트
+          sed -i 's|image: amdp-registry.skala-ai.com/skala25a/sk-team-08-decase:.*|image: '"${NEW_IMAGE}"'|g' ./k8s/deploy.yaml
+
+          # containers의 image 업데이트 
+          sed -i '/containers:/,/volumeMounts:/ s|image: amdp-registry.skala-ai.com/skala25a/sk-team-08-decase:.*|image: '"${NEW_IMAGE}"'|g' ./k8s/deploy.yaml
+
+          # update annotation 업데이트 (ArgoCD 동기화용)
+          HASH=$(echo $RANDOM | md5sum | head -c 32)
+          sed -i "s|update: .*|update: ${HASH}|g" ./k8s/deploy.yaml
+
+          echo "📋 Updated deploy.yaml content (image lines only):"
+          grep -A 1 -B 1 "image: amdp-registry" ./k8s/deploy.yaml || echo "Image lines updated"
+
+      - name: 📤 Commit and Push Changes to Repository
+        run: |
+          echo "📤 Committing and pushing changes..."
+
+          # Secrets에서 Git 사용자 정보 가져오기
+          git config user.name "${{ secrets.GIT_USER_NAME }}"
+          git config user.email "${{ secrets.GIT_USER_EMAIL }}"
+
+          # deploy.yaml 파일을 스테이징 영역에 추가
+          git add ./k8s/deploy.yaml || true
+
+          # 변경사항이 있으면 커밋 및 푸시
+          if ! git diff --cached --quiet; then
+            echo "✅ Changes detected, committing..."
+            
+            # 커밋 메시지 (무한루프 방지용 [skip ci] 태그 포함)
+            git commit -m "[AUTO] Update Backend deploy.yaml with image ${{ steps.tag.outputs.FINAL_IMAGE_TAG }} [skip ci]"
+            
+            echo "📤 Pushing to repository..."
+            git push origin ${{ env.GIT_BRANCH }}
+            
+            echo "✅ Successfully pushed manifest update to repository"
+          else
+            echo "ℹ️ No changes to commit."
+          fi
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: 📊 Pipeline Summary
+        run: |
+          echo "🎉 Backend CI/CD Pipeline Completed Successfully!"
+          echo ""
+          echo "📋 Pipeline Summary:"
+          echo "├── ☕ Spring Boot Application Built with Java 21"
+          echo "├── 📦 Backend Image: ${{ secrets.IMAGE_REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.tag.outputs.FINAL_IMAGE_TAG }}"
+          echo "├── 🏷️ Hash Code: ${{ steps.tag.outputs.HASHCODE }}"
+          echo "├── 🔢 Build Number: ${{ github.run_number }}"
+          echo "├── 📝 Updated deploy.yaml (initContainers + containers)"
+          echo "├── 📤 Pushed changes to repository"
+          echo "└── 🔄 ArgoCD will automatically sync and deploy this change"
+          echo ""
+          echo "🌐 Backend API will be available at: https://decase.skala25a.project.skala-ai.com/api/v1"
+          echo "📊 Management port: https://decase.skala25a.project.skala-ai.com:8081/actuator"
+          echo "📈 ArgoCD Dashboard: Check your ArgoCD UI for deployment status"

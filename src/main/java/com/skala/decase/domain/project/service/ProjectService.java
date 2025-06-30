@@ -1,5 +1,7 @@
 package com.skala.decase.domain.project.service;
 
+import com.skala.decase.domain.job.domain.Job;
+import com.skala.decase.domain.job.repository.JobRepository;
 import com.skala.decase.domain.member.domain.Member;
 import com.skala.decase.domain.member.repository.MemberProjectRepository;
 import com.skala.decase.domain.member.service.MemberService;
@@ -12,6 +14,7 @@ import com.skala.decase.domain.project.controller.dto.response.ProjectDetailResp
 import com.skala.decase.domain.project.controller.dto.response.ProjectResponse;
 import com.skala.decase.domain.project.domain.MemberProject;
 import com.skala.decase.domain.project.domain.Project;
+import com.skala.decase.domain.project.domain.ProjectInvitation;
 import com.skala.decase.domain.project.exception.ProjectException;
 import com.skala.decase.domain.project.mapper.MemberProjectMapper;
 import com.skala.decase.domain.project.mapper.ProjectMapper;
@@ -39,6 +42,7 @@ public class ProjectService {
     private final MemberProjectRepository memberProjectRepository;
     private final ProjectInvitationRepository projectInvitationRepository;
     private final SourceRepository sourceRepository;
+    private final JobRepository jobRepository;
 
     private final MemberService memberService;
 
@@ -112,23 +116,24 @@ public class ProjectService {
         editProject.setModifiedDate(LocalDateTime.now()); // 수정 시각 갱신
 
         Project saved = projectRepository.save(editProject);
-        return EditProjectResponseDto.fromEntity(saved);
+        return projectMapper.toEditResponse(saved);
     }
 
     @Transactional
     public DeleteProjectResponse deleteProject(Long projectId) {
         Project project = findByProjectId(projectId);
-
-        projectInvitationRepository.deleteByProject_ProjectId(projectId);
-        memberProjectRepository.deleteByProject_ProjectId(projectId);
-        projectRepository.delete(project);
+        project.delete();
+        projectRepository.save(project);
         return successMapper.toDelete();
     }
 
     // 단일 프로젝트 상세 설명
     public ProjectDetailResponseDto getProject(Long projectId) {
         Project project = findByProjectId(projectId);
-        return projectMapper.toDetailResponse(project);
+        MemberProject memberProject = memberProjectRepository.findByProjectId(projectId)
+                .stream().filter(MemberProject::isAdmin).toList().get(0);
+        Member creator = memberService.findByMemberId(memberProject.getMember().getMemberId());
+        return projectMapper.toDetailResponse(project, creator);
     }
 
     // 조견표 리스트 생성

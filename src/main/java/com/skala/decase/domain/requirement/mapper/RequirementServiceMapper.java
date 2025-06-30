@@ -3,13 +3,14 @@ package com.skala.decase.domain.requirement.mapper;
 import com.skala.decase.domain.document.domain.Document;
 import com.skala.decase.domain.member.domain.Member;
 import com.skala.decase.domain.project.domain.Project;
+import com.skala.decase.domain.requirement.controller.dto.request.SourceCallbackReq;
 import com.skala.decase.domain.requirement.controller.dto.response.RequirementWithSourceResponse;
 import com.skala.decase.domain.requirement.controller.dto.response.SourceResponse;
 import com.skala.decase.domain.requirement.domain.Difficulty;
 import com.skala.decase.domain.requirement.domain.Priority;
 import com.skala.decase.domain.requirement.domain.Requirement;
 import com.skala.decase.domain.requirement.domain.RequirementType;
-import com.skala.decase.domain.requirement.service.dto.response.CreateRfpResponse;
+import com.skala.decase.domain.requirement.controller.dto.request.CreateRfpRequest;
 import com.skala.decase.domain.source.domain.Source;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -22,21 +23,20 @@ import org.springframework.stereotype.Component;
 @AllArgsConstructor
 public class RequirementServiceMapper {
 
-    public Requirement toREQEntity(CreateRfpResponse response, Member member, Project project, LocalDateTime now) {
+    public Requirement toREQEntity(CreateRfpRequest response, Member member, Project project, LocalDateTime now) {
 
         Requirement newReq = new Requirement();
 
-        String description = "[요구사항]\n" + response.description_content() + "\n"
-                + "[대상업무]\n" + response.target_task() + "\n"
-                + "[요건 처리 상세]\n" + response.processing_detail();
+        String description = "[대상 업무]\n" + response.target_page() + "\n"
+                + "[대상업무]\n" + response.description() + "\n";
 
         newReq.createInitialRequirement(
-                response.id(),
+                response.requirement_id(),
                 RequirementType.fromKorean(response.type()),
                 response.category_large(),
                 response.category_medium(),
                 response.category_small(),
-                response.description_name(),
+                response.requirement_name(),
                 description,
                 Priority.fromKorean(response.importance()),
                 Difficulty.fromKorean(response.difficulty()),
@@ -47,15 +47,15 @@ public class RequirementServiceMapper {
         return newReq;
     }
 
-    public Source toSrcEntity(CreateRfpResponse response, Requirement requirement, Document document) {
+    public Source toSrcEntity(SourceCallbackReq response, Requirement requirement, Document document) {
 
         Source newReq = new Source();
 
         newReq.createSource(
                 requirement,
                 document,
-                Integer.parseInt(response.rfp_page()),  //int로 변환할까
-                response.raw_text()
+                response.source_page(),  //int로 변환할까
+                response.original_text()
         );
         return newReq;
     }

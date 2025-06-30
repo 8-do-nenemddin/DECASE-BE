@@ -71,6 +71,9 @@ public class Project {
     @OneToMany(mappedBy = "project", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Requirement> requirements;
 
+    @Column(name = "is_deleted", nullable = false)
+    private Boolean isDeleted = false;
+
     // 프로젝트 생성자
     public Project(String name, Long scale, Date startDate, Date endDate,
                    String description, String proposalPM, LocalDateTime createdDate, LocalDateTime modifiedDate) {
@@ -87,5 +90,9 @@ public class Project {
         this.membersProjects = new ArrayList<>();
         this.documents = new ArrayList<>();
         this.requirements = new ArrayList<>();
+    }
+
+    public void delete() {
+        this.isDeleted = true;
     }
 }

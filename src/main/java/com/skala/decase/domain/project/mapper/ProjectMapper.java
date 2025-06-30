@@ -2,19 +2,16 @@ package com.skala.decase.domain.project.mapper;
 
 import com.skala.decase.domain.member.domain.Member;
 import com.skala.decase.domain.project.controller.dto.request.CreateProjectRequest;
-import com.skala.decase.domain.project.controller.dto.response.DocumentResponse;
-import com.skala.decase.domain.project.controller.dto.response.MappingTableResponseDto;
-import com.skala.decase.domain.project.controller.dto.response.ProjectDetailResponseDto;
-import com.skala.decase.domain.project.controller.dto.response.ProjectResponse;
+import com.skala.decase.domain.project.controller.dto.response.*;
 import com.skala.decase.domain.project.domain.Project;
+import com.skala.decase.domain.requirement.domain.Requirement;
 import com.skala.decase.domain.source.domain.Source;
+import lombok.AllArgsConstructor;
+import org.springframework.stereotype.Component;
+
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
-
-import com.skala.decase.domain.requirement.domain.Requirement;
-import lombok.AllArgsConstructor;
-import org.springframework.stereotype.Component;
 
 @Component
 @AllArgsConstructor
@@ -53,7 +50,7 @@ public class ProjectMapper {
         );
     }
 
-    public ProjectDetailResponseDto toDetailResponse(Project project) {
+    public ProjectDetailResponseDto toDetailResponse(Project project, Member creator) {
         return new ProjectDetailResponseDto(
                 project.getProjectId(),
                 project.getName(),
@@ -61,7 +58,8 @@ public class ProjectMapper {
                 project.getStartDate(),
                 project.getEndDate(),
                 project.getDescription(),
-                project.getProposalPM()
+                project.getProposalPM(),
+                creator.getMemberId()
         );
     }
 
@@ -80,5 +78,15 @@ public class ProjectMapper {
                 requirement.getDescription(),
                 documentResponse
         );
+    }
+
+    public EditProjectResponseDto toEditResponse(Project project) {
+        return new EditProjectResponseDto(
+                project.getProjectId(),
+                project.getName(),
+                project.getScale(),
+                project.getStartDate(),
+                project.getEndDate(),
+                project.getDescription());
     }
 }

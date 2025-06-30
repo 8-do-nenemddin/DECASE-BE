@@ -9,4 +9,6 @@ import java.util.List;
 public interface PendingRequirementRepository extends JpaRepository<PendingRequirement, Long> {
 	List<PendingRequirement> findAllByProject_ProjectIdAndStatusFalse(Long projectId);
 
+	List<PendingRequirement> findAllPendingRequirementByReqIdCode(String reqIdCode);
+
 }
