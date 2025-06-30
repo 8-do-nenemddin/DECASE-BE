@@ -25,26 +25,22 @@ public class RequirementServiceMapper {
 
     public Requirement toREQEntity(CreateRfpRequest response, Member member, Project project, LocalDateTime now) {
 
-        Requirement newReq = new Requirement();
+        String description = "[문서 페이지]\n" + response.target_page() + "\n"
+                + "[대상 업무]\n" + response.description() + "\n";
 
-        String description = "[대상 업무]\n" + response.target_page() + "\n"
-                + "[대상업무]\n" + response.description() + "\n";
-
-        newReq.createInitialRequirement(
-                response.requirement_id(),
-                RequirementType.fromKorean(response.type()),
-                response.category_large(),
-                response.category_medium(),
-                response.category_small(),
-                response.requirement_name(),
-                description,
-                Priority.fromKorean(response.importance()),
-                Difficulty.fromKorean(response.difficulty()),
-                now,
-                project,
-                member
-        );
-        return newReq;
+        return Requirement.builder()
+                .reqIdCode(response.requirement_id())
+                .type(RequirementType.fromKorean(response.type()))
+                .level1(response.category_large())
+                .level2(response.category_medium())
+                .level3(response.category_small())
+                .description(description)
+                .priority(Priority.fromKorean(response.importance()))
+                .difficulty(Difficulty.fromKorean(response.difficulty()))
+                .createdDate(LocalDateTime.now())
+                .project(project)
+                .createdBy(member)
+                .build();
     }
 
     public Source toSrcEntity(SourceCallbackReq response, Requirement requirement, Document document) {
