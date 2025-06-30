@@ -7,6 +7,7 @@ import com.skala.decase.domain.project.exception.ProjectException;
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.mail.MailException;
 import org.springframework.mail.javamail.JavaMailSender;
@@ -23,7 +24,9 @@ public class MailService {
     private final JavaMailSender javaMailSender;
     private final static String MAIL_SUBJECT_CONTENT = "Decase 프로젝트 초대 메일입니다.";
     private final static String MAIL_WELCOME_CONTENT = "Decase와 함께 하시는 것을 진심으로 환영합니다.";
-    private final static String WEB_URL = "http://localhost:5173/invite";
+
+    @Value("${invite.web-url}")
+    private String webUrl;
 
     /*
         메일 전송
@@ -48,7 +51,7 @@ public class MailService {
     }
 
     private String getContent(ProjectInvitation projectInvitation) {
-        String link = WEB_URL + projectInvitation.getToken();
+        String link = webUrl + projectInvitation.getToken();
 
         return """
                 <!DOCTYPE html>
