@@ -9,7 +9,6 @@ import com.skala.decase.domain.requirement.exception.PendingRequirementException
 import com.skala.decase.domain.requirement.exception.RequirementException;
 import com.skala.decase.domain.requirement.repository.PendingRequirementRepository;
 import com.skala.decase.domain.requirement.repository.RequirementRepository;
-import com.skala.decase.domain.source.domain.Source;
 import com.skala.decase.domain.source.service.SourceRepository;
 import lombok.RequiredArgsConstructor;
 import org.hibernate.Hibernate;
@@ -17,7 +16,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -82,63 +80,67 @@ public class PendingRequirementService {
             .toList();
     }
 
+    public void approveRequest(Long projectId, ApproveDto approveDto) {
+        // 1) PendingRequirement 조회
+        PendingRequirement pendingRequirement = pendingRequirementRepository.findById(approveDto.getPendingPk())
+                .orElseThrow(() -> new PendingRequirementException("해당 요청이 존재하지 않습니다.", HttpStatus.NOT_FOUND));
+
+        // 2) 원본 Requirement 조회
+        Requirement originalRequirement = requirementRepository.findByProject_ProjectIdAndReqIdCode(
+                projectId, pendingRequirement.getReqIdCode()
+        ).orElseThrow(() -> new RequirementException("원본 요구사항을 찾을 수 없습니다.", HttpStatus.NOT_FOUND));
+
+        if (approveDto.getStatus() == 2) {
+            if (pendingRequirement.getIsDelete()) {
+                originalRequirement.setModifiedDate(pendingRequirement.getModifiedDate());
+                originalRequirement.setModReason(pendingRequirement.getModReason());
+                originalRequirement.setModifiedBy(pendingRequirement.getCreatedBy());
+
+                List<PendingRequirement> pendinglist = pendingRequirementRepository.findAllPendingRequirementByReqIdCode(pendingRequirement.getReqIdCode());
+
+                // ✅ Envers 스냅샷 찍기 전에 연관 객체 강제 초기화
+                Hibernate.initialize(originalRequirement.getCreatedBy());
+                Hibernate.initialize(originalRequirement.getModifiedBy());
+
+                System.out.println("createdBy initialized? " + Hibernate.isInitialized(originalRequirement.getCreatedBy()));
+                System.out.println("modifiedBy initialized? " + Hibernate.isInitialized(originalRequirement.getModifiedBy()));
+
+                requirementRepository.save(originalRequirement);
+                requirementRepository.flush(); // 이 시점에서 초기화된 필드까지 Envers가 추적
+                requirementRepository.delete(originalRequirement);
+                pendingRequirementRepository.deleteAll(pendinglist);
+            } else {
+                // 승인 처리: Pending 값으로 원본 Requirement 필드 덮어쓰기
+                originalRequirement.updateFromPending(
+                        pendingRequirement.getType(),
+                        pendingRequirement.getLevel1(),
+                        pendingRequirement.getLevel2(),
+                        pendingRequirement.getLevel3(),
+                        pendingRequirement.getName(),
+                        pendingRequirement.getDescription(),
+                        pendingRequirement.getPriority(),
+                        pendingRequirement.getDifficulty(),
+                        pendingRequirement.getModReason(),
+                        pendingRequirement.getCreatedBy()
+                );
+                // 원본 Requirement 저장
+                requirementRepository.save(originalRequirement);
+            }
+            // Pending 삭제
+            pendingRequirementRepository.delete(pendingRequirement);
+        } else if (approveDto.getStatus() == 1) {
+            // 반려 처리: Pending 삭제
+            pendingRequirement.setStatus(true);
+            pendingRequirementRepository.save(pendingRequirement);
+        } else {
+            throw new PendingRequirementException("유효하지 않은 상태 값입니다. status는 1(승인) 또는 2(반려)이어야 합니다.", HttpStatus.BAD_REQUEST);
+        }
+    }
+
     @Transactional
     public String approveRequests(Long projectId, List<ApproveDto> dtoList) {
         for (ApproveDto dto : dtoList) {
-            // 1) PendingRequirement 조회
-            PendingRequirement pendingRequirement = pendingRequirementRepository.findById(dto.getPendingPk())
-                    .orElseThrow(() -> new PendingRequirementException("해당 요청이 존재하지 않습니다.", HttpStatus.NOT_FOUND));
-
-            // 2) 원본 Requirement 조회
-            Requirement originalRequirement = requirementRepository.findByProject_ProjectIdAndReqIdCode(
-                    projectId, pendingRequirement.getReqIdCode()
-            ).orElseThrow(() -> new RequirementException("원본 요구사항을 찾을 수 없습니다.", HttpStatus.NOT_FOUND));
-
-            if (dto.getStatus() == 2) {
-                if (pendingRequirement.getIsDelete() == true) {
-                    originalRequirement.setModifiedDate(pendingRequirement.getModifiedDate());
-                    originalRequirement.setModReason(pendingRequirement.getModReason());
-                    originalRequirement.setModifiedBy(pendingRequirement.getCreatedBy());
-
-                    List<PendingRequirement> pendinglist = pendingRequirementRepository.findAllPendingRequirementByReqIdCode(pendingRequirement.getReqIdCode());
-
-                    // ✅ Envers 스냅샷 찍기 전에 연관 객체 강제 초기화
-                    Hibernate.initialize(originalRequirement.getCreatedBy());
-                    Hibernate.initialize(originalRequirement.getModifiedBy());
-
-                    System.out.println("createdBy initialized? " + Hibernate.isInitialized(originalRequirement.getCreatedBy()));
-                    System.out.println("modifiedBy initialized? " + Hibernate.isInitialized(originalRequirement.getModifiedBy()));
-
-                    requirementRepository.save(originalRequirement);
-                    requirementRepository.flush(); // 이 시점에서 초기화된 필드까지 Envers가 추적
-                    requirementRepository.delete(originalRequirement);
-                    pendingRequirementRepository.deleteAll(pendinglist);
-                } else {
-                    // 승인 처리: Pending 값으로 원본 Requirement 필드 덮어쓰기
-                    originalRequirement.updateFromPending(
-                            pendingRequirement.getType(),
-                            pendingRequirement.getLevel1(),
-                            pendingRequirement.getLevel2(),
-                            pendingRequirement.getLevel3(),
-                            pendingRequirement.getName(),
-                            pendingRequirement.getDescription(),
-                            pendingRequirement.getPriority(),
-                            pendingRequirement.getDifficulty(),
-                            pendingRequirement.getModReason(),
-                            pendingRequirement.getCreatedBy()
-                    );
-                    // 원본 Requirement 저장
-                    requirementRepository.save(originalRequirement);
-                }
-                // Pending 삭제
-                pendingRequirementRepository.delete(pendingRequirement);
-            } else if (dto.getStatus() == 1) {
-                // 반려 처리: Pending 삭제
-                pendingRequirement.setStatus(true);
-                pendingRequirementRepository.save(pendingRequirement);
-            } else {
-                throw new PendingRequirementException("유효하지 않은 상태 값입니다. status는 1(승인) 또는 2(반려)이어야 합니다.", HttpStatus.BAD_REQUEST);
-            }
+            approveRequest(projectId, dto);
         }
         return "요청된 요구사항이 정상적으로 처리되었습니다.";
     }

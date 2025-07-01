@@ -9,5 +9,5 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class ApproveDto {
 	private Long pendingPk;  // 승인/반려할 PendingRequirement PK
-	private int status;  // true: 승인, false: 반려
+	private int status;  // 2: 승인, 1: 반려
 }
