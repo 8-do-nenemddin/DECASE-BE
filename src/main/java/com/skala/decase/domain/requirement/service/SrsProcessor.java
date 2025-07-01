@@ -94,10 +94,16 @@ public class SrsProcessor {
                     .bodyToMono(Map.class)
                     .timeout(Duration.ofSeconds(30))  // 즉시 응답받으므로 30초로 단축
                     .doOnSuccess(response -> {
-                        int jobId = (int) response.get("job_id");
-                        String status = (String) response.get("status");
-                        String message = (String) response.get("message");
-                        log.info("현황 시스템 분석 시작, jobId: {}, 상태: {}, 메시지: {}", jobId, status, message);
+                        Object jobIdObj = response.get("job_id");
+                        Object statusObj = response.get("status");
+                        Object messageObj = response.get("message");
+
+                        if (jobIdObj instanceof Integer && statusObj instanceof String status && messageObj instanceof String message) {
+                            int jobId = (Integer) jobIdObj;
+                            log.info("현황 시스템 분석 시작, jobId: {}, 상태: {}, 메시지: {}", jobId, status, message);
+                        } else {
+                            log.warn("AS-IS 응답 형식이 올바르지 않습니다. 응답 내용: {}", response);
+                        }
                     })
                     .doOnError(error -> {
                         log.error("현황 시스템 분석 실패 - 프로젝트: {}, 에러: {}", projectId, error.getMessage());

@@ -29,7 +29,7 @@ public class PendingRequirement {
 	@Column(name = "req_id_code", length = 100, nullable = false)
 	private String reqIdCode;
 
-	@Column(name = "name", length = 100, nullable = false)
+	@Column(name = "name", length = 100)
 	private String name;  // 요구사항 명
 
 	@Column(name = "description", length = 5000)
