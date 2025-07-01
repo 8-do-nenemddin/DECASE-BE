@@ -190,17 +190,17 @@ public class Requirement {
         this.modifiedBy = modifiedBy;
     }
 
-    public void updateFromPending(RequirementType type, String level1, String level2, String level3, String name,
-                                  String description, Priority priority, Difficulty difficulty, String modReason,
+    public void updateFromPending(RequirementType newType, String newLevel1, String newLevel2, String newLevel3, String newName,
+                                  String newDescription, Priority newPriority, Difficulty newDifficulty, String modReason,
                                   Member modifiedBy) {
-        this.type = type == null ? this.type : type;
-        this.level1 = level1 == null ? this.level1 : level1;
-        this.level2 = level2 == null ? this.level2 : level2;
-        this.level3 = level3 == null ? this.level3 : level3;
-        this.name = name == null ? this.name : name;
-        this.description = description == null ? this.description : description;
-        this.priority = priority == null ? this.priority : priority;
-        this.difficulty = difficulty == null ? this.difficulty : difficulty;
+        this.type = newType == null ? this.type : newType;
+        this.level1 = newLevel1 == null ? this.level1 : newLevel1;
+        this.level2 = newLevel2 == null ? this.level2 : newLevel2;
+        this.level3 = newLevel3 == null ? this.level3 : newLevel3;
+        this.name = newName == null ? this.name : newName;
+        this.description = newDescription == null ? this.description : newDescription;
+        this.priority = newPriority == null ? this.priority : newPriority;
+        this.difficulty = newDifficulty == null ? this.difficulty : newDifficulty;
         this.modReason = modReason;
         this.modifiedBy = modifiedBy;
     }
