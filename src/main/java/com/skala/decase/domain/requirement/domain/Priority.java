@@ -6,6 +6,15 @@ import org.springframework.http.HttpStatus;
 public enum Priority {
     HIGH, MIDDLE, LOW;
 
+    public static Priority fromEnglish(String value) {
+        return switch (value) {
+            case "HIGH" -> HIGH;
+            case "MIDDLE" -> MIDDLE;
+            case "LOW" -> LOW;
+            default -> throw new PriorityException("Unknown priority value: " + value, HttpStatus.BAD_REQUEST);
+        };
+    }
+
     public static Priority fromKorean(String value) {
         return switch (value) {
             case "상" -> HIGH;
