@@ -86,6 +86,8 @@ public class DocumentService {
                                    Member member, boolean isMemberUpload) {
         String fileName = System.currentTimeMillis() + "_" + StringUtils.cleanPath(file.getOriginalFilename());
         Path path = Paths.get(uploadPath);
+
+        // 디렉토리 없으면 생성
         if (!Files.exists(path)) {
             try {
                 Files.createDirectories(path);
@@ -94,6 +96,7 @@ public class DocumentService {
             }
         }
 
+        // 파일 저장
         Path filePath = path.resolve(fileName);
         try {
             Files.copy(file.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
@@ -101,9 +104,16 @@ public class DocumentService {
             throw new DocumentException("파일을 저장할 수 없습니다.", HttpStatus.INTERNAL_SERVER_ERROR);
         }
 
-        // Document 엔티티 생성 및 저장
+        // docTypeIdx에 해당하는 prefix 확인
+        String prefix = TYPE_PREFIX_MAP.get(docTypeIdx);
+        if (prefix == null) {
+            throw new DocumentException("유효하지 않은 docTypeIdx: " + docTypeIdx,
+                    HttpStatus.BAD_REQUEST);
+        }
+
+        // Document 엔티티 생성
         Document doc = new Document(
-                generateDocId(TYPE_PREFIX_MAP.get(docTypeIdx)),
+                generateDocId(prefix),
                 file.getOriginalFilename(),
                 filePath.toString(),
                 isMemberUpload,
@@ -113,6 +123,7 @@ public class DocumentService {
 
         return documentRepository.save(doc);
     }
+
 
     // Doc ID 찾기
     public String generateDocId(String typePrefix) {
