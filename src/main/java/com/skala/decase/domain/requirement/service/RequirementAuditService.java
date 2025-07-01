@@ -15,7 +15,6 @@ import org.hibernate.envers.RevisionType;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
-import java.time.format.DateTimeFormatter;
 import java.util.*;
 
 @Service
@@ -38,21 +37,6 @@ public class RequirementAuditService {
                 .filter(requirement -> requirement.getRequirement().getReqIdCode().equals(reqIdCode))
                 .sorted(Comparator.comparing(RequirementAuditDTO::getRevisionDate)) // 오름차순 정렬 추가
                 .map(requirementAuditMapper::toResponse)
-                .toList();
-    }
-
-    public List<String> findModReasonByProjectIdAndReqIdCode(long projectId, String reqIdCode) {
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
-
-        return requirementAuditRepository.getRequirementHistoryByProjectId(projectId)
-                .stream()
-                .filter(requirement -> requirement.getRequirement().getReqIdCode().equals(reqIdCode))
-                .sorted(Comparator.comparing(RequirementAuditDTO::getRevisionDate))
-                .map(audit -> {
-                    String date = audit.getRevisionDate().format(formatter);
-                    String reason = Optional.ofNullable(audit.getRequirement().getModReason()).orElse("(수정 이유 없음)");
-                    return date + " : " + reason;
-                })
                 .toList();
     }
 

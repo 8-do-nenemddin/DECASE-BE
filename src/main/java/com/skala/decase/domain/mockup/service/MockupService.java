@@ -1,7 +1,5 @@
 package com.skala.decase.domain.mockup.service;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.skala.decase.domain.mockup.domain.Mockup;
 import com.skala.decase.domain.mockup.domain.dto.MockupExistDto;
 import com.skala.decase.domain.mockup.exception.MockupException;
@@ -61,7 +59,7 @@ public class MockupService {
 	}
 
 	// 단일 목업 코드 반환 (HTML 등)
-	public ResponseEntity<Map<String, Object>> getMockupCode(Long projectId, Integer revisionCount, String fileName) {
+	public ResponseEntity<Resource> getMockupCode(Long projectId, Integer revisionCount, String fileName) {
 		Optional<Mockup> mockupOpt = mockupRepository.findByProject_ProjectIdAndRevisionCountAndName(projectId, revisionCount, fileName);
 
 		if (mockupOpt.isEmpty()) {
@@ -70,53 +68,17 @@ public class MockupService {
 
 		Mockup mockup = mockupOpt.get();
 		try {
-			// HTML 파일 읽기
 			String code = Files.readString(Path.of(mockup.getPath()));
-
-			// 같은 projectId + revisionCount + .json 확장자를 가진 mockup 중 하나 찾기
-			Optional<Mockup> jsonMetaOpt = mockupRepository.findAllByProject_ProjectIdAndRevisionCount(projectId, revisionCount)
-					.stream()
-					.filter(m -> m.getName().toLowerCase().endsWith(".json"))
-					.findFirst();
-
-			List<Map<String, Object>> sourceRequirements = new ArrayList<>();
-
-			if (jsonMetaOpt.isPresent()) {
-				Path jsonPath = Path.of(jsonMetaOpt.get().getPath());
-				String jsonContent = Files.readString(jsonPath);
-
-				ObjectMapper mapper = new ObjectMapper();
-				JsonNode root = mapper.readTree(jsonContent);
-				JsonNode pages = root.path("page_mapping");
-
-				for (JsonNode page : pages) {
-					if (fileName.equals(page.path("generated_file").asText())) {
-						JsonNode sources = page.path("source_requirements");
-						if (sources.isArray()) {
-							for (JsonNode src : sources) {
-								Map<String, Object> entry = new HashMap<>();
-								entry.put("id", src.path("id").asText());
-								entry.put("description", src.path("description").asText());
-								sourceRequirements.add(entry);
-							}
-						}
-						break;
-					}
-				}
-			}
-
-			Map<String, Object> responseBody = new HashMap<>();
-			responseBody.put("html", code);
-			responseBody.put("sourceRequirements", sourceRequirements);
+			ByteArrayResource resource = new ByteArrayResource(code.getBytes(StandardCharsets.UTF_8));
 
 			return ResponseEntity.ok()
-					.contentType(MediaType.APPLICATION_JSON)
-					.body(responseBody);
-
+					.contentType(MediaType.TEXT_HTML)
+					.body(resource);
 		} catch (IOException e) {
 			return ResponseEntity.internalServerError().build();
 		}
 	}
+
 
 	// 목업 불러오기
 	private List<Resource> getMockupsByRevision(Long projectId, Integer revisionCount) {

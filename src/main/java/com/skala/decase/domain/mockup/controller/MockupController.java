@@ -43,7 +43,7 @@ public class MockupController {
 
     @Operation(summary = "목업 코드", description = "생성된 목업 코드 전송")
     @GetMapping("/{revisionCount}/{fileName}")
-    public ResponseEntity<Map<String, Object>> getMockupCode(
+    public ResponseEntity<Resource> getMockupCode(
             @PathVariable Long projectId,
             @PathVariable Integer revisionCount,
             @PathVariable String fileName) {

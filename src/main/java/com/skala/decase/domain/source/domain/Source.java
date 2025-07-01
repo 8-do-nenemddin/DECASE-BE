@@ -43,7 +43,6 @@ public class Source {
 
     private int pageNum;  //페이지 번호
 
-    @Column(name = "rel_sentence", length = 1000, nullable = false)
     private String relSentence;  //관련 문장
 
     public void createSource(Requirement requirement, Document document, int pageNum, String relSentence) {

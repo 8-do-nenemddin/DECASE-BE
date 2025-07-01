@@ -11,7 +11,6 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
-import lombok.Builder;
 import lombok.Data;
 import org.hibernate.envers.Audited;
 import org.hibernate.envers.NotAudited;
@@ -111,11 +110,10 @@ public class Requirement {
     /**
      * 요구사항 정의서 초기 생성시 생성되는 데이터
      */
-    @Builder
-    public Requirement(String reqIdCode, RequirementType type, String level1, String level2,
-                       String level3, String name, String description, Priority priority,
-                       Difficulty difficulty,
-                       LocalDateTime createdDate, Project project, Member createdBy) {
+    public void createInitialRequirement(String reqIdCode, RequirementType type, String level1, String level2,
+                                         String level3, String name, String description, Priority priority,
+                                         Difficulty difficulty,
+                                         LocalDateTime createdDate, Project project, Member createdBy) {
         this.reqIdCode = reqIdCode;
         this.revisionCount = 1;
         this.type = type;
