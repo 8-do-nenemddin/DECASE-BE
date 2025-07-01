@@ -2,21 +2,33 @@ package com.skala.decase.domain.requirement.domain;
 
 import com.skala.decase.domain.member.domain.Member;
 import com.skala.decase.domain.project.domain.Project;
+import com.skala.decase.domain.requirement.controller.dto.request.SrsDeleteRequestDetail;
+import com.skala.decase.domain.requirement.controller.dto.request.SrsUpdateRequestDetail;
 import com.skala.decase.domain.requirement.controller.dto.request.UpdateRequirementDto;
-import com.skala.decase.domain.requirement.service.dto.response.UpdateRfpResponse;
 import com.skala.decase.domain.source.domain.Source;
-import jakarta.persistence.*;
-
+import jakarta.persistence.CascadeType;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EntityListeners;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToMany;
+import jakarta.persistence.Table;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
-
 import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 import org.hibernate.envers.Audited;
 import org.hibernate.envers.NotAudited;
 import org.hibernate.envers.RelationTargetAuditMode;
-import lombok.NoArgsConstructor;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
@@ -160,6 +172,7 @@ public class Requirement {
         this.isDeleted = false;
         this.project = project;
         this.projectIdAud = project.getProjectId();
+        this.createdBy = modifiedBy;
         this.modifiedBy = modifiedBy;
         this.modReason = modReason; //요구사항 추가 이유
     }
@@ -177,16 +190,51 @@ public class Requirement {
         this.modifiedBy = modifiedBy;
     }
 
-    public void updateSRS(UpdateRfpResponse response, Member modifiedBy) {
+    /**
+     * 요구사항 정의서 내용 수정
+     */
+    public void updateSRS(SrsUpdateRequestDetail response, Member modifiedBy) {
         this.revisionCount += 1;
-        this.modReason = response.mod_reason();
-        this.type = RequirementType.fromKorean(response.type());
-        this.level1 = response.category_large();
-        this.level2 = response.category_medium();
-        this.level3 = response.category_small();
-        this.name = response.name();
-        this.priority = Priority.fromKorean(response.importance());
-        this.difficulty = Difficulty.fromKorean(response.difficulty());
+        if (response.modified_reason() != null) {
+            this.modReason = response.modified_reason();
+        }
+        if (response.type() != null) {
+            this.type = RequirementType.fromKorean(response.type());
+        }
+        if (response.level1() != null) {
+            this.level1 = response.level1();
+        }
+        if (response.level2() != null) {
+            this.level2 = response.level2();
+        }
+        if (response.level3() != null) {
+            this.level3 = response.level3();
+        }
+        if (response.requirement_name() != null) {
+            this.name = response.requirement_name();
+        }
+        if (response.importance() != null) {
+            this.priority = Priority.fromEnglish(response.importance());
+        }
+        if (response.difficulty() != null) {
+            this.difficulty = Difficulty.fromEnglish(response.difficulty());
+        }
+        if (response.description() != null) {
+            this.description = response.description();
+        }
+        this.modifiedBy = modifiedBy;
+    }
+
+    /**
+     * 요구사항 정의서 내용 삭제
+     */
+    public void deleteSRS(SrsDeleteRequestDetail response, Member modifiedBy) {
+        this.revisionCount += 1;
+        this.isDeleted = true;
+        this.deletedRevision = this.revisionCount;
+        if (response.modified_reason() != null) {
+            this.modReason = response.modified_reason();
+        }
         this.modifiedBy = modifiedBy;
     }
 

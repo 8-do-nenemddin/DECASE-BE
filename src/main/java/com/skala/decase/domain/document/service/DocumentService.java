@@ -19,7 +19,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -56,7 +55,7 @@ public class DocumentService {
     private String BASE_ASIS_PATH;
 
     // 문서 타입 매핑
-    private static final Map<Integer, String> TYPE_PREFIX_MAP = Map.of(
+    public static final Map<Integer, String> TYPE_PREFIX_MAP = Map.of(
             1, "RFP",
             2, "MOMV",
             3, "MOMD",
@@ -82,10 +81,9 @@ public class DocumentService {
      * @param file
      * @return
      */
-    private Document uploadDocument(String uploadPath, MultipartFile file, int docTypeIdx, Project project,
-                                    Member member, boolean isMemberUpload) {
-
-        // 파일 이름 생성
+    @Transactional
+    public Document uploadDocument(String uploadPath, MultipartFile file, int docTypeIdx, Project project,
+                                   Member member, boolean isMemberUpload) {
         String fileName = System.currentTimeMillis() + "_" + StringUtils.cleanPath(file.getOriginalFilename());
         Path path = Paths.get(uploadPath);
 

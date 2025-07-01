@@ -6,6 +6,15 @@ import org.springframework.http.HttpStatus;
 public enum Difficulty {
     HIGH, MIDDLE, LOW;
 
+    public static Difficulty fromEnglish(String value) {
+        return switch (value) {
+            case "HIGH" -> HIGH;
+            case "MIDDLE" -> MIDDLE;
+            case "LOW" -> LOW;
+            default -> throw new DifficultyException("Unknown difficulty value: " + value, HttpStatus.BAD_REQUEST);
+        };
+    }
+
     public static Difficulty fromKorean(String value) {
         return switch (value) {
             case "상" -> HIGH;
