@@ -99,4 +99,11 @@ public interface RequirementRepository extends JpaRepository<Requirement, Long> 
     @Query("SELECT r FROM Requirement r WHERE r.project.projectId = :projectId")
     Optional<List<Requirement>> findByProjectId(@Param("projectId") long project);
 
+    @Query("SELECT DISTINCT r FROM Requirement r " +
+            "LEFT JOIN FETCH r.sources s " +
+            "LEFT JOIN FETCH s.document " +
+            "WHERE r.project.projectId = :projectId " +
+            "AND r.isDeleted = false")
+    Optional<List<Requirement>> findByProjectIdWithSourceWithDocument(Long projectId);
+
 }

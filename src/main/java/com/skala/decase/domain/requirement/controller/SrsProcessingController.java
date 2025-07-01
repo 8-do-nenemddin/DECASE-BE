@@ -45,24 +45,22 @@ public class SrsProcessingController {
     }
 
     /**
-     * 추가적인 문서를 받아서 요구사항 정의서 수정사항에 반영
+     * 추가 문서를 받아서 요구사항 정의서 수정사항에 반영
      *
      * @param projectId 프로젝트 id
      * @param memberId  멤버 id
-     * @param docId     문서 id
      * @param file      사용자 업로드 파일
      * @return
      */
     @Operation(summary = "추가적인 문서를 받아서 요구사항 정의서 수정사항에 반영", description = "추가적인 문서를 받아서 요구사항 정의서 수정사항에 반영합니다.")
     @PostMapping(path = "/{projectId}/requirement-documents/update",
             consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ResponseEntity<ApiResponse<String>> updateRfpFile(@PathVariable Long projectId,
-                                                             @RequestParam("memberId") Long memberId,
-                                                             @RequestParam("docId") String docId,
-                                                             @RequestPart("file") MultipartFile file) {
-        // post: /api/v1/process-rfp-file에서 생성된 요구사항 정의서 리스트를 받아옴.
-        srsUpdateService.updateRFP(projectId, memberId, docId, file);
-        return ResponseEntity.ok().body(ApiResponse.success("요구사항 정의서 수정 완료"));
+    public ResponseEntity<ApiResponse<String>> updateSRS(@PathVariable Long projectId,
+                                                         @RequestParam("memberId") Long memberId,
+                                                         @RequestParam("fileName") String fileName,
+                                                         @RequestPart("file") MultipartFile file) {
+        srsUpdateService.updateRFP(projectId, memberId, fileName, file);
+        return ResponseEntity.ok().body(ApiResponse.success("요구사항 정의서 수정 요청 완료"));
     }
 
 }
