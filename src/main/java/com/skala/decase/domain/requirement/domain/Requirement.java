@@ -145,7 +145,7 @@ public class Requirement {
                                         String level1, String level2,
                                         String level3, String name, String description, Priority priority,
                                         Difficulty difficulty,
-                                        LocalDateTime createdDate, Project project, Member createdBy) {
+                                        LocalDateTime createdDate, Project project, Member modifiedBy) {
         this.reqIdCode = reqIdCode;
         this.revisionCount = revisionCount;
         this.type = type;
@@ -160,25 +160,24 @@ public class Requirement {
         this.isDeleted = false;
         this.project = project;
         this.projectIdAud = project.getProjectId();
-        this.createdBy = createdBy;
+        this.modifiedBy = modifiedBy;
         this.modReason = modReason; //요구사항 추가 이유
     }
 
-    public void update(UpdateRequirementDto requirementDto, Member createdBy) {
-        this.type = requirementDto.getType();
-        this.level1 = requirementDto.getLevel1();
-        this.level2 = requirementDto.getLevel2();
-        this.level3 = requirementDto.getLevel3();
-        this.priority = requirementDto.getPriority();
-        this.difficulty = requirementDto.getDifficulty();
-        this.name = requirementDto.getName();
-        this.description = requirementDto.getDescription();
+    public void update(UpdateRequirementDto requirementDto, Member modifiedBy) {
+        this.type = requirementDto.getType() == null ? this.type : requirementDto.getType();
+        this.level1 = requirementDto.getLevel1() == null ? this.level1 : requirementDto.getLevel1();
+        this.level2 = requirementDto.getLevel2() == null ? this.level2 : requirementDto.getLevel2();
+        this.level3 = requirementDto.getLevel3() == null ? this.level3 : requirementDto.getLevel3();
+        this.priority = requirementDto.getPriority() == null ? this.priority : requirementDto.getPriority();
+        this.difficulty = requirementDto.getDifficulty() == null ? this.difficulty : requirementDto.getDifficulty();
+        this.name = requirementDto.getName() == null ? this.getName() : requirementDto.getName();
+        this.description = requirementDto.getDescription() == null ? this.description : requirementDto.getDescription();
         this.modReason = requirementDto.getModReason();
-        this.createdBy = createdBy;
-        this.projectIdAud = createdBy.getMemberId();
+        this.modifiedBy = modifiedBy;
     }
 
-    public void updateSRS(UpdateRfpResponse response, Member createdBy) {
+    public void updateSRS(UpdateRfpResponse response, Member modifiedBy) {
         this.revisionCount += 1;
         this.modReason = response.mod_reason();
         this.type = RequirementType.fromKorean(response.type());
@@ -188,22 +187,21 @@ public class Requirement {
         this.name = response.name();
         this.priority = Priority.fromKorean(response.importance());
         this.difficulty = Difficulty.fromKorean(response.difficulty());
-        this.createdBy = createdBy;
+        this.modifiedBy = modifiedBy;
     }
 
     public void updateFromPending(RequirementType type, String level1, String level2, String level3, String name,
                                   String description, Priority priority, Difficulty difficulty, String modReason,
-                                  Member createdBy) {
-        this.type = type;
-        this.level1 = level1;
-        this.level2 = level2;
-        this.level3 = level3;
-        this.name = name;
-        this.description = description;
-        this.priority = priority;
-        this.difficulty = difficulty;
+                                  Member modifiedBy) {
+        this.type = type == null ? this.type : type;
+        this.level1 = level1 == null ? this.level1 : level1;
+        this.level2 = level2 == null ? this.level2 : level2;
+        this.level3 = level3 == null ? this.level3 : level3;
+        this.name = name == null ? this.name : name;
+        this.description = description == null ? this.description : description;
+        this.priority = priority == null ? this.priority : priority;
+        this.difficulty = difficulty == null ? this.difficulty : difficulty;
         this.modReason = modReason;
-        this.createdBy = createdBy;
-        this.modifiedDate = LocalDateTime.now();
+        this.modifiedBy = modifiedBy;
     }
 }

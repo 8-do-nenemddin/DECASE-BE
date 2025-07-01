@@ -2,6 +2,7 @@ package com.skala.decase.domain.requirement.service;
 
 import com.skala.decase.domain.member.domain.Member;
 import com.skala.decase.domain.member.exception.MemberException;
+import com.skala.decase.domain.member.repository.MemberProjectRepository;
 import com.skala.decase.domain.member.repository.MemberRepository;
 import com.skala.decase.domain.mockup.controller.dto.request.CreateMockUpRequest;
 import com.skala.decase.domain.mockup.mapper.MockupMapper;
@@ -46,6 +47,7 @@ public class RequirementService {
     private final MemberRepository memberRepository;
     private final PendingRequirementRepository pendingRequirementRepository;
     private final RequirementAuditService requirementAuditService;
+    private final MemberProjectRepository memberProjectRepository;
 
     private final RequirementServiceMapper requirementServiceMapper;
     private final MockupMapper mockupMapper;
@@ -245,6 +247,12 @@ public class RequirementService {
                 throw new RequirementException("해당 프로젝트의 요구사항이 아닙니다.", HttpStatus.BAD_REQUEST);
             }
 
+            //admin일 경우 바로 반영
+            if (memberProjectRepository.existsAdminPermission(project, member)) {
+                updateRequirementByAdmin(req, requirement, member);
+                continue;
+            }
+
             PendingRequirement pendingRequirement = new PendingRequirement();
             pendingRequirement.createPendingRequirement(req, requirement.getReqIdCode(), project, member); // 변경 사항 업데이트
 
@@ -252,18 +260,30 @@ public class RequirementService {
         }
     }
 
+    private void updateRequirementByAdmin(UpdateRequirementDto req, Requirement requirement, Member member) {
+        if (requirement.isDeleted()) {
+            requirementRepository.delete(requirement);
+            return;
+        }
+        requirement.update(req, member);
+    }
+
     /**
      * 사용자가 직접 화면에서 요구사항 정의서 내용을 삭제할때 리비전 업데이트 x
      */
     @Transactional
     public void deleteRequirement(Long projectId, Long reqPk, String reason, Long memberId) {
-        projectService.findByProjectId(projectId);
+        Project project = projectService.findByProjectId(projectId);
 
         Requirement requirement = requirementRepository.findById(reqPk)
                 .orElseThrow(() -> new RequirementException("해당 요구사항이 존재하지 않습니다.", HttpStatus.NOT_FOUND));
 
         Member member = memberRepository.findById(memberId)
                 .orElseThrow(() -> new MemberException("해당 멤버가 존재하지 않습니다.", HttpStatus.NOT_FOUND));
+
+        if (memberProjectRepository.existsAdminPermission(project, member)) {
+            requirementRepository.delete(requirement);
+        }
 
         PendingRequirement pendingRequirement = new PendingRequirement();
         pendingRequirement.createPendingRequirementDelete(requirement, reason, member); // 변경 사항 업데이트
