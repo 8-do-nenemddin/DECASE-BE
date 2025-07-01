@@ -30,6 +30,7 @@ import java.util.Comparator;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -40,9 +41,8 @@ public class ProjectService {
 
     private final ProjectRepository projectRepository;
     private final MemberProjectRepository memberProjectRepository;
-    private final ProjectInvitationRepository projectInvitationRepository;
     private final SourceRepository sourceRepository;
-    private final JobRepository jobRepository;
+    private final MemberProjectRepository memberProjectInvitationRepository;
 
     private final MemberService memberService;
 
@@ -159,5 +159,14 @@ public class ProjectService {
             result.add(projectMapper.toMappingTable(requirement, responseDtos));
         }
         return result.stream().sorted(Comparator.comparing(MappingTableResponseDto::req_code)).toList();
+    }
+
+    public String getAuthority(Long projectId, Long memberId) {
+        MemberProject memberProject = memberProjectRepository.findByProject_ProjectIdAndMember_MemberId(projectId, memberId);
+        if (memberProject == null) {
+            throw new ProjectException("해당 멤버의 프로젝트 권한을 찾을 수 없습니다.", HttpStatus.NOT_FOUND);
+        }
+        System.out.println("✅ : "+ memberProject.getPermission().toString());
+        return memberProject.getPermission().toString();
     }
 }

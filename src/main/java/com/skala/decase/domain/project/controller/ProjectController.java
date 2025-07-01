@@ -94,4 +94,12 @@ public class ProjectController {
                         "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
                 .body(resource);
     }
+
+    @GetMapping("/{projectId}/authority/{memberId}")
+    public ResponseEntity<PermissionResponse> getAuthority(
+            @PathVariable Long projectId,
+            @PathVariable Long memberId) {
+        String permission = projectService.getAuthority(projectId, memberId);
+        return ResponseEntity.ok(new PermissionResponse(permission));
+    }
 }
