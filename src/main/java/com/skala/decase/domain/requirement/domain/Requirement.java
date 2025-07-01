@@ -133,7 +133,7 @@ public class Requirement {
         this.projectIdAud = project.getProjectId();
         this.createdBy = createdBy;
         this.modifiedBy = createdBy;
-        this.modReason = ""; //초기 요구사항 정의서의 수정 이유는 비워둠.
+        this.modReason = "-"; //초기 요구사항 정의서의 수정 이유는 비워둠.
         this.sources = new ArrayList<>();
     }
 
