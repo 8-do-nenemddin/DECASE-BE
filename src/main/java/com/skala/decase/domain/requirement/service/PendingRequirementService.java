@@ -100,6 +100,8 @@ public class PendingRequirementService {
                     originalRequirement.setModReason(pendingRequirement.getModReason());
                     originalRequirement.setModifiedBy(pendingRequirement.getCreatedBy());
 
+                    List<PendingRequirement> pendinglist = pendingRequirementRepository.findAllPendingRequirementByReqIdCode(pendingRequirement.getReqIdCode());
+
                     // ✅ Envers 스냅샷 찍기 전에 연관 객체 강제 초기화
                     Hibernate.initialize(originalRequirement.getCreatedBy());
                     Hibernate.initialize(originalRequirement.getModifiedBy());
@@ -107,10 +109,10 @@ public class PendingRequirementService {
                     System.out.println("createdBy initialized? " + Hibernate.isInitialized(originalRequirement.getCreatedBy()));
                     System.out.println("modifiedBy initialized? " + Hibernate.isInitialized(originalRequirement.getModifiedBy()));
 
-
                     requirementRepository.save(originalRequirement);
                     requirementRepository.flush(); // 이 시점에서 초기화된 필드까지 Envers가 추적
                     requirementRepository.delete(originalRequirement);
+                    pendingRequirementRepository.deleteAll(pendinglist);
                 } else {
                     // 승인 처리: Pending 값으로 원본 Requirement 필드 덮어쓰기
                     originalRequirement.updateFromPending(
