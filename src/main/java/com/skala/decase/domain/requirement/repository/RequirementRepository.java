@@ -106,4 +106,5 @@ public interface RequirementRepository extends JpaRepository<Requirement, Long> 
             "AND r.isDeleted = false")
     Optional<List<Requirement>> findByProjectIdWithSourceWithDocument(Long projectId);
 
+    List<Requirement> findByProject_ProjectIdAndReqIdCodeIn(Long projectId, List<String> reqPks);
 }

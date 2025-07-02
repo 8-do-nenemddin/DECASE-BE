@@ -129,4 +129,8 @@ public interface MemberProjectRepository extends JpaRepository<MemberProject, Lo
 
     // 어드민 여부 조회
     Boolean existsByMemberAndIsAdminTrue(Member member);
+
+	List<MemberProject> project(Project project);
+
+    MemberProject findByProject_ProjectIdAndMember_MemberId(Long projectId, Long memberId);
 }
