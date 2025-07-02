@@ -39,7 +39,6 @@ public class SrsProcessingController {
     public ResponseEntity<ApiResponse<String>> processRfpFile(@PathVariable Long projectId,
                                                               @RequestParam("memberId") Long memberId,
                                                               @RequestPart("file") MultipartFile file) {
-        // post: /api/v1/process-rfp-file에서 생성된 요구사항 정의서 리스트를 받아옴.
         String docId = srsProcessingService.createRequirementsSpecification(projectId, memberId, file);
         return ResponseEntity.ok().body(ApiResponse.success(docId + "의 요구사항 정의서 생성 요청"));
     }
