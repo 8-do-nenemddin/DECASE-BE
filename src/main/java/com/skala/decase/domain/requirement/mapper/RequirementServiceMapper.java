@@ -101,10 +101,22 @@ public class RequirementServiceMapper {
     }
 
     private SourceResponse toSourceResponse(Source source) {
+        String documentName;
+        if (source.getDocument() != null) {  // RFP 문서인 경우 이름을 RFP로 설정
+            String docId = source.getDocument().getDocId();
+            if (docId.startsWith("RFP")) {
+                documentName = "RFP";
+            } else {
+                documentName = source.getDocument().getName();
+            }
+        } else {
+            documentName = "Document Not Found";
+        }
+
         return new SourceResponse(
                 source.getSourceId(),
                 source.getDocument() != null ? source.getDocument().getDocId() : null,
-                source.getDocument() != null ? source.getDocument().getName() : null,
+                documentName,
                 source.getPageNum(),
                 source.getRelSentence()
         );

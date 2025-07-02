@@ -36,7 +36,7 @@ public class MockupController {
     // 사이드바 - 요구사항 리비전에 따른 목업 불러오기
     @Operation(summary = "목업 보기", description = "생성된 목업 리비전-파일명 전송")
     @GetMapping("")
-    public ResponseEntity<Map<Integer, List<String>>> getMockups(
+    public ResponseEntity<Map<Integer, Map<String, List<String>>>> getMockups(
             @PathVariable Long projectId) {
         return ResponseEntity.ok(mockupService.getMockupsGroupedByRevision(projectId));
     }
