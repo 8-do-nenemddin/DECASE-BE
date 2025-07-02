@@ -2,12 +2,15 @@ package com.skala.decase.domain.requirement.mapper;
 
 import com.skala.decase.domain.requirement.controller.dto.response.RequirementAuditDTO;
 import com.skala.decase.domain.requirement.controller.dto.response.RequirementAuditResponse;
+import com.skala.decase.domain.requirement.controller.dto.response.RequirementModReasonResponse;
 import com.skala.decase.domain.requirement.domain.Requirement;
 import lombok.AllArgsConstructor;
 import org.hibernate.envers.DefaultRevisionEntity;
 import org.hibernate.envers.RevisionType;
 import org.springframework.stereotype.Component;
 
+import java.time.Instant;
+import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.List;
 
@@ -27,6 +30,26 @@ public class RequirementAuditMapper {
                 revisionType
         );
     }
+
+    public RequirementModReasonResponse toModReasonResponse(Object[] result) {
+        String reqIdCode = (String) result[0];
+        String modReason = (String) result[1];
+        Object revTimestampObj = result[2];
+
+        LocalDateTime revisionDate;
+        if (revTimestampObj instanceof java.sql.Timestamp) {
+            revisionDate = ((java.sql.Timestamp) revTimestampObj).toLocalDateTime();
+        } else if (revTimestampObj instanceof Long) {
+            revisionDate = Instant.ofEpochMilli((Long) revTimestampObj).atZone(ZoneId.systemDefault()).toLocalDateTime();
+        } else if (revTimestampObj instanceof LocalDateTime) {
+            revisionDate = (LocalDateTime) revTimestampObj;
+        } else {
+            throw new IllegalArgumentException("Unsupported revTimestamp type: " + revTimestampObj.getClass());
+        }
+
+        return new RequirementModReasonResponse(reqIdCode, modReason, revisionDate);
+    }
+
 
     public RequirementAuditResponse toResponse(RequirementAuditDTO requirementAuditDTO) {
         return new RequirementAuditResponse(

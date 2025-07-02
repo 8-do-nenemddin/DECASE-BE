@@ -34,6 +34,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -76,18 +77,23 @@ public class RequirementService {
         List<Requirement> requirements = requirementRepository.findByProjectIdWithSourceWithDocument(projectId)
                 .orElse(null);
 
-        //요구사항이 없는 경우
         if (requirements == null) {
-            return new ArrayList<>();
+            throw new RequirementException("요구사항이 존재하지 않습니다.", HttpStatus.BAD_REQUEST);
         }
 
-        List<RequirementWithSourceResponse> responses = new ArrayList<>();
-        for (Requirement requirement : requirements) {
-            List<String> modReason = requirementAuditService.findModReasonByProjectIdAndReqIdCode(projectId,
-                    requirement.getReqIdCode());
-            responses.add(requirementServiceMapper.toReqWithSrcResponse(requirement, modReason, revisionCount));
-        }
-        return responses.stream()
+        // 모든 reqIdCode 수집
+        List<String> reqIdCodes = requirements.stream()
+                .map(Requirement::getReqIdCode)
+                .toList();
+
+        // 한 번에 이력 조회 (Map 형태로 반환)
+        Map<String, List<String>> reasonMap = requirementAuditService.findModReasonByProjectIdAndReqIdCodes(projectId, reqIdCodes);
+        // 변환
+        return requirements.stream()
+                .map(req -> {
+                    List<String> reasons = reasonMap.getOrDefault(req.getReqIdCode(), List.of());
+                    return requirementServiceMapper.toReqWithSrcResponse(req, reasons, revisionCount);
+                })
                 .sorted(Comparator.comparing(RequirementWithSourceResponse::type)
                         .thenComparing(RequirementWithSourceResponse::reqIdCode))
                 .toList();

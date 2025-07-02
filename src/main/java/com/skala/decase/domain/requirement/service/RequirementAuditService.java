@@ -3,6 +3,7 @@ package com.skala.decase.domain.requirement.service;
 import com.skala.decase.domain.requirement.controller.dto.response.MatrixResponse;
 import com.skala.decase.domain.requirement.controller.dto.response.RequirementAuditDTO;
 import com.skala.decase.domain.requirement.controller.dto.response.RequirementAuditResponse;
+import com.skala.decase.domain.requirement.controller.dto.response.RequirementModReasonResponse;
 import com.skala.decase.domain.requirement.domain.Reception;
 import com.skala.decase.domain.requirement.domain.Requirement;
 import com.skala.decase.domain.requirement.exception.RequirementException;
@@ -11,12 +12,14 @@ import com.skala.decase.domain.requirement.repository.RequirementAuditRepository
 import com.skala.decase.domain.requirement.repository.RequirementRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.hibernate.envers.RevisionType;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
 import java.time.format.DateTimeFormatter;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 @Transactional
@@ -33,27 +36,40 @@ public class RequirementAuditService {
     }
 
     public List<RequirementAuditResponse> findByProjectIdAndReqIdCode(long projectId, String reqIdCode) {
-        return requirementAuditRepository.getRequirementHistoryByProjectId(projectId)
+        return requirementAuditRepository.getRequirementHistoryByProjectIdAndReqIdCode(projectId, reqIdCode)
                 .stream()
-                .filter(requirement -> requirement.getRequirement().getReqIdCode().equals(reqIdCode))
-                .sorted(Comparator.comparing(RequirementAuditDTO::getRevisionDate)) // 오름차순 정렬 추가
                 .map(requirementAuditMapper::toResponse)
                 .toList();
     }
 
-    public List<String> findModReasonByProjectIdAndReqIdCode(long projectId, String reqIdCode) {
+    public Map<String, List<String>> findModReasonByProjectIdAndReqIdCodes(long projectId, List<String> reqIdCodes) {
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+        Map<String, List<String>> results = new LinkedHashMap<>();
 
-        return requirementAuditRepository.getRequirementHistoryByProjectId(projectId)
-                .stream()
-                .filter(requirement -> requirement.getRequirement().getReqIdCode().equals(reqIdCode))
-                .sorted(Comparator.comparing(RequirementAuditDTO::getRevisionDate))
-                .map(audit -> {
-                    String date = audit.getRevisionDate().format(formatter);
-                    String reason = Optional.ofNullable(audit.getRequirement().getModReason()).orElse("(수정 이유 없음)");
-                    return date + " : " + reason;
-                })
-                .toList();
+        int batchSize = 50;
+        for (int i = 0; i < reqIdCodes.size(); i += batchSize) {
+            int end = Math.min(i + batchSize, reqIdCodes.size());
+            List<String> batch = reqIdCodes.subList(i, end);
+
+            List<RequirementModReasonResponse> audits = requirementAuditRepository.findModReasonByProjectIdAndReqIdCodesNative(projectId, batch);
+
+            Map<String, List<String>> batchMap = audits.stream()
+                    .sorted(Comparator.comparing(RequirementModReasonResponse::revisionDate))
+                    .collect(Collectors.groupingBy(
+                            RequirementModReasonResponse::reqIdCode,
+                            LinkedHashMap::new,
+                            Collectors.mapping(
+                                    dto -> {
+                                        String date = dto.revisionDate().format(formatter);
+                                        String reason = Optional.ofNullable(dto.ModReason()).orElse("-");
+                                        return date + " : " + reason;
+                                    },
+                                    Collectors.toList()
+                            )
+                    ));
+            results.putAll(batchMap);
+        }
+        return results;
     }
 
     public List<MatrixResponse> createMatrix(long projectId) {

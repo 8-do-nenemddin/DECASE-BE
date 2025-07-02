@@ -5,6 +5,7 @@ import com.skala.decase.domain.project.exception.ProjectException;
 import com.skala.decase.domain.project.service.ProjectService;
 import com.skala.decase.domain.requirement.controller.dto.response.RequirementAuditDTO;
 import com.skala.decase.domain.requirement.controller.dto.response.RequirementAuditResponse;
+import com.skala.decase.domain.requirement.controller.dto.response.RequirementModReasonResponse;
 import com.skala.decase.domain.requirement.domain.Requirement;
 import com.skala.decase.domain.requirement.exception.HistoryException;
 import com.skala.decase.domain.requirement.mapper.RequirementAuditMapper;
@@ -25,7 +26,7 @@ public class RequirementAuditRepository {
     private final EntityManager entityManager;
     private final RequirementAuditMapper requirementAuditMapper;
 
-    public List<RequirementAuditDTO> getRequirementHistoryByProjectId(Long projectId) {
+    public List<RequirementAuditDTO> getRequirementHistoryByProjectId(long projectId) {
         AuditReader auditReader = AuditReaderFactory.get(entityManager);
 
         @SuppressWarnings("unchecked")
@@ -41,6 +42,45 @@ public class RequirementAuditRepository {
         return results.stream()
                 .map(requirementAuditMapper::toEntity)
                 .sorted(Comparator.comparing(RequirementAuditDTO::getRevisionDate).reversed())
+                .toList();
+    }
+
+    public List<RequirementAuditDTO> getRequirementHistoryByProjectIdAndReqIdCode(long projectId, String reqIdCode) {
+        AuditReader auditReader = AuditReaderFactory.get(entityManager);
+
+        @SuppressWarnings("unchecked")
+        List<Object[]> results = auditReader.createQuery()
+                .forRevisionsOfEntity(Requirement.class, false, true)
+                .add(AuditEntity.property("projectIdAud").eq(projectId))
+                .add(AuditEntity.property("reqIdCode").eq(reqIdCode))
+                .getResultList();
+
+        if (results.isEmpty()) {
+            throw new HistoryException("해당 요구사항에 대한 히스토리가 존재하지 않습니다.", HttpStatus.BAD_REQUEST);
+        }
+
+        return results.stream()
+                .map(requirementAuditMapper::toEntity)
+                .sorted(Comparator.comparing(RequirementAuditDTO::getRevisionDate).reversed())
+                .toList();
+    }
+
+    public List<RequirementModReasonResponse> findModReasonByProjectIdAndReqIdCodesNative(Long projectId, List<String> reqIdCodes) {
+        String sql = "SELECT r.req_id_code, r.mod_reason, rev.revtstmp " +
+                "FROM td_requirements_aud r " +
+                "JOIN revinfo rev ON r.rev = rev.rev " +
+                "WHERE r.project_id_aud = :projectId " +
+                "AND r.req_id_code IN :reqIdCodes " +
+                "ORDER BY r.req_id_code";
+
+        @SuppressWarnings("unchecked")
+        List<Object[]> results = entityManager.createNativeQuery(sql)
+                .setParameter("projectId", projectId)
+                .setParameter("reqIdCodes", reqIdCodes)
+                .getResultList();
+
+        return results.stream()
+                .map(requirementAuditMapper::toModReasonResponse)
                 .toList();
     }
 }
