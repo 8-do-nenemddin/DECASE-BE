@@ -44,17 +44,29 @@ public class MockupService {
     private final ProjectRepository projectRepository;
 
 	// 프로젝트 ID 기준 모든 목업 리비전별로 그룹화된 정보 반환
-	public Map<Integer, List<String>> getMockupsGroupedByRevision(Long projectId) {
+	public Map<Integer, Map<String, List<String>>> getMockupsGroupedByRevision(Long projectId) {
 		List<Mockup> mockups = mockupRepository.findAllByProject_ProjectId(projectId);
 		if (mockups.isEmpty()) {
 			throw new MockupException("해당 프로젝트에 대한 목업이 없습니다.", HttpStatus.NOT_FOUND);
 		}
 
-		Map<Integer, List<String>> revisionMap = new HashMap<>();
+		Map<Integer, Map<String, List<String>>> revisionMap = new HashMap<>();
 		for (Mockup mockup : mockups) {
-			revisionMap
-					.computeIfAbsent(mockup.getRevisionCount(), k -> new ArrayList<>())
-					.add(Paths.get(mockup.getPath()).getFileName().toString());
+			Map<String, List<String>> revisionData = revisionMap
+					.computeIfAbsent(mockup.getRevisionCount(), k -> new HashMap<>());
+			
+			// _spec.html로 끝나는 파일은 spec 리스트에, 나머지는 mock 리스트에 추가
+			if (mockup.getName().endsWith("_spec.html")) {
+				revisionData.computeIfAbsent("spec", k -> new ArrayList<>()).add(mockup.getName());
+			} else {
+				revisionData.computeIfAbsent("mock", k -> new ArrayList<>()).add(mockup.getName());
+			}
+		}
+
+		// 각 리비전에 대해 spec과 mock 리스트가 없으면 빈 리스트로 초기화
+		for (Map<String, List<String>> revisionData : revisionMap.values()) {
+			revisionData.putIfAbsent("spec", new ArrayList<>());
+			revisionData.putIfAbsent("mock", new ArrayList<>());
 		}
 
 		return revisionMap;
