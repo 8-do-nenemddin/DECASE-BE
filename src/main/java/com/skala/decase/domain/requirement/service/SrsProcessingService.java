@@ -124,25 +124,24 @@ public class SrsProcessingService {
                                 List<CreateRfpRequest> srs) {
         Project project = projectService.findByProjectId(projectId);
         Member member = memberService.findByMemberId(memberId);
-        Document document = documentRepository.findByDocId(documentId)
-                .orElseThrow(
-                        () -> new RequirementException("요구사항 정의서 생성 실패. 문서 ID: " + documentId, HttpStatus.NOT_FOUND));
+        Document document = documentService.findByDocId(documentId);
 
-        if (status.equals("COMPLETED")) {
-            LocalDateTime now = LocalDateTime.now();
-            for (CreateRfpRequest req : srs) {
-                Requirement requirement = requirementRepository.save(
-                        requirementServiceMapper.toREQEntity(req, member, project, now));
-                if (req.sources() != null) {
-                    req.sources().forEach(sourceReq -> {
-                        sourceRepository.save(requirementServiceMapper.toSrcEntity(sourceReq, requirement, document));
-                    });
-                }
-            }
-            log.info("요구사항 정의서 및 출처 저장 완료 - 프로젝트 ID: {}", projectId);
-        } else {
+        if (!status.equals("COMPLETED")) {
+            documentRepository.delete(document);  //요구사항 정의서 저장 실패시 사용자 업로드 RFP 삭제
             throw new RequirementException("요구사항 정의서 저장 실패. 상태: " + status + " - 프로젝트 ID: " + projectId,
                     HttpStatus.INTERNAL_SERVER_ERROR);
         }
+
+        LocalDateTime now = LocalDateTime.now();
+        for (CreateRfpRequest req : srs) {
+            Requirement requirement = requirementRepository.save(
+                    requirementServiceMapper.toREQEntity(req, member, project, now));
+            if (req.sources() != null) {
+                req.sources().forEach(sourceReq -> {
+                    sourceRepository.save(requirementServiceMapper.toSrcEntity(sourceReq, requirement, document));
+                });
+            }
+        }
+        log.info("요구사항 정의서 및 출처 저장 완료 - 프로젝트 ID: {}", projectId);
     }
 }

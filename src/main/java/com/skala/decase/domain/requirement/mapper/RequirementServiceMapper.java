@@ -3,6 +3,7 @@ package com.skala.decase.domain.requirement.mapper;
 import com.skala.decase.domain.document.domain.Document;
 import com.skala.decase.domain.member.domain.Member;
 import com.skala.decase.domain.project.domain.Project;
+import com.skala.decase.domain.requirement.controller.dto.request.CreateRfpRequest;
 import com.skala.decase.domain.requirement.controller.dto.request.SourceCallbackReq;
 import com.skala.decase.domain.requirement.controller.dto.response.RequirementWithSourceResponse;
 import com.skala.decase.domain.requirement.controller.dto.response.SourceResponse;
@@ -10,12 +11,10 @@ import com.skala.decase.domain.requirement.domain.Difficulty;
 import com.skala.decase.domain.requirement.domain.Priority;
 import com.skala.decase.domain.requirement.domain.Requirement;
 import com.skala.decase.domain.requirement.domain.RequirementType;
-import com.skala.decase.domain.requirement.controller.dto.request.CreateRfpRequest;
 import com.skala.decase.domain.source.domain.Source;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
-import java.util.stream.Collectors;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -58,10 +57,10 @@ public class RequirementServiceMapper {
     }
 
     public RequirementWithSourceResponse toReqWithSrcResponse(Requirement requirement, List<String> modReason,
-                                                                     int currentRevisionCount) {
+                                                              int currentRevisionCount) {
         List<SourceResponse> sourceResponses = requirement.getSources().stream()
                 .map(this::toSourceResponse)
-                .collect(Collectors.toList());
+                .toList();
 
         DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd");
         // 조회 시점의 revisionCount보다 이후에 삭제된 경우 false로 반환
@@ -104,7 +103,7 @@ public class RequirementServiceMapper {
     private SourceResponse toSourceResponse(Source source) {
         return new SourceResponse(
                 source.getSourceId(),
-                source.getDocument() != null ? source.getDocument().getDocId() : null,
+                source.getDocument() != null ? source.getDocument().getName() : null,
                 source.getPageNum(),
                 source.getRelSentence()
         );

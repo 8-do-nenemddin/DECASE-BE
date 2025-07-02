@@ -10,6 +10,7 @@ import com.skala.decase.domain.project.domain.Project;
 import com.skala.decase.domain.project.service.ProjectService;
 import com.skala.decase.domain.requirement.controller.dto.request.RequirementRevisionDto;
 import com.skala.decase.domain.requirement.controller.dto.request.UpdateRequirementDto;
+import com.skala.decase.domain.requirement.controller.dto.request.UpdateSrsAgentRequest;
 import com.skala.decase.domain.requirement.controller.dto.response.RequirementWithSourceResponse;
 import com.skala.decase.domain.requirement.domain.Difficulty;
 import com.skala.decase.domain.requirement.domain.PendingRequirement;
@@ -18,6 +19,7 @@ import com.skala.decase.domain.requirement.domain.Requirement;
 import com.skala.decase.domain.requirement.domain.RequirementType;
 import com.skala.decase.domain.requirement.exception.RequirementException;
 import com.skala.decase.domain.requirement.mapper.RequirementServiceMapper;
+import com.skala.decase.domain.requirement.mapper.RequirementUpdateServiceMapper;
 import com.skala.decase.domain.requirement.repository.PendingRequirementRepository;
 import com.skala.decase.domain.requirement.repository.RequirementRepository;
 import com.skala.decase.domain.source.domain.Source;
@@ -44,13 +46,16 @@ public class RequirementService {
     private final RequirementRepository requirementRepository;
     private final ProjectService projectService;
     private final SourceRepository sourceRepository;
+
+    private final RequirementUpdateServiceMapper requirementUpdateServiceMapper;
+    private final MockupMapper mockupMapper;
+
     private final MemberRepository memberRepository;
     private final PendingRequirementRepository pendingRequirementRepository;
     private final RequirementAuditService requirementAuditService;
     private final MemberProjectRepository memberProjectRepository;
 
     private final RequirementServiceMapper requirementServiceMapper;
-    private final MockupMapper mockupMapper;
 
     // 리버전 기본값 1로 받도록 하기 위함
     public List<RequirementWithSourceResponse> getGeneratedRequirements(Long projectId) {
@@ -68,7 +73,7 @@ public class RequirementService {
         Project project = projectService.findByProjectId(projectId);
 
         //유효한 요구사항 리스트 조회 -> 변경된 로직에서는 최신 버전만 가지고 있으므로 revision count가 필요 없음.
-        List<Requirement> requirements = requirementRepository.findByProjectId(projectId)
+        List<Requirement> requirements = requirementRepository.findByProjectIdWithSourceWithDocument(projectId)
                 .orElse(null);
 
         //요구사항이 없는 경우
@@ -78,7 +83,8 @@ public class RequirementService {
 
         List<RequirementWithSourceResponse> responses = new ArrayList<>();
         for (Requirement requirement : requirements) {
-            List<String> modReason = requirementAuditService.findModReasonByProjectIdAndReqIdCode(projectId, requirement.getReqIdCode());
+            List<String> modReason = requirementAuditService.findModReasonByProjectIdAndReqIdCode(projectId,
+                    requirement.getReqIdCode());
             responses.add(requirementServiceMapper.toReqWithSrcResponse(requirement, modReason, revisionCount));
         }
         return responses.stream()
@@ -86,6 +92,44 @@ public class RequirementService {
                         .thenComparing(RequirementWithSourceResponse::reqIdCode))
                 .toList();
     }
+
+    /**
+     * 특정 버전의 요구사항 정의서를 불러옵니다. 출처 포함 x
+     *
+     * @param projectId
+     * @param revisionCount
+     * @return
+     */
+    public List<UpdateSrsAgentRequest> getRequirementsForUpdate(Long projectId, int revisionCount) {
+        Project project = projectService.findByProjectId(projectId);
+
+        //유효한 요구사항 리스트 조회
+        List<Requirement> requirements = requirementRepository.findValidRequirementsByProjectAndRevision(
+                projectId, revisionCount);
+
+        //요구사항이 없는 경우
+        if (requirements.isEmpty()) {
+            return new ArrayList<>();
+        }
+
+        // reqIdCode + revisionCount 조합별로 createdDate 기준 최신 요구사항만 필터링
+        List<Requirement> latestRequirements = requirements.stream()
+                .collect(Collectors.groupingBy(
+                        req -> req.getReqIdCode() + "_" + req.getRevisionCount(),
+                        Collectors.maxBy(Comparator.comparing(Requirement::getCreatedDate))
+                ))
+                .values()
+                .stream()
+                .filter(Optional::isPresent)
+                .map(Optional::get)
+                .toList();
+
+        return latestRequirements.stream()
+                .map(requirementUpdateServiceMapper::toUpdateREQ)
+                .toList();
+
+    }
+
 
     /**
      * 특정 버전의 기능적 요구사항을 불러옵니다.

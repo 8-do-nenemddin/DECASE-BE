@@ -4,5 +4,5 @@ public enum JobName {
     SRS,
     ASIS,
     MOCKUP,
-    SRS_UPDATE
+    UPDATE
 } 
