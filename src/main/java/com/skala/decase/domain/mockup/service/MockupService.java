@@ -176,7 +176,16 @@ public class MockupService {
 
 			for (Resource resource : mockupResources) {
 				String fileName = resource.getFilename();
-				zipOut.putNextEntry(new ZipEntry(fileName));
+				String zipEntryPath;
+				
+				// _spec.html로 끝나는 파일은 screen_spec 폴더에, 나머지는 mockup 폴더에 넣기
+				if (fileName != null && fileName.endsWith("_spec.html")) {
+					zipEntryPath = "screen_spec/" + fileName;
+				} else {
+					zipEntryPath = "mockup/" + fileName;
+				}
+				
+				zipOut.putNextEntry(new ZipEntry(zipEntryPath));
 				try (InputStream inputStream = resource.getInputStream()) {
 					byte[] buffer = new byte[1024];
 					int length;
