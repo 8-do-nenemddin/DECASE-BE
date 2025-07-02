@@ -6,12 +6,7 @@ import com.skala.decase.domain.member.domain.Member;
 import com.skala.decase.domain.member.repository.MemberProjectRepository;
 import com.skala.decase.domain.member.service.MemberService;
 import com.skala.decase.domain.project.controller.dto.request.CreateProjectRequest;
-import com.skala.decase.domain.project.controller.dto.response.DeleteProjectResponse;
-import com.skala.decase.domain.project.controller.dto.response.DocumentResponse;
-import com.skala.decase.domain.project.controller.dto.response.EditProjectResponseDto;
-import com.skala.decase.domain.project.controller.dto.response.MappingTableResponseDto;
-import com.skala.decase.domain.project.controller.dto.response.ProjectDetailResponseDto;
-import com.skala.decase.domain.project.controller.dto.response.ProjectResponse;
+import com.skala.decase.domain.project.controller.dto.response.*;
 import com.skala.decase.domain.project.domain.MemberProject;
 import com.skala.decase.domain.project.domain.Project;
 import com.skala.decase.domain.project.domain.ProjectInvitation;
@@ -22,12 +17,15 @@ import com.skala.decase.domain.project.mapper.SuccessMapper;
 import com.skala.decase.domain.project.repository.ProjectInvitationRepository;
 import com.skala.decase.domain.project.repository.ProjectRepository;
 import com.skala.decase.domain.requirement.domain.Requirement;
+import com.skala.decase.domain.requirement.repository.RequirementRepository;
 import com.skala.decase.domain.source.domain.Source;
 import com.skala.decase.domain.source.service.SourceRepository;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.stream.Collectors;
+
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -49,6 +47,7 @@ public class ProjectService {
     private final ProjectMapper projectMapper;
     private final MemberProjectMapper memberProjectMapper;
     private final SuccessMapper successMapper;
+    private final RequirementRepository requirementRepository;
 
     /**
      * 프로젝트 존재 확인
@@ -168,5 +167,12 @@ public class ProjectService {
         }
         System.out.println("✅ : "+ memberProject.getPermission().toString());
         return memberProject.getPermission().toString();
+    }
+
+    public List<RequirementDescriptionResponse> getDescriptions(Long projectId, List<String> ids) {
+        return requirementRepository.findByProject_ProjectIdAndReqIdCodeIn(projectId, ids)
+                .stream()
+                .map(req -> new RequirementDescriptionResponse(req.getReqIdCode(), req.getDescription()))
+                .collect(Collectors.toList());
     }
 }

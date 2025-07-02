@@ -1,6 +1,7 @@
 package com.skala.decase.domain.project.controller;
 
 import com.skala.decase.domain.project.controller.dto.request.CreateProjectRequest;
+import com.skala.decase.domain.project.controller.dto.request.RequirementDescriptionRequest;
 import com.skala.decase.domain.project.controller.dto.response.*;
 import com.skala.decase.domain.project.domain.ProjectApiDocument;
 import com.skala.decase.domain.project.service.ProjectService;
@@ -101,5 +102,14 @@ public class ProjectController {
             @PathVariable Long memberId) {
         String permission = projectService.getAuthority(projectId, memberId);
         return ResponseEntity.ok(new PermissionResponse(permission));
+    }
+
+    @PostMapping("/{projectId}/requirements/descriptions")
+    public ResponseEntity<RequirementDescriptionsResponse> getDescriptions(
+            @PathVariable Long projectId,
+            @RequestBody RequirementDescriptionRequest request) {
+        List<String> ids = request.requirementIds();
+        List<RequirementDescriptionResponse> descriptions = projectService.getDescriptions(projectId, ids);
+        return ResponseEntity.ok(new RequirementDescriptionsResponse(descriptions));
     }
 }

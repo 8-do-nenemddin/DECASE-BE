@@ -99,4 +99,5 @@ public interface RequirementRepository extends JpaRepository<Requirement, Long> 
     @Query("SELECT r FROM Requirement r WHERE r.project.projectId = :projectId")
     Optional<List<Requirement>> findByProjectId(@Param("projectId") long project);
 
+    List<Requirement> findByProject_ProjectIdAndReqIdCodeIn(Long projectId, List<String> reqPks);
 }
