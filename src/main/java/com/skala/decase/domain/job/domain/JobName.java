@@ -4,5 +4,6 @@ public enum JobName {
     SRS,
     ASIS,
     MOCKUP,
-    UPDATE
+    UPDATE,
+    SCREEN_SPEC
 } 
