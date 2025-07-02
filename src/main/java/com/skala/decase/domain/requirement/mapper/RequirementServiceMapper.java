@@ -103,6 +103,7 @@ public class RequirementServiceMapper {
     private SourceResponse toSourceResponse(Source source) {
         return new SourceResponse(
                 source.getSourceId(),
+                source.getDocument() != null ? source.getDocument().getDocId() : null,
                 source.getDocument() != null ? source.getDocument().getName() : null,
                 source.getPageNum(),
                 source.getRelSentence()

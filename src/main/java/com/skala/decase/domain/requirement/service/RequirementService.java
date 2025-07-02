@@ -240,9 +240,9 @@ public class RequirementService {
                 .filter(r -> level1 == null || level1.equals(r.level1()))
                 .filter(r -> level2 == null || level2.equals(r.level2()))
                 .filter(r -> level3 == null || level3.equals(r.level3()))
-                .filter(r -> type == null || r.type().equals(RequirementType.fromOrdinal(type)))
-                .filter(r -> difficulty == null || r.difficulty().equals(Difficulty.fromOrdinal(difficulty)))
-                .filter(r -> priority == null || r.priority().equals(Priority.fromOrdinal(priority)))
+                .filter(r -> type == null || r.type().equals(RequirementType.fromOrdinal(type).toString()))
+                .filter(r -> difficulty == null || r.difficulty().equals(Difficulty.fromOrdinal(difficulty).toString()))
+                .filter(r -> priority == null || r.priority().equals(Priority.fromOrdinal(priority).toString()))
                 .filter(r -> docTypes == null || r.sources().stream()
                         .anyMatch(rd -> {
                             String docId = rd.docId();
