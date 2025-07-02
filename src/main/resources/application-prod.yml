@@ -67,11 +67,16 @@ file:
   upload:
     base-path: ./storage
     mockup-path: ./storage/mockups
+    spec-save-path: ./storage/mockups
     asis-path: ./storage/asis
+    asis-save-path: ./storage/asis
     upload-path: ./storage/uploads
 
 mockup:
   callback-url: "https://decase.skala25a.project.skala-ai.com/api/v1/projects/{projectId}/mockups/callback"
+
+screen-spec:
+  callback-url: "https://decase.skala25a.project.skala-ai.com/api/v1/projects/{projectId}/screen-spec/callback"
 
 asis:
   callback-url: "https://decase.skala25a.project.skala-ai.com/api/v1/projects/{projectId}/asis/callback"
