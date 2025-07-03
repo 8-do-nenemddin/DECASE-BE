@@ -10,6 +10,7 @@ import com.skala.decase.domain.document.service.DocumentService;
 import com.skala.decase.domain.member.domain.Member;
 import com.skala.decase.domain.member.service.MemberService;
 import com.skala.decase.domain.project.domain.Project;
+import com.skala.decase.domain.project.repository.ProjectRepository;
 import com.skala.decase.domain.project.service.ProjectService;
 import com.skala.decase.domain.requirement.controller.dto.request.SrsDeleteRequestDetail;
 import com.skala.decase.domain.requirement.controller.dto.request.SrsUpdateRequest;
@@ -51,6 +52,7 @@ public class SrsUpdateService {
     private final WebClient webClient;
     private final RequirementUpdateServiceMapper requirementUpdateServiceMapper;
 
+    private final ProjectRepository projectRepository;
     private final RequirementRepository requirementRepository;
     private final SourceRepository sourceRepository;
     private final DocumentRepository documentRepository;
@@ -77,7 +79,7 @@ public class SrsUpdateService {
      */
     public void callFastApiUpdateProcess(List<UpdateSrsAgentRequest> srsRequests, Long projectId, Long memberId,
                                          String documentId,
-                                         MultipartFile file, String callbackUrl) {
+                                         MultipartFile file, String callbackUrl, String fileSubject) {
         log.info("요구사항 업데이트 시작 - 프로젝트: {}", projectId);
 
         log.info("FastAPI 서버에 목업 생성 비동기 요청 시작. 요구사항 수: {}", srsRequests.size());
@@ -85,7 +87,7 @@ public class SrsUpdateService {
         try {
             // MultipartFile을 byte[]로 읽어서 ByteArrayResource로 감싸서 전달
             byte[] fileBytes = file.getBytes();
-            builder.part("meeting_file", new ByteArrayResource(fileBytes) {
+            builder.part("extra_file", new ByteArrayResource(fileBytes) {
                 @Override
                 public String getFilename() {
                     return file.getOriginalFilename();
@@ -100,6 +102,7 @@ public class SrsUpdateService {
         builder.part("member_id", memberId);
         builder.part("document_id", documentId);
         builder.part("callback_url", callbackUrl);
+        builder.part("file_subject", fileSubject);
 
         // srsRequests를 JSON 문자열로 변환하여 multipart에 추가
         ObjectMapper objectMapper = new ObjectMapper();
@@ -202,8 +205,20 @@ public class SrsUpdateService {
         // 요구사항 업데이트시 사용할 요구사항 정의서 찾아오기
         List<UpdateSrsAgentRequest> srsRequests = requirementService.getRequirementsForUpdate(projectId, maxRevision);
 
+        // 파일 이름에서 언더스코어(_) 뒤의 실제 파일 이름만 추출
+        String originalFileName = savedDocument.getName();
+        String fileSubject = originalFileName;
+        int underscoreIdx = originalFileName.indexOf("_");
+        if (underscoreIdx != -1 && underscoreIdx + 1 < originalFileName.length()) {
+            fileSubject = originalFileName.substring(underscoreIdx + 1);
+        }
+
         callFastApiUpdateProcess(srsRequests, project.getProjectId(), member.getMemberId(), savedDocument.getDocId(),
-                file, formattedCallbackUrl);
+                file, formattedCallbackUrl, fileSubject);
+
+        // 프로젝트 리비전 증가
+        project.setRevisionCount(project.getRevisionCount() + 1);
+        projectRepository.save(project);
     }
 
 
@@ -242,8 +257,8 @@ public class SrsUpdateService {
         }
         // 2. 수정
         for (SrsUpdateRequestDetail updateDetail : requirements.to_update()) {
-            Requirement oldReq = requirementRepository.findByReqIdCodeAndIsDeletedFalse(
-                            updateDetail.requirement_id())
+            Requirement oldReq = requirementRepository.findByProjectAndReqIdCodeAndIsDeletedFalse(
+                            project, updateDetail.requirement_id())
                     .orElseThrow(() -> new RequirementException("업데이트할 요구사항이 없습니다.", HttpStatus.NOT_FOUND));
             oldReq.updateSRS(updateDetail, member);
             requirementRepository.save(oldReq);
@@ -253,7 +268,7 @@ public class SrsUpdateService {
         }
         // 3. 삭제
         for (SrsDeleteRequestDetail deleteDetail : requirements.to_delete()) {
-            Requirement reqToDelete = requirementRepository.findByReqIdCodeAndIsDeletedFalse(
+            Requirement reqToDelete = requirementRepository.findByProjectAndReqIdCodeAndIsDeletedFalse(project,
                             deleteDetail.requirement_id())
                     .orElseThrow(() -> new RequirementException("삭제할 요구사항이 없습니다.", HttpStatus.NOT_FOUND));
             reqToDelete.deleteSRS(deleteDetail, member);

@@ -14,6 +14,7 @@ import com.skala.decase.domain.requirement.mapper.RequirementServiceMapper;
 import com.skala.decase.domain.requirement.repository.RequirementRepository;
 import com.skala.decase.domain.source.service.SourceRepository;
 import jakarta.persistence.EntityManager;
+import java.io.File;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
@@ -48,6 +49,8 @@ public class SrsProcessingService {
     private String asisCallbackUrl;
     @Value("${srs.callback-url}")
     private String srsCallbackUrl;
+    @Value("${file.upload.asis-save-path}")
+    private String BASE_ASIS_SAVE_PATH;
 
 
     /**
@@ -105,11 +108,43 @@ public class SrsProcessingService {
         Member member = memberService.findByMemberId(memberId);
 
         if (status.equals("COMPLETED")) {
-            documentService.uploadASIS(project, member, file);
+            Document asisPdf = documentService.uploadASIS(project, member, file);
+            saveAsisHtml(asisPdf);
             log.info("AS-IS 분석 결과 파일 저장 완료 - 프로젝트 ID: {}", projectId);
         } else {
             throw new RequirementException("AS-IS 분석 실패. 상태: " + status + " - 프로젝트 ID: " + projectId,
                     HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    /**
+     * AS-IS PDF 파일을 HTML로 복사 저장
+     */
+    @Transactional
+    public void saveAsisHtml(Document asisPdf) {
+        try {
+            // 기존 PDF 파일 경로와 이름
+            String pdfPath = asisPdf.getPath() + File.separator + asisPdf.getName();
+
+            // .pdf를 .html로 변경한 이름과 경로
+            String htmlName = asisPdf.getName().replaceFirst("\\.pdf$", ".html");
+            String htmlFilePath = BASE_ASIS_SAVE_PATH + File.separator + htmlName;
+
+            // 새로운 Document 객체 생성 (name, path만 .html로 변경, 나머지는 asisPdf와 동일)
+            Document htmlDoc = new Document(
+                    "V" + asisPdf.getDocId(), // view 용 asis 파일
+                    htmlName,
+                    htmlFilePath,
+                    asisPdf.isMemberUpload(),
+                    asisPdf.getProject(),
+                    asisPdf.getCreatedBy()
+            );
+
+            documentRepository.save(htmlDoc);
+            log.info("AS-IS PDF 파일을 HTML로 복사 및 Document 저장 완료: {} -> {}", pdfPath, htmlFilePath);
+        } catch (Exception e) {
+            log.error("AS-IS PDF를 HTML로 저장 중 오류 발생", e);
+            throw new RequirementException("AS-IS PDF를 HTML로 저장 중 오류가 발생했습니다.", HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 

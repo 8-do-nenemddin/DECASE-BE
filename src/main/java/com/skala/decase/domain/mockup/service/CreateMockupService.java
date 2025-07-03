@@ -67,11 +67,14 @@ public class CreateMockupService {
      */
     public void callFastApiMockupGenerationAsync(List<CreateMockUpRequest> srsRequests, String outputFolderName,
                                                  Long projectId, Integer revisionCount) {
+
+        String mockupCallbackUrl = callbackUrl.replace("{projectId}", String.valueOf(projectId));
+
         log.info("FastAPI 서버에 목업 생성 비동기 요청 시작. 요구사항 수: {}", srsRequests.size());
         Map<String, Object> requestBody = new java.util.HashMap<>();
         requestBody.put("project_id", projectId);
         requestBody.put("revision_count", revisionCount);
-        requestBody.put("callback_url", callbackUrl);
+        requestBody.put("callback_url", mockupCallbackUrl);
         requestBody.put("output_folder_name", outputFolderName);
 
         // CreateMockUpRequest 객체 리스트를 Map 리스트로 변환
@@ -123,8 +126,11 @@ public class CreateMockupService {
     public void extractAndSaveMockupFiles(Resource zipResource, Project project, Integer revisionCount) {
         // 프로젝트별 디렉토리 생성
         Path projectDir = Paths.get(BASE_UPLOAD_PATH, "project_" + project.getProjectId(), "revision_" + revisionCount);
+        Path mockupsDir = projectDir.resolve("mockups");
+        Path screenSpecDir = projectDir.resolve("screen_spec");
         try {
-            Files.createDirectories(projectDir);
+            Files.createDirectories(mockupsDir);
+            Files.createDirectories(screenSpecDir);
         } catch (Exception e) {
             throw new MockupException("프로젝트별 디렉토리 생성 실패", HttpStatus.INTERNAL_SERVER_ERROR);
         }
@@ -134,15 +140,15 @@ public class CreateMockupService {
 
             while ((entry = zipInputStream.getNextEntry()) != null) {
                 if (entry.isDirectory()) {
-                    // 디렉토리 생성
-                    Path dirPath = projectDir.resolve(entry.getName());
+                    // 디렉토리 생성 (mockups 하위에 생성)
+                    Path dirPath = mockupsDir.resolve(entry.getName());
                     Files.createDirectories(dirPath);
                     continue;
                 }
 
-                // 파일 저장
+                // 파일 저장 (mockups 하위에 저장)
                 String filename = entry.getName();
-                Path filePath = projectDir.resolve(filename);
+                Path filePath = mockupsDir.resolve(filename);
 
                 // 상위 디렉토리가 없으면 생성
                 Files.createDirectories(filePath.getParent());

@@ -22,10 +22,11 @@ spring:
     hikari:
       maximum-pool-size: 20
       minimum-idle: 5
-      connection-timeout: 30000
-      idle-timeout: 600000 # 10분 (유지)
-      max-lifetime: 900000 # 15분 (기존 30분에서 단축)
-      keepalive-time: 300000 # 5분 (신규 추가) - 유휴 커넥션 타임아웃 방지
+      idle-timeout: 180000 # 3분 
+      max-lifetime: 240000 # 4분 
+      keepalive-time: 60000 # 1분
+      connection-timeout: 15000 # 15초
+      validation-timeout: 2000 # 2초
       auto-commit: false
       pool-name: HikariCP-Local
       leak-detection-threshold: 60000
@@ -65,13 +66,18 @@ initializer:
 
 file:
   upload:
-    base-path: ./storage
-    mockup-path: ./storage/mockups
-    asis-path: ./storage/asis
-    upload-path: ./storage/uploads
+    base-path: /app/storage
+    mockup-path: /app/storage/mockups
+    spec-save-path: /app/storage/mockups
+    asis-path: /app/storage/asis
+    asis-save-path: /app/storage/asis
+    upload-path: /app/storage/uploads
 
 mockup:
   callback-url: "https://decase.skala25a.project.skala-ai.com/api/v1/projects/{projectId}/mockups/callback"
+
+screen-spec:
+  callback-url: "https://decase.skala25a.project.skala-ai.com/api/v1/projects/{projectId}/screen-spec/callback"
 
 asis:
   callback-url: "https://decase.skala25a.project.skala-ai.com/api/v1/projects/{projectId}/asis/callback"

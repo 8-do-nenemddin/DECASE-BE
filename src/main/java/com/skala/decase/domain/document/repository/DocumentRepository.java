@@ -20,6 +20,12 @@ public interface DocumentRepository extends JpaRepository<Document, String> {
     /**
      * as-is 문서 리스트 조회
      */
-    @Query("SELECT d FROM Document d WHERE d.project=:project AND d.docId LIKE 'ASIS-%'")
+    @Query("SELECT d FROM Document d WHERE d.project=:project AND d.docId LIKE 'VASIS-%'")
     List<Document> findByDocIdStartingWithASIS(@Param("project") Project project);
+
+    /**
+     * 파일명으로 문서 조회 (확장자 제외)
+     */
+    @Query("SELECT d FROM Document d WHERE d.project=:project AND d.name LIKE :fileName")
+    List<Document> findByProjectAndName(@Param("project") Project project, @Param("fileName") String fileName);
 }

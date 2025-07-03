@@ -109,7 +109,6 @@ public class RequirementController {
             @RequestParam(required = false) List<String> docType) {
         List<RequirementResponse> result = requirementService.getFilteredRequirements(
                 projectId, revisionCount, query, level1, level2, level3, type, difficulty, priority, docType);
-
         return ResponseEntity.ok().body(ApiResponse.success(result));
     }
 
