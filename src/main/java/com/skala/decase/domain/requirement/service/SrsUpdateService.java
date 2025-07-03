@@ -10,6 +10,7 @@ import com.skala.decase.domain.document.service.DocumentService;
 import com.skala.decase.domain.member.domain.Member;
 import com.skala.decase.domain.member.service.MemberService;
 import com.skala.decase.domain.project.domain.Project;
+import com.skala.decase.domain.project.repository.ProjectRepository;
 import com.skala.decase.domain.project.service.ProjectService;
 import com.skala.decase.domain.requirement.controller.dto.request.SrsDeleteRequestDetail;
 import com.skala.decase.domain.requirement.controller.dto.request.SrsUpdateRequest;
@@ -51,6 +52,7 @@ public class SrsUpdateService {
     private final WebClient webClient;
     private final RequirementUpdateServiceMapper requirementUpdateServiceMapper;
 
+    private final ProjectRepository projectRepository;
     private final RequirementRepository requirementRepository;
     private final SourceRepository sourceRepository;
     private final DocumentRepository documentRepository;
@@ -213,6 +215,10 @@ public class SrsUpdateService {
 
         callFastApiUpdateProcess(srsRequests, project.getProjectId(), member.getMemberId(), savedDocument.getDocId(),
                 file, formattedCallbackUrl, fileSubject);
+
+        // 프로젝트 리비전 증가
+        project.setRevisionCount(project.getRevisionCount() + 1);
+        projectRepository.save(project);
     }
 
 
