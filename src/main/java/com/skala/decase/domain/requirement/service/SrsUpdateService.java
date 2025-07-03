@@ -251,8 +251,8 @@ public class SrsUpdateService {
         }
         // 2. 수정
         for (SrsUpdateRequestDetail updateDetail : requirements.to_update()) {
-            Requirement oldReq = requirementRepository.findByReqIdCodeAndIsDeletedFalse(
-                            updateDetail.requirement_id())
+            Requirement oldReq = requirementRepository.findByProjectAndReqIdCodeAndIsDeletedFalse(
+                            project, updateDetail.requirement_id())
                     .orElseThrow(() -> new RequirementException("업데이트할 요구사항이 없습니다.", HttpStatus.NOT_FOUND));
             oldReq.updateSRS(updateDetail, member);
             requirementRepository.save(oldReq);
@@ -262,7 +262,7 @@ public class SrsUpdateService {
         }
         // 3. 삭제
         for (SrsDeleteRequestDetail deleteDetail : requirements.to_delete()) {
-            Requirement reqToDelete = requirementRepository.findByReqIdCodeAndIsDeletedFalse(
+            Requirement reqToDelete = requirementRepository.findByProjectAndReqIdCodeAndIsDeletedFalse(project,
                             deleteDetail.requirement_id())
                     .orElseThrow(() -> new RequirementException("삭제할 요구사항이 없습니다.", HttpStatus.NOT_FOUND));
             reqToDelete.deleteSRS(deleteDetail, member);
