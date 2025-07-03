@@ -188,6 +188,7 @@ public class Requirement {
         this.level3 = requirementDto.getLevel3() == null ? this.level3 : requirementDto.getLevel3();
         this.priority = requirementDto.getPriority() == null ? this.priority : requirementDto.getPriority();
         this.difficulty = requirementDto.getDifficulty() == null ? this.difficulty : requirementDto.getDifficulty();
+        this.status = requirementDto.getStatus() == null ? this.status : Reception.fromKorean(requirementDto.getStatus());
         this.name = requirementDto.getName() == null ? this.getName() : requirementDto.getName();
         this.description = requirementDto.getDescription() == null ? this.description : requirementDto.getDescription();
         this.modReason = requirementDto.getModReason();

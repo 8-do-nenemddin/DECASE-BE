@@ -119,13 +119,12 @@ public class RequirementController {
         return ResponseEntity.ok(revisions);
     }
 
-    @Operation(summary = "클라이언트에서 요구사항 정의서 내용 수정", description = "특정 리비전의 요구사항 정의서를 클라이언트가 수정할 수 있습니다.")
-    @PostMapping("{projectId}/requirements/{revisionCount}/edit")
+    @Operation(summary = "클라이언트에서 요구사항 정의서 내용 수정", description = "최신 리비전의 요구사항 정의서를 클라이언트가 수정할 수 있습니다.")
+    @PostMapping("{projectId}/requirements/edit")
     public ResponseEntity<ApiResponse<String>> updateRequirement(
             @PathVariable Long projectId,
-            @PathVariable int revisionCount,
             @RequestBody List<UpdateRequirementDto> dtoList) {
-        requirementService.updateRequirement(projectId, revisionCount, dtoList);
+        requirementService.updateRequirement(projectId, dtoList);
         return ResponseEntity.ok().body(ApiResponse.success("변경 내역이 저장되었습니다."));
     }
 

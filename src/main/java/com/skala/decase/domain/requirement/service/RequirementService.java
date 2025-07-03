@@ -285,7 +285,7 @@ public class RequirementService {
     }
 
     @Transactional
-    public void updateRequirement(Long projectId, int revisionCount, List<UpdateRequirementDto> dtoList) {
+    public void updateRequirement(Long projectId, List<UpdateRequirementDto> dtoList) {
         Project project = projectService.findByProjectId(projectId);
 
         for (UpdateRequirementDto req : dtoList) {
