@@ -102,6 +102,7 @@ public class RequirementAuditMapper {
         return new SourceResponse(
                 sourceId,
                 (String) sourceMap.get("doc_id"),
+                (String) sourceMap.get("doc_name"),
                 pageNum,
                 (String) sourceMap.get("rel_sentence")
         );

@@ -16,8 +16,10 @@ import java.time.LocalDateTime;
 import java.util.List;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.hibernate.envers.Audited;
 
 @Entity
+@Audited
 @Data
 @Table(name = "TM_DOCUMENTS")
 @NoArgsConstructor

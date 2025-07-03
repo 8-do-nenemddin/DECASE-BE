@@ -61,7 +61,7 @@ public class ExelExportService {
         String[] headers = {
                 "요구사항 ID", "요구사항 유형", "대분류", "중분류", "소분류",
                 "요구사항 명", "요구사항 설명", "중요도", "난이도", "출처",
-                "출처 ID", "관리 구분", "변경이력", "최종 변경 일자"
+                "관리 구분", "수용 여부", "변경 이력", "최종 변경 일자"
         };
 
         for (int i = 0; i < headers.length; i++) {
@@ -86,9 +86,10 @@ public class ExelExportService {
             createCell(row, 7, convertPriorityToKorean(response.getPriority()), dataStyle);
             createCell(row, 8, convertDifficultyToKorean(response.getDifficulty()), dataStyle);
             createCell(row, 9, formatSources(response.getSources()), dataStyle);
-            createCell(row, 10, formatSourceIds(response.getSources()), dataStyle);
-            createCell(row, 11, formatModificationHistory(response.getModReason()), dataStyle);
-            createCell(row, 12, formatDate(response.getModifiedDate()), dataStyle);
+            createCell(row, 10, "", dataStyle); //관리 구분
+            createCell(row, 11, "", dataStyle); //수용 여부
+            createCell(row, 12, formatModificationHistory(response.getModReason()), dataStyle);
+            createCell(row, 13, formatDate(response.getModifiedDate()), dataStyle);
         }
 
         // 컬럼 너비 자동 조정

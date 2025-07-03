@@ -103,12 +103,14 @@ public class RequirementAuditRepository {
                         "        'source_id', s.source_id, " +
                         "        'page_num', s.page_num, " +
                         "        'rel_sentence', s.rel_sentence, " +
-                        "        'doc_id', s.doc_id " +
+                        "        'doc_id', s.doc_id, " +
+                        "        'doc_name', d.name " +
                         "      ) " +
                         "    END " +
                         "  ), JSON_ARRAY()) AS sources " +
                         "FROM latest_requirements r " +
                         "LEFT JOIN td_source_aud s ON r.req_id_code = s.req_id_code " +
+                        "LEFT JOIN tm_documents_aud d ON s.doc_id = d.doc_id " +
                         "WHERE r.rn = 1 " +
                         "  AND r.revtype <> 2 " +
                         "  AND r.project_id_aud = :projectId " +

@@ -6,6 +6,7 @@ import com.skala.decase.domain.requirement.controller.dto.request.UpdateRequirem
 import jakarta.persistence.*;
 import lombok.Data;
 import org.aspectj.apache.bcel.classfile.Module;
+import org.hibernate.envers.Audited;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
@@ -14,6 +15,7 @@ import java.util.ArrayList;
 
 @Data
 @Entity
+@Audited
 @Table(name = "TD_PENDING_REQUIREMENTS")
 @EntityListeners(AuditingEntityListener.class)
 public class PendingRequirement {
