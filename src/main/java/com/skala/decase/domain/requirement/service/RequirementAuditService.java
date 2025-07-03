@@ -1,9 +1,6 @@
 package com.skala.decase.domain.requirement.service;
 
-import com.skala.decase.domain.requirement.controller.dto.response.MatrixResponse;
-import com.skala.decase.domain.requirement.controller.dto.response.RequirementAuditDTO;
-import com.skala.decase.domain.requirement.controller.dto.response.RequirementAuditResponse;
-import com.skala.decase.domain.requirement.controller.dto.response.RequirementModReasonResponse;
+import com.skala.decase.domain.requirement.controller.dto.response.*;
 import com.skala.decase.domain.requirement.domain.Reception;
 import com.skala.decase.domain.requirement.domain.Requirement;
 import com.skala.decase.domain.requirement.exception.RequirementException;
@@ -139,5 +136,9 @@ public class RequirementAuditService {
                 .sorted(Map.Entry.comparingByKey()) // key = reqIdCode 기준 오름차순 정렬
                 .map(Map.Entry::getValue)
                 .toList();
+    }
+
+    public List<RequirementResponse> findByProjectIdAndRevisionCount(Long projectId, int revisionCount) {
+        return requirementAuditRepository.findByProjectIdAndRevisionCount(projectId, revisionCount);
     }
 }

@@ -29,6 +29,7 @@ import lombok.NoArgsConstructor;
 import org.hibernate.envers.Audited;
 import org.hibernate.envers.NotAudited;
 import org.hibernate.envers.RelationTargetAuditMode;
+import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
@@ -54,6 +55,9 @@ public class Requirement {
     @Enumerated(EnumType.STRING)
     private RequirementType type;
 
+    @Enumerated(EnumType.STRING)
+    private Reception status;
+
     @Column(name = "level_1", length = 100)
     private String level1;
 
@@ -75,7 +79,6 @@ public class Requirement {
     @Enumerated(EnumType.STRING)
     private Difficulty difficulty;
 
-    @NotAudited
     @Column(nullable = false)
     private LocalDateTime createdDate;
 
@@ -94,6 +97,7 @@ public class Requirement {
     @NotAudited
     private Project project;
 
+    @CreatedDate
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "member_id", nullable = false)
     private Member createdBy;

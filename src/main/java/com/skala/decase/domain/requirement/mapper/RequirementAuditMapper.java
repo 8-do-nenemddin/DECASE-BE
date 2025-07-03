@@ -1,22 +1,34 @@
 package com.skala.decase.domain.requirement.mapper;
 
-import com.skala.decase.domain.requirement.controller.dto.response.RequirementAuditDTO;
-import com.skala.decase.domain.requirement.controller.dto.response.RequirementAuditResponse;
-import com.skala.decase.domain.requirement.controller.dto.response.RequirementModReasonResponse;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.skala.decase.domain.member.domain.Member;
+import com.skala.decase.domain.requirement.controller.dto.response.*;
+import com.skala.decase.domain.requirement.domain.Difficulty;
+import com.skala.decase.domain.requirement.domain.Priority;
 import com.skala.decase.domain.requirement.domain.Requirement;
+import com.skala.decase.domain.requirement.domain.RequirementType;
+import com.skala.decase.domain.source.domain.Source;
 import lombok.AllArgsConstructor;
 import org.hibernate.envers.DefaultRevisionEntity;
 import org.hibernate.envers.RevisionType;
 import org.springframework.stereotype.Component;
 
+import java.security.Timestamp;
 import java.time.Instant;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 
 @Component
 @AllArgsConstructor
 public class RequirementAuditMapper {
+
+    private final ObjectMapper objectMapper;
 
     public RequirementAuditDTO toEntity(Object[] result) {
         Requirement requirement = (Requirement) result[0];
@@ -29,6 +41,90 @@ public class RequirementAuditMapper {
                 revisionEntity.getRevisionDate().toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime(),
                 revisionType
         );
+    }
+
+    public RequirementResponse toDtoResponse(Object[] result, int revisionCount) {
+        return new RequirementResponse(
+                (Long) result[0],
+                (String) result[1],
+                revisionCount,
+                (String) result[2],
+                (String) result[13],
+                (String) result[3],
+                (String) result[4],
+                (String) result[5],
+                (String) result[8],
+                (String) result[9],
+                (String) result[6],
+                (String) result[7],
+                getLocalDateTime(result[11]),
+                getLocalDateTime(result[10]),
+                null,
+                parseSourcesForResponse(result[14])
+        );
+    }
+
+    private List<SourceResponse> parseSourcesForResponse(Object jsonValue) {
+        if (jsonValue == null) return new ArrayList<>();
+
+        String jsonString;
+        if (jsonValue instanceof String str) {
+            jsonString = str;
+        } else {
+            jsonString = String.valueOf(jsonValue); // 최후의 수단
+        }
+
+        if (jsonString.trim().isEmpty() || "[]".equals(jsonString.trim())) {
+            return new ArrayList<>();
+        }
+
+        try {
+            List<Map<String, Object>> sourcesList = objectMapper.readValue(
+                    jsonString,
+                    new TypeReference<>() {}
+            );
+            return sourcesList.stream()
+                    .map(this::mapToSourceResponse)
+                    .toList();
+        } catch (Exception e) {
+            System.err.println("❌ Failed to parse sources JSON: " + e.getMessage());
+            return new ArrayList<>();
+        }
+    }
+
+    private SourceResponse mapToSourceResponse(Map<String, Object> sourceMap) {
+        Number sourceIdRaw = (Number) sourceMap.get("source_id");
+        Number pageNumRaw = (Number) sourceMap.get("page_num");
+
+        Long sourceId = sourceIdRaw != null ? sourceIdRaw.longValue() : null;
+        Integer pageNum = pageNumRaw != null ? pageNumRaw.intValue() : null;
+
+        return new SourceResponse(
+                sourceId,
+                (String) sourceMap.get("doc_id"),
+                pageNum,
+                (String) sourceMap.get("rel_sentence")
+        );
+    }
+
+    private LocalDateTime getLocalDateTime(Object value) {
+        if (value == null) return null;
+
+        if (value instanceof java.sql.Timestamp) {
+            return ((java.sql.Timestamp) value).toLocalDateTime();
+        } else if (value instanceof java.sql.Date) {
+            return ((java.sql.Date) value).toLocalDate().atStartOfDay();
+        } else if (value instanceof java.util.Date) {
+            return ((java.util.Date) value).toInstant()
+                    .atZone(ZoneId.systemDefault())
+                    .toLocalDateTime();
+        } else if (value instanceof LocalDateTime) {
+            return (LocalDateTime) value;
+        } else if (value instanceof LocalDate) {
+            return ((LocalDate) value).atStartOfDay();
+        }
+
+        throw new IllegalArgumentException("Unsupported type for date conversion: " + value.getClass());
     }
 
     public RequirementModReasonResponse toModReasonResponse(Object[] result) {

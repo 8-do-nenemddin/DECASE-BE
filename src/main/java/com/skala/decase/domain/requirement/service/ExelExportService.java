@@ -3,6 +3,7 @@ package com.skala.decase.domain.requirement.service;
 import com.skala.decase.domain.project.controller.dto.response.DocumentResponse;
 import com.skala.decase.domain.project.controller.dto.response.MappingTableResponseDto;
 import com.skala.decase.domain.requirement.controller.dto.response.MatrixResponse;
+import com.skala.decase.domain.requirement.controller.dto.response.RequirementResponse;
 import com.skala.decase.domain.requirement.controller.dto.response.RequirementWithSourceResponse;
 import com.skala.decase.domain.requirement.controller.dto.response.SourceResponse;
 import com.skala.decase.domain.requirement.domain.Reception;
@@ -15,6 +16,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -25,7 +28,7 @@ public class ExelExportService {
     /**
      * 요구사항 데이터를 CSV 형식으로 변환
      */
-    public byte[] generateExcelFile(List<RequirementWithSourceResponse> responses) throws IOException {
+    public byte[] generateExcelFile(List<RequirementResponse> responses) throws IOException {
         Workbook workbook = new XSSFWorkbook();
         Sheet sheet = workbook.createSheet("요구사항 정의서");
 
@@ -69,24 +72,23 @@ public class ExelExportService {
 
         // 데이터 행 생성
         int rowNum = 1;
-        for (RequirementWithSourceResponse response : responses) {
+        for (RequirementResponse response : responses) {
             Row row = sheet.createRow(rowNum++);
 
             // 각 셀에 데이터 입력
-            createCell(row, 0, response.reqIdCode(), dataStyle);
-            createCell(row, 1, convertTypeToKorean(response.type()), dataStyle);
-            createCell(row, 2, response.level1(), dataStyle);
-            createCell(row, 3, response.level2(), dataStyle);
-            createCell(row, 4, response.level3(), dataStyle);
-            createCell(row, 5, response.name(), dataStyle);
-            createCell(row, 6, response.description(), dataStyle);
-            createCell(row, 7, convertPriorityToKorean(response.priority()), dataStyle);
-            createCell(row, 8, convertDifficultyToKorean(response.difficulty()), dataStyle);
-            createCell(row, 9, formatSources(response.sources()), dataStyle);
-            createCell(row, 10, formatSourceIds(response.sources()), dataStyle);
-            createCell(row, 11, response.isDeleted() ? "삭제" : "등록", dataStyle);
-            createCell(row, 12, formatModificationHistory(response.modReason()), dataStyle);
-            createCell(row, 13, formatDate(response.createdDate()), dataStyle);
+            createCell(row, 0, response.getReqIdCode(), dataStyle);
+            createCell(row, 1, convertTypeToKorean(response.getType()), dataStyle);
+            createCell(row, 2, response.getLevel1(), dataStyle);
+            createCell(row, 3, response.getLevel2(), dataStyle);
+            createCell(row, 4, response.getLevel3(), dataStyle);
+            createCell(row, 5, response.getName(), dataStyle);
+            createCell(row, 6, response.getDescription(), dataStyle);
+            createCell(row, 7, convertPriorityToKorean(response.getPriority()), dataStyle);
+            createCell(row, 8, convertDifficultyToKorean(response.getDifficulty()), dataStyle);
+            createCell(row, 9, formatSources(response.getSources()), dataStyle);
+            createCell(row, 10, formatSourceIds(response.getSources()), dataStyle);
+            createCell(row, 11, formatModificationHistory(response.getModReason()), dataStyle);
+            createCell(row, 12, formatDate(response.getModifiedDate()), dataStyle);
         }
 
         // 컬럼 너비 자동 조정
@@ -213,11 +215,12 @@ public class ExelExportService {
     /**
      * 날짜를 포맷팅
      */
-    private String formatDate(String dateString) {
-        if (dateString == null) {
+    private String formatDate(LocalDateTime dateTime) {
+        if (dateTime == null) {
             return "";
         }
-        return dateString.replace("-", ".");
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy.MM.dd");
+        return dateTime.format(formatter);
     }
 
     public byte[] generateMatrixExcelFile(List<MatrixResponse> responses) throws IOException {
