@@ -167,10 +167,9 @@ public class SrsProcessingService {
                     HttpStatus.INTERNAL_SERVER_ERROR);
         }
 
-        LocalDateTime now = LocalDateTime.now();
         for (CreateRfpRequest req : srs) {
             Requirement requirement = requirementRepository.save(
-                    requirementServiceMapper.toREQEntity(req, member, project, now));
+                    requirementServiceMapper.toREQEntity(req, member, project));
             if (req.sources() != null) {
                 req.sources().forEach(sourceReq -> {
                     sourceRepository.save(requirementServiceMapper.toSrcEntity(sourceReq, requirement, document));

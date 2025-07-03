@@ -64,6 +64,8 @@ dependencies {
 
 	// envers
 	implementation 'org.hibernate:hibernate-envers:6.4.4.Final'
+
+	implementation 'org.hibernate.validator:hibernate-validator:8.0.1.Final'
 }
 
 tasks.named('test') {

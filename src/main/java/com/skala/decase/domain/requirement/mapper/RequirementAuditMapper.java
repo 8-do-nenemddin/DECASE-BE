@@ -57,11 +57,30 @@ public class RequirementAuditMapper {
                 (String) result[9],
                 (String) result[6],
                 (String) result[7],
+                mapRevtypeToString(result[12]),
                 getLocalDateTime(result[11]),
                 getLocalDateTime(result[10]),
                 null,
                 parseSourcesForResponse(result[14])
         );
+    }
+
+    private String mapRevtypeToString(Object revtype) {
+        if (revtype == null) return null;
+
+        int value;
+        if (revtype instanceof Number) {
+            value = ((Number) revtype).intValue();  // Byte, Integer, etc. 모두 처리
+        } else {
+            return "알 수 없음";
+        }
+
+        return switch (value) {
+            case 0 -> "추가";
+            case 1 -> "수정";
+            case 2 -> "삭제";
+            default -> "알 수 없음";
+        };
     }
 
     private List<SourceResponse> parseSourcesForResponse(Object jsonValue) {

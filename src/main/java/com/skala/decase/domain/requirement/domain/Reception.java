@@ -10,7 +10,15 @@ public enum Reception {
         return switch (value) {
             case "수용" -> ACCEPTED;
             case "미수용" -> UNACCEPTED;
-            default -> throw new DifficultyException("Unknown difficulty value: " + value, HttpStatus.BAD_REQUEST);
+            default -> throw new DifficultyException("Unknown Reception value: " + value, HttpStatus.BAD_REQUEST);
+        };
+    }
+
+    public static String fromReception(String reception) {
+        return switch (reception) {
+            case "ACCEPTED" -> "수용";
+            case "UNACCEPTED" -> "미수용";
+            default -> throw new DifficultyException("Unknown Reception value: " + reception, HttpStatus.BAD_REQUEST);
         };
     }
 }

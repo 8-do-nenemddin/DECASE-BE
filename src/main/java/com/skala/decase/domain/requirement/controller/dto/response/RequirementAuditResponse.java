@@ -6,7 +6,6 @@ import com.skala.decase.domain.requirement.domain.Priority;
 import com.skala.decase.domain.requirement.domain.RequirementType;
 
 import java.time.LocalDateTime;
-import java.util.Date;
 
 public record RequirementAuditResponse(
         long revisionNumber,

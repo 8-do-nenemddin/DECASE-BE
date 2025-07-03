@@ -96,7 +96,7 @@ public class RequirementAuditRepository {
                         "  r.name, r.description, r.priority, r.difficulty, " +
                         "  r.modified_date AS modified_date, " +
                         "  r.created_date AS created_date, " +
-                        "  r.revtype, r.status, " +
+                        "  r.revtype, r.status, " +  // 요구사항 revtype만 포함
                         "  IFNULL(JSON_ARRAYAGG( " +
                         "    CASE WHEN s.source_id IS NOT NULL THEN " +
                         "      JSON_OBJECT( " +
@@ -104,7 +104,7 @@ public class RequirementAuditRepository {
                         "        'page_num', s.page_num, " +
                         "        'rel_sentence', s.rel_sentence, " +
                         "        'doc_id', s.doc_id, " +
-                        "        'doc_name', d.name " +
+                        "        'doc_name', d.name " + // 문서명만 가져오기
                         "      ) " +
                         "    END " +
                         "  ), JSON_ARRAY()) AS sources " +
@@ -118,8 +118,9 @@ public class RequirementAuditRepository {
                         "  r.req_pk, r.req_id_code, " +
                         "  r.type, r.level_1, r.level_2, r.level_3, " +
                         "  r.name, r.description, r.priority, r.difficulty, " +
-                        "  r.modified_date, r.created_date, r.revtype " +
+                        "  r.modified_date, r.created_date, r.revtype, r.status " +
                         "ORDER BY r.req_id_code";
+
 
         @SuppressWarnings("unchecked")
         List<Object[]> results = entityManager.createNativeQuery(sql)

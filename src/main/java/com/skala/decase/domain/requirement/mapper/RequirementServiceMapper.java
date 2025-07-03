@@ -22,11 +22,11 @@ import org.springframework.stereotype.Component;
 @AllArgsConstructor
 public class RequirementServiceMapper {
 
-    public Requirement toREQEntity(CreateRfpRequest response, Member member, Project project, LocalDateTime now) {
+    public Requirement toREQEntity(CreateRfpRequest response, Member member, Project project) {
 
         String description = "[대상 업무]\n" + response.target_page() + "\n"
                 + "[상세 내용]\n" + response.description() + "\n";
-
+        System.out.println("여기니?");
         return Requirement.builder()
                 .reqIdCode(response.requirement_id())
                 .type(RequirementType.fromKorean(response.type()))
