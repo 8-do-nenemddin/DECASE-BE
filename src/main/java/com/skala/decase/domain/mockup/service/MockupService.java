@@ -32,6 +32,7 @@ import java.nio.file.Paths;
 import java.util.*;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
+import java.util.Base64;
 
 @Service
 @RequiredArgsConstructor
@@ -120,6 +121,20 @@ public class MockupService {
 			Map<String, Object> responseBody = new HashMap<>();
 			responseBody.put("html", code);
 			responseBody.put("sourceRequirements", sourceRequirements);
+
+			// html 파일과 같은 경로, 같은 이름의 .png 파일이 있으면 base64로 인코딩하여 image 필드로 추가
+			String pngFilePath = mockup.getPath().replaceAll("\\_spec.html?$", ".png");
+			Path pngPath = Path.of(pngFilePath);
+			if (Files.exists(pngPath)) {
+				try {
+					byte[] imageBytes = Files.readAllBytes(pngPath);
+					String base64Image = Base64.getEncoder().encodeToString(imageBytes);
+					responseBody.put("imageName", pngPath.getFileName().toString());
+					responseBody.put("image", base64Image);
+				} catch (IOException e) {
+					// 이미지 읽기 실패 시 무시 (image 필드 추가하지 않음)
+				}
+			}
 
 			return ResponseEntity.ok()
 					.contentType(MediaType.APPLICATION_JSON)
