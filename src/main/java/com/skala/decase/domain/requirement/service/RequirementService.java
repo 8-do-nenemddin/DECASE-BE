@@ -11,15 +11,8 @@ import com.skala.decase.domain.project.service.ProjectService;
 import com.skala.decase.domain.requirement.controller.dto.request.RequirementRevisionDto;
 import com.skala.decase.domain.requirement.controller.dto.request.UpdateRequirementDto;
 import com.skala.decase.domain.requirement.controller.dto.request.UpdateSrsAgentRequest;
-import com.skala.decase.domain.requirement.controller.dto.response.RequirementAuditDTO;
-import com.skala.decase.domain.requirement.controller.dto.response.RequirementDto;
 import com.skala.decase.domain.requirement.controller.dto.response.RequirementResponse;
-import com.skala.decase.domain.requirement.controller.dto.response.RequirementWithSourceResponse;
-import com.skala.decase.domain.requirement.domain.Difficulty;
-import com.skala.decase.domain.requirement.domain.PendingRequirement;
-import com.skala.decase.domain.requirement.domain.Priority;
-import com.skala.decase.domain.requirement.domain.Requirement;
-import com.skala.decase.domain.requirement.domain.RequirementType;
+import com.skala.decase.domain.requirement.domain.*;
 import com.skala.decase.domain.requirement.exception.RequirementException;
 import com.skala.decase.domain.requirement.mapper.RequirementServiceMapper;
 import com.skala.decase.domain.requirement.mapper.RequirementUpdateServiceMapper;
@@ -27,20 +20,13 @@ import com.skala.decase.domain.requirement.repository.PendingRequirementReposito
 import com.skala.decase.domain.requirement.repository.RequirementRepository;
 import com.skala.decase.domain.source.domain.Source;
 import com.skala.decase.domain.source.service.SourceRepository;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
-import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -235,10 +221,10 @@ public class RequirementService {
     }
 
     public List<RequirementResponse> getFilteredRequirements(Long projectId, int revisionCount, String query,
-                                                                       String level1, String level2, String level3,
-                                                                       Integer type, Integer difficulty,
-                                                                       Integer priority,
-                                                                       List<String> docTypes) {
+                                                             String level1, String level2, String level3,
+                                                             Integer type, Integer difficulty,
+                                                             Integer priority,
+                                                             List<String> docTypes) {
 
         Project project = projectService.findByProjectId(projectId);
         List<RequirementResponse> response = getGeneratedRequirements(projectId, revisionCount);
@@ -272,7 +258,7 @@ public class RequirementService {
         String format = "%0" + digitCount + "d";
 
         List<RequirementRevisionDto> versionList = new ArrayList<>();
-        for (int i = 1; i <= maxRevision; i++) {
+        for (int i = maxRevision; i > 0; i--) {
             int finalI = i;
             Optional<Requirement> requirementOpt = requirementRepository.findFirstByProjectAndRevisionCount(project, i);
             requirementOpt.ifPresent(req -> {
