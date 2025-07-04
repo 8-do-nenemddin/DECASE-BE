@@ -32,9 +32,8 @@ public class MockupController {
     private final MockupService mockupService;
     private final CreateMockupService createMockupService;
 
-    //TODO: 리비전 버전이 없어도 되나?
     // 사이드바 - 요구사항 리비전에 따른 목업 불러오기
-    @Operation(summary = "목업 보기", description = "생성된 목업 리비전-파일명 전송")
+    @Operation(summary = "목업 사이드바 리스트 조회", description = "생성된 목업 리비전-파일명 전송")
     @GetMapping("")
     public ResponseEntity<Map<Integer, Map<String, List<String>>>> getMockups(
             @PathVariable Long projectId) {

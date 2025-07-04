@@ -29,6 +29,7 @@ public class DocumentController {
     private final DocumentService documentService;
     private final ObjectMapper objectMapper;
 
+    @Operation(summary = "문서 업로드", description = "사용자가 문서를 업로드합니다.")
     @PostMapping(value = "/projects/{projectId}/documents/uploads", consumes = "multipart/form-data")
     public ResponseEntity<List<DocumentResponse>> uploadDocuments(
             @PathVariable Long projectId,
@@ -47,18 +48,19 @@ public class DocumentController {
     //     return ResponseEntity.noContent().build();
     // }
 
-    @Operation(summary = "문서 다운로드", description = "docId에 해당하는 문서를 다운로드합니다..")
+    @Operation(summary = "문서 다운로드", description = "docId에 해당하는 문서를 다운로드합니다.")
     @GetMapping("/documents/{docId}/downloads")
     public ResponseEntity<Resource> downloadDocument(@PathVariable String docId) throws Exception {
         return documentService.downloadDocument(docId);
     }
 
+    @Operation(summary = "문서 정보 상세보기", description = "docId에 해당하는 문서의 이름, 설명, 생성 날짜, 생성자를 반환합니다.")
     @GetMapping("/documents/{docId}")
     public ResponseEntity<DocumentDetailResponse> getDocumentDetail(@PathVariable String docId) {
         return documentService.getDocumentDetails(docId);
     }
 
-    // 요구사항 리비전에 따른 문서 목록
+    @Operation(summary = "문서 미리보기", description = "프로젝트의 사용자 업로드 문서 목록을 보여줍니다. docId, 이름, 설명을 반환합니다.")
     @GetMapping("/projects/{projectId}/document/uploads")
     public ResponseEntity<List<DocumentResponse>> getDocumentUploads(@PathVariable Long projectId) {
         return documentService.getDocumentUploads(projectId);
