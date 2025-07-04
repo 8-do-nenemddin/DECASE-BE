@@ -9,6 +9,7 @@ import com.skala.decase.domain.mockup.repository.MockupRepository;
 import com.skala.decase.domain.project.domain.Project;
 import com.skala.decase.domain.project.repository.ProjectRepository;
 import com.skala.decase.domain.mockup.domain.dto.MockupUploadResponse;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.web.multipart.MultipartFile;
@@ -32,16 +33,24 @@ import java.nio.file.Paths;
 import java.util.*;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
+import java.util.Base64;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @Service
 @RequiredArgsConstructor
 public class MockupService {
 
+    private static final Logger log = LoggerFactory.getLogger(MockupService.class);
+
     // 로컬 파일 업로드 경로
-    private static final String BASE_UPLOAD_PATH = "DECASE/mockups";
+    private static final String TEST_BASE_UPLOAD_PATH = "DECASE/mockups";
 
     private final MockupRepository mockupRepository;
     private final ProjectRepository projectRepository;
+	
+	@Value("${file.upload.mockup-path}")
+    private String MOCKUP_UPLOAD_PATH;
 
 	// 프로젝트 ID 기준 모든 목업 리비전별로 그룹화된 정보 반환
 	public Map<Integer, Map<String, List<String>>> getMockupsGroupedByRevision(Long projectId) {
@@ -121,6 +130,20 @@ public class MockupService {
 			responseBody.put("html", code);
 			responseBody.put("sourceRequirements", sourceRequirements);
 
+			// html 파일과 같은 경로, 같은 이름의 .png 파일이 있으면 base64로 인코딩하여 image 필드로 추가
+			String pngFilePath = mockup.getPath().replaceAll("\\_spec.html?$", ".png");
+			Path pngPath = Path.of(pngFilePath);
+			if (Files.exists(pngPath)) {
+				try {
+					byte[] imageBytes = Files.readAllBytes(pngPath);
+					String base64Image = Base64.getEncoder().encodeToString(imageBytes);
+					responseBody.put("imageName", pngPath.getFileName().toString());
+					responseBody.put("image", base64Image);
+				} catch (IOException e) {
+					// 이미지 읽기 실패 시 무시 (image 필드 추가하지 않음)
+				}
+			}
+
 			return ResponseEntity.ok()
 					.contentType(MediaType.APPLICATION_JSON)
 					.body(responseBody);
@@ -196,6 +219,39 @@ public class MockupService {
 				}
 			}
 
+			// 1. 기존 mockupResources 압축 코드 위에 추가
+			Path pngDirPath = Paths.get(MOCKUP_UPLOAD_PATH, "project_" + projectId, "revision_" + revisionCount,"screen_spec");
+			if (Files.exists(pngDirPath) && Files.isDirectory(pngDirPath)) {
+				try {
+					// 디렉터리 내 모든 파일 로그 출력
+					log.info("[PNG 디렉터리] {} 내 파일 목록:", pngDirPath);
+					Files.list(pngDirPath).forEach(path -> log.info("  - {}", path.getFileName()));
+
+					// PNG 파일만 필터링
+					Files.list(pngDirPath)
+						.filter(path -> path.toString().toLowerCase().endsWith(".png"))
+						.forEach(pngPath -> {
+							log.info("[PNG 추가 시도] 파일: {}", pngPath.getFileName());
+							try (InputStream inputStream = Files.newInputStream(pngPath)) {
+								String fileName = pngPath.getFileName().toString();
+								String zipEntryPath = "screen_spec/" + fileName;
+								zipOut.putNextEntry(new ZipEntry(zipEntryPath));
+								byte[] buffer = new byte[1024];
+								int length;
+								while ((length = inputStream.read(buffer)) >= 0) {
+									zipOut.write(buffer, 0, length);
+								}
+								zipOut.closeEntry();
+								log.info("[PNG 추가 성공] {} -> {}", fileName, zipEntryPath);
+							} catch (IOException e) {
+								log.error("[PNG 추가 실패] {} - {}", pngPath, e.getMessage(), e);
+							}
+						});
+				} catch (IOException e) {
+					log.error("PNG 디렉터리 접근 실패: {} - {}", pngDirPath, e.getMessage(), e);
+				}
+			}
+
 			zipOut.finish();
 			byte[] zipBytes = byteStream.toByteArray();
 			ByteArrayResource resource = new ByteArrayResource(zipBytes);
@@ -220,7 +276,7 @@ public class MockupService {
             if (file.isEmpty()) continue;
 
             String filename = file.getOriginalFilename();
-            java.nio.file.Path savePath = java.nio.file.Paths.get(BASE_UPLOAD_PATH, filename);
+            java.nio.file.Path savePath = java.nio.file.Paths.get(TEST_BASE_UPLOAD_PATH, filename);
             java.nio.file.Files.copy(file.getInputStream(), savePath, java.nio.file.StandardCopyOption.REPLACE_EXISTING);
 
             Mockup mockup = Mockup
