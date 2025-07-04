@@ -3,6 +3,7 @@ package com.skala.decase.domain.requirement.controller;
 import com.skala.decase.domain.requirement.controller.dto.request.DeleteRequestDto;
 import com.skala.decase.domain.requirement.controller.dto.request.RequirementRevisionDto;
 import com.skala.decase.domain.requirement.controller.dto.request.UpdateRequirementDto;
+import com.skala.decase.domain.requirement.controller.dto.response.RequirementResponse;
 import com.skala.decase.domain.requirement.controller.dto.response.RequirementWithSourceResponse;
 import com.skala.decase.domain.requirement.service.ExelExportService;
 import com.skala.decase.domain.requirement.service.RequirementService;
@@ -40,11 +41,11 @@ public class RequirementController {
 
     @Operation(summary = "요구사항 정의서 버전별 미리보기", description = "특정 리비전의 요구사항 정의서 미리보기를 지원합니다.")
     @GetMapping("/{projectId}/requirements/generated")
-    public ResponseEntity<ApiResponse<List<RequirementWithSourceResponse>>> getGeneratedRequirements(
+    public ResponseEntity<ApiResponse<List<RequirementResponse>>> getGeneratedRequirements(
             @PathVariable Long projectId,
             @RequestParam(required = false) Integer revisionCount) {
 
-        List<RequirementWithSourceResponse> responses = (revisionCount == null)
+        List<RequirementResponse> responses = (revisionCount == null)
                 ? requirementService.getGeneratedRequirements(projectId)
                 : requirementService.getGeneratedRequirements(projectId, revisionCount);
 
@@ -60,7 +61,7 @@ public class RequirementController {
         try {
             int revision = (revisionCount == null) ? 1 : revisionCount;
 
-            List<RequirementWithSourceResponse> responses = requirementService.getGeneratedRequirements(projectId,
+            List<RequirementResponse> responses = requirementService.getGeneratedRequirements(projectId,
                     revision);
 
             // Excel 파일 생성
@@ -95,7 +96,7 @@ public class RequirementController {
 
     @Operation(summary = "요구사항 정의서 버전 별 검색", description = "요구사항 정의서 버전 별 검색")
     @GetMapping("/{projectId}/documents/{revisionCount}/search")
-    public ResponseEntity<ApiResponse<List<RequirementWithSourceResponse>>> getGeneratedRequirements(
+    public ResponseEntity<ApiResponse<List<RequirementResponse>>> getGeneratedRequirements(
             @PathVariable Long projectId,
             @PathVariable int revisionCount,
             @RequestParam(required = false) String query,
@@ -106,7 +107,7 @@ public class RequirementController {
             @RequestParam(required = false) Integer difficulty,
             @RequestParam(required = false) Integer priority,
             @RequestParam(required = false) List<String> docType) {
-        List<RequirementWithSourceResponse> result = requirementService.getFilteredRequirements(
+        List<RequirementResponse> result = requirementService.getFilteredRequirements(
                 projectId, revisionCount, query, level1, level2, level3, type, difficulty, priority, docType);
         return ResponseEntity.ok().body(ApiResponse.success(result));
     }
@@ -118,13 +119,12 @@ public class RequirementController {
         return ResponseEntity.ok(revisions);
     }
 
-    @Operation(summary = "클라이언트에서 요구사항 정의서 내용 수정", description = "특정 리비전의 요구사항 정의서를 클라이언트가 수정할 수 있습니다.")
-    @PostMapping("{projectId}/requirements/{revisionCount}/edit")
+    @Operation(summary = "클라이언트에서 요구사항 정의서 내용 수정", description = "최신 리비전의 요구사항 정의서를 클라이언트가 수정할 수 있습니다.")
+    @PostMapping("{projectId}/requirements/edit")
     public ResponseEntity<ApiResponse<String>> updateRequirement(
             @PathVariable Long projectId,
-            @PathVariable int revisionCount,
             @RequestBody List<UpdateRequirementDto> dtoList) {
-        requirementService.updateRequirement(projectId, revisionCount, dtoList);
+        requirementService.updateRequirement(projectId, dtoList);
         return ResponseEntity.ok().body(ApiResponse.success("변경 내역이 저장되었습니다."));
     }
 

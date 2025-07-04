@@ -4,13 +4,23 @@ import com.skala.decase.domain.requirement.exception.DifficultyException;
 import org.springframework.http.HttpStatus;
 
 public enum Reception {
-    ACCEPTED, UNACCEPTED;
+    ACCEPTED, REVIEWING, UNACCEPTED;
 
-    public static Reception fromKorean(String value) {
-        return switch (value) {
-            case "수용" -> ACCEPTED;
-            case "미수용" -> UNACCEPTED;
-            default -> throw new DifficultyException("Unknown difficulty value: " + value, HttpStatus.BAD_REQUEST);
+    public static Reception fromKorean(String reception) {
+        return switch (reception) {
+            case "ACCEPTED" -> ACCEPTED;
+            case "REVIEWING" -> REVIEWING;
+            case "UNACCEPTED" -> UNACCEPTED;
+            default -> throw new DifficultyException("Unknown Reception value: " + reception, HttpStatus.BAD_REQUEST);
+        };
+    }
+
+    public static String fromReception(String reception) {
+        return switch (reception) {
+            case "ACCEPTED" -> "수용";
+            case "REVIEWING" -> "검토중";
+            case "UNACCEPTED" -> "미수용";
+            default -> throw new DifficultyException("Unknown Reception value: " + reception, HttpStatus.BAD_REQUEST);
         };
     }
 }

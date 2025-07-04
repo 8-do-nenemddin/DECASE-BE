@@ -29,6 +29,7 @@ import lombok.NoArgsConstructor;
 import org.hibernate.envers.Audited;
 import org.hibernate.envers.NotAudited;
 import org.hibernate.envers.RelationTargetAuditMode;
+import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
@@ -54,6 +55,9 @@ public class Requirement {
     @Enumerated(EnumType.STRING)
     private RequirementType type;
 
+    @Enumerated(EnumType.STRING)
+    private Reception reception = Reception.ACCEPTED;
+
     @Column(name = "level_1", length = 100)
     private String level1;
 
@@ -75,7 +79,7 @@ public class Requirement {
     @Enumerated(EnumType.STRING)
     private Difficulty difficulty;
 
-    @NotAudited
+    @CreatedDate
     @Column(nullable = false)
     private LocalDateTime createdDate;
 
@@ -184,6 +188,7 @@ public class Requirement {
         this.level3 = requirementDto.getLevel3() == null ? this.level3 : requirementDto.getLevel3();
         this.priority = requirementDto.getPriority() == null ? this.priority : requirementDto.getPriority();
         this.difficulty = requirementDto.getDifficulty() == null ? this.difficulty : requirementDto.getDifficulty();
+        this.reception = requirementDto.getReception() == null ? this.reception : requirementDto.getReception();
         this.name = requirementDto.getName() == null ? this.getName() : requirementDto.getName();
         this.description = requirementDto.getDescription() == null ? this.description : requirementDto.getDescription();
         this.modReason = requirementDto.getModReason();
@@ -239,7 +244,7 @@ public class Requirement {
     }
 
     public void updateFromPending(RequirementType newType, String newLevel1, String newLevel2, String newLevel3, String newName,
-                                  String newDescription, Priority newPriority, Difficulty newDifficulty, String modReason,
+                                  String newDescription, Priority newPriority, Difficulty newDifficulty, Reception reception, String modReason,
                                   Member modifiedBy) {
         this.type = newType == null ? this.type : newType;
         this.level1 = newLevel1 == null ? this.level1 : newLevel1;
@@ -249,6 +254,7 @@ public class Requirement {
         this.description = newDescription == null ? this.description : newDescription;
         this.priority = newPriority == null ? this.priority : newPriority;
         this.difficulty = newDifficulty == null ? this.difficulty : newDifficulty;
+        this.reception = reception == null ? this.reception : reception;
         this.modReason = modReason;
         this.modifiedBy = modifiedBy;
     }

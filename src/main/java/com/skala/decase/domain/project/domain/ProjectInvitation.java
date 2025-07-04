@@ -4,11 +4,13 @@ import jakarta.persistence.*;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.hibernate.envers.Audited;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Entity
+@Audited
 @Table(name = "TM_PROJECTS_INVITATION")
 @Getter
 @NoArgsConstructor
