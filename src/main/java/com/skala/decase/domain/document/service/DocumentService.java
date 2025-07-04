@@ -84,7 +84,7 @@ public class DocumentService {
     @Transactional
     public Document uploadDocument(String uploadPath, MultipartFile file, int docTypeIdx, Project project,
                                    Member member, boolean isMemberUpload) {
-        String fileName = System.currentTimeMillis() + "_" + StringUtils.cleanPath(file.getOriginalFilename());
+        String fileName = StringUtils.cleanPath(file.getOriginalFilename()) + "_" + System.currentTimeMillis();
         Path path = Paths.get(uploadPath);
 
         // 디렉토리 없으면 생성
@@ -263,9 +263,12 @@ public class DocumentService {
         Document doc = documentRepository.findById(docId)
                 .orElseThrow(() -> new DocumentException("문서를 찾을 수 없습니다.", HttpStatus.NOT_FOUND));
 
+        int lastUnderscore = doc.getName().lastIndexOf("_");
+        String docName = doc.getName().substring(0, lastUnderscore);
+
         DocumentDetailResponse docDetailResponse = DocumentDetailResponse.builder()
                 .docId(doc.getDocId())
-                .name(doc.getName())
+                .name(docName)
                 .docDescription(doc.getDocDescription() == null ? "" : doc.getDocDescription())
                 .createdDate(doc.getCreatedDate())
                 .build();
@@ -286,8 +289,7 @@ public class DocumentService {
         List<Document> documents = documentRepository.findAllByProjectAndIsMemberUploadTrue(project);
 
         List<DocumentResponse> responseList = documents.stream()
-                .map(documentMapper::toResponse)
-                .collect(Collectors.toList());
+                .map(documentMapper::toResponse).toList();
 
         return ResponseEntity.ok(responseList);
     }
