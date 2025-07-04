@@ -92,20 +92,24 @@ public class RequirementAuditRepository {
                         "  FROM td_requirements_aud " +
                         "  WHERE revision_count <= :targetRevision " +
                         "), " +
-                        "sources AS ( " +
-                        "  SELECT s.req_id_code, " +
-                        "         JSON_ARRAYAGG( " +
-                        "           JSON_OBJECT( " +
-                        "             'source_id', s.source_id, " +
-                        "             'page_num', s.page_num, " +
-                        "             'rel_sentence', s.rel_sentence, " +
-                        "             'doc_id', s.doc_id, " +
-                        "             'doc_name', d.name " +
-                        "           ) " +
-                        "         ) AS sources " +
+                        "deduped_sources AS ( " +
+                        "  SELECT DISTINCT s.req_id_code, s.source_id, s.page_num, s.rel_sentence, s.doc_id, d.name AS doc_name " +
                         "  FROM td_source_aud s " +
                         "  LEFT JOIN tm_documents_aud d ON s.doc_id = d.doc_id " +
-                        "  GROUP BY s.req_id_code " +
+                        "), " +
+                        "sources AS ( " +
+                        "  SELECT req_id_code, " +
+                        "         JSON_ARRAYAGG( " +
+                        "           JSON_OBJECT( " +
+                        "             'source_id', source_id, " +
+                        "             'page_num', page_num, " +
+                        "             'rel_sentence', rel_sentence, " +
+                        "             'doc_id', doc_id, " +
+                        "             'doc_name', doc_name " +
+                        "           ) " +
+                        "         ) AS sources " +
+                        "  FROM deduped_sources " +
+                        "  GROUP BY req_id_code " +
                         ") " +
                         "SELECT " +
                         "  r.req_pk, r.req_id_code, " +
@@ -121,7 +125,6 @@ public class RequirementAuditRepository {
                         "  AND r.revtype <> 2 " +
                         "  AND r.project_id_aud = :projectId " +
                         "ORDER BY r.req_id_code";
-
 
         @SuppressWarnings("unchecked")
         List<Object[]> results = entityManager.createNativeQuery(sql)
