@@ -34,10 +34,14 @@ import java.util.*;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 import java.util.Base64;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @Service
 @RequiredArgsConstructor
 public class MockupService {
+
+    private static final Logger log = LoggerFactory.getLogger(MockupService.class);
 
     // 로컬 파일 업로드 경로
     private static final String TEST_BASE_UPLOAD_PATH = "DECASE/mockups";
@@ -216,13 +220,18 @@ public class MockupService {
 			}
 
 			// 1. 기존 mockupResources 압축 코드 위에 추가
-			Path pngDirPath = Paths.get(MOCKUP_UPLOAD_PATH, "project_" + projectId, "revision_" + revisionCount);
+			Path pngDirPath = Paths.get(MOCKUP_UPLOAD_PATH, "project_" + projectId, "revision_" + revisionCount,"screen_spec");
 			if (Files.exists(pngDirPath) && Files.isDirectory(pngDirPath)) {
 				try {
+					// 디렉터리 내 모든 파일 로그 출력
+					log.info("[PNG 디렉터리] {} 내 파일 목록:", pngDirPath);
+					Files.list(pngDirPath).forEach(path -> log.info("  - {}", path.getFileName()));
+
 					// PNG 파일만 필터링
 					Files.list(pngDirPath)
 						.filter(path -> path.toString().toLowerCase().endsWith(".png"))
 						.forEach(pngPath -> {
+							log.info("[PNG 추가 시도] 파일: {}", pngPath.getFileName());
 							try (InputStream inputStream = Files.newInputStream(pngPath)) {
 								String fileName = pngPath.getFileName().toString();
 								String zipEntryPath = "screen_spec/" + fileName;
@@ -233,12 +242,13 @@ public class MockupService {
 									zipOut.write(buffer, 0, length);
 								}
 								zipOut.closeEntry();
+								log.info("[PNG 추가 성공] {} -> {}", fileName, zipEntryPath);
 							} catch (IOException e) {
-								// PNG 파일 하나가 실패해도 무시
+								log.error("[PNG 추가 실패] {} - {}", pngPath, e.getMessage(), e);
 							}
 						});
 				} catch (IOException e) {
-					// 디렉터리 접근 실패 시 무시
+					log.error("PNG 디렉터리 접근 실패: {} - {}", pngDirPath, e.getMessage(), e);
 				}
 			}
 
