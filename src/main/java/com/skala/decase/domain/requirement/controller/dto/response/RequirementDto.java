@@ -20,6 +20,7 @@ public class RequirementDto {
 	private String category3;
 	private String priority;
 	private String difficulty;
+	private String reception;
 	private String source;
 	private String sourcePage;
 	private String modifiedDate;

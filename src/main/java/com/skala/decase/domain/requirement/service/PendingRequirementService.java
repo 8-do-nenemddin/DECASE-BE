@@ -50,6 +50,7 @@ public class PendingRequirementService {
                         .category3(originalRequirement.getLevel3())
                         .priority(originalRequirement.getPriority().toString())
                         .difficulty(originalRequirement.getDifficulty().toString())
+                            .reception(originalRequirement.getDescription())
                         .modifiedDate(
                                 Optional.ofNullable(originalRequirement.getModifiedDate())
                                         .map(LocalDateTime::toString)
@@ -70,7 +71,8 @@ public class PendingRequirementService {
                         .category3(pendingRequirement.getLevel3() != null ? pendingRequirement.getLevel3() : originalRequirement.getLevel3())
                         .priority(pendingRequirement.getPriority() != null ? pendingRequirement.getPriority().toString() : originalRequirement.getPriority().toString())
                         .difficulty(pendingRequirement.getDifficulty() != null ? pendingRequirement.getDifficulty().toString() : originalRequirement.getDifficulty().toString())
-                        .modifiedDate(pendingRequirement.getModifiedDate().toString())
+                            .reception(pendingRequirement.getReception() != null ? pendingRequirement.getReception().toString() : originalRequirement.getDescription().toString())
+                            .modifiedDate(pendingRequirement.getModifiedDate().toString())
                         .modifier(pendingRequirement.getCreatedBy().getName())
                         .reason(pendingRequirement.getModReason())
                         .isDelete(pendingRequirement.getIsDelete())
@@ -120,9 +122,11 @@ public class PendingRequirementService {
                         pendingRequirement.getDescription(),
                         pendingRequirement.getPriority(),
                         pendingRequirement.getDifficulty(),
+                        pendingRequirement.getReception(),
                         pendingRequirement.getModReason(),
                         pendingRequirement.getCreatedBy()
                 );
+                System.out.println("반영 안됨 " + originalRequirement.getReception());
                 // 원본 Requirement 저장
                 requirementRepository.save(originalRequirement);
             }

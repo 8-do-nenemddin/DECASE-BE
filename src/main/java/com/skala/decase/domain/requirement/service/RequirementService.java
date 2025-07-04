@@ -306,9 +306,13 @@ public class RequirementService {
                 continue;
             }
 
+            System.out.println("=== PendingRequirement 생성 전 ===");
             PendingRequirement pendingRequirement = new PendingRequirement();
+
+            System.out.println("=== createPendingRequirement 호출 전 ===");
             pendingRequirement.createPendingRequirement(req, requirement.getReqIdCode(), project, member); // 변경 사항 업데이트
 
+            System.out.println("=== save 호출 전 ===");
             pendingRequirementRepository.save(pendingRequirement);
         }
     }

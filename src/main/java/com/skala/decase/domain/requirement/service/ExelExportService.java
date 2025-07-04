@@ -87,7 +87,7 @@ public class ExelExportService {
             createCell(row, 8, convertDifficultyToKorean(response.getDifficulty()), dataStyle);
             createCell(row, 9, formatSources(response.getSources()), dataStyle);
             createCell(row, 10, response.getRevType(), dataStyle); //관리 구분
-            createCell(row, 11, response.getStatus(), dataStyle); //수용 여부
+            createCell(row, 11, response.getReception(), dataStyle); //수용 여부
             createCell(row, 12, formatModificationHistory(response.getModReason()), dataStyle);
             createCell(row, 13, formatDate(response.getModifiedDate()), dataStyle);
         }

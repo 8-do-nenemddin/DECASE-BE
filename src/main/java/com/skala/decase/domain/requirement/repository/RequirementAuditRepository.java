@@ -85,10 +85,27 @@ public class RequirementAuditRepository {
     public List<RequirementResponse> findByProjectIdAndRevisionCount(long projectId, int revisionCount) {
         String sql =
                 "WITH latest_requirements AS ( " +
-                        "  SELECT *, " +
+                        "  SELECT req_pk, req_id_code, type, level_1, level_2, level_3, " +
+                        "         name, description, priority, difficulty, " +
+                        "         modified_date, created_date, revtype, reception, project_id_aud, " +
                         "         ROW_NUMBER() OVER (PARTITION BY req_id_code ORDER BY modified_date DESC) AS rn " +
                         "  FROM td_requirements_aud " +
                         "  WHERE revision_count <= :targetRevision " +
+                        "), " +
+                        "sources AS ( " +
+                        "  SELECT s.req_id_code, " +
+                        "         JSON_ARRAYAGG( " +
+                        "           JSON_OBJECT( " +
+                        "             'source_id', s.source_id, " +
+                        "             'page_num', s.page_num, " +
+                        "             'rel_sentence', s.rel_sentence, " +
+                        "             'doc_id', s.doc_id, " +
+                        "             'doc_name', d.name " +
+                        "           ) " +
+                        "         ) AS sources " +
+                        "  FROM td_source_aud s " +
+                        "  LEFT JOIN tm_documents_aud d ON s.doc_id = d.doc_id " +
+                        "  GROUP BY s.req_id_code " +
                         ") " +
                         "SELECT " +
                         "  r.req_pk, r.req_id_code, " +
@@ -96,29 +113,13 @@ public class RequirementAuditRepository {
                         "  r.name, r.description, r.priority, r.difficulty, " +
                         "  r.modified_date AS modified_date, " +
                         "  r.created_date AS created_date, " +
-                        "  r.revtype, r.status, " +  // 요구사항 revtype만 포함
-                        "  IFNULL(JSON_ARRAYAGG( " +
-                        "    CASE WHEN s.source_id IS NOT NULL THEN " +
-                        "      JSON_OBJECT( " +
-                        "        'source_id', s.source_id, " +
-                        "        'page_num', s.page_num, " +
-                        "        'rel_sentence', s.rel_sentence, " +
-                        "        'doc_id', s.doc_id, " +
-                        "        'doc_name', d.name " + // 문서명만 가져오기
-                        "      ) " +
-                        "    END " +
-                        "  ), JSON_ARRAY()) AS sources " +
+                        "  r.revtype, r.reception, " +
+                        "  IFNULL(s.sources, JSON_ARRAY()) AS sources " +
                         "FROM latest_requirements r " +
-                        "LEFT JOIN td_source_aud s ON r.req_id_code = s.req_id_code " +
-                        "LEFT JOIN tm_documents_aud d ON s.doc_id = d.doc_id " +
+                        "LEFT JOIN sources s ON r.req_id_code = s.req_id_code " +
                         "WHERE r.rn = 1 " +
                         "  AND r.revtype <> 2 " +
                         "  AND r.project_id_aud = :projectId " +
-                        "GROUP BY " +
-                        "  r.req_pk, r.req_id_code, " +
-                        "  r.type, r.level_1, r.level_2, r.level_3, " +
-                        "  r.name, r.description, r.priority, r.difficulty, " +
-                        "  r.modified_date, r.created_date, r.revtype, r.status " +
                         "ORDER BY r.req_id_code";
 
 

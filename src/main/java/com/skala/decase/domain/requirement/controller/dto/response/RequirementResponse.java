@@ -14,7 +14,7 @@ public class RequirementResponse {
     private String reqIdCode;
     private int revisionCount;
     private String type;
-    private String status;
+    private String reception;
     private String level1;
     private String level2;
     private String level3;
@@ -33,14 +33,14 @@ public class RequirementResponse {
     private List<SourceResponse> sources;
 
     public RequirementResponse(long reqPk, String reqIdCode, int revisionCount,
-                               String type, String status, String level1, String level2,
+                               String type, String reception, String level1, String level2,
                                String level3, String priority, String difficulty, String name, String description, String revType,
                                LocalDateTime createdDate, LocalDateTime modifiedDate, List<String> modReason, List<SourceResponse> sources) {
         this.reqPk = reqPk;
         this.reqIdCode = reqIdCode;
         this.revisionCount = revisionCount;
         this.type = type;
-        this.status = Reception.fromReception(status);
+        this.reception = Reception.fromReception(reception);
         this.level1 = level1;
         this.level2 = level2;
         this.level3 = level3;
