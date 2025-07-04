@@ -72,7 +72,8 @@ public class RequirementUpdateServiceMapper {
                 requirement,
                 document,
                 0,
-                ""
+                "",
+                requirement.getRevisionCount()
         );
         return newReq;
     }
