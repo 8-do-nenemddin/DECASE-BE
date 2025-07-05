@@ -84,7 +84,7 @@ public class DocumentService {
     @Transactional
     public Document uploadDocument(String uploadPath, MultipartFile file, int docTypeIdx, Project project,
                                    Member member, boolean isMemberUpload) {
-        String fileName = System.currentTimeMillis() + "_" + StringUtils.cleanPath(file.getOriginalFilename());
+        String fileName = StringUtils.cleanPath(file.getOriginalFilename());
         Path path = Paths.get(uploadPath);
 
         // 디렉토리 없으면 생성
@@ -97,7 +97,7 @@ public class DocumentService {
         }
 
         // 파일 저장
-        Path filePath = path.resolve(fileName);
+        Path filePath = path.resolve(fileName + "_" + System.currentTimeMillis());
         try {
             Files.copy(file.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
         } catch (IOException e) {
@@ -114,7 +114,7 @@ public class DocumentService {
         // Document 엔티티 생성
         Document doc = new Document(
                 generateDocId(prefix),
-                file.getOriginalFilename(),
+                fileName,
                 filePath.toString(),
                 isMemberUpload,
                 project,
@@ -263,6 +263,7 @@ public class DocumentService {
         Document doc = documentRepository.findById(docId)
                 .orElseThrow(() -> new DocumentException("문서를 찾을 수 없습니다.", HttpStatus.NOT_FOUND));
 
+
         DocumentDetailResponse docDetailResponse = DocumentDetailResponse.builder()
                 .docId(doc.getDocId())
                 .name(doc.getName())
@@ -286,8 +287,7 @@ public class DocumentService {
         List<Document> documents = documentRepository.findAllByProjectAndIsMemberUploadTrue(project);
 
         List<DocumentResponse> responseList = documents.stream()
-                .map(documentMapper::toResponse)
-                .collect(Collectors.toList());
+                .map(documentMapper::toResponse).toList();
 
         return ResponseEntity.ok(responseList);
     }

@@ -257,18 +257,13 @@ public class RequirementService {
 
         int maxRevision = Optional.ofNullable(requirementRepository.getMaxRevisionCount(project)).orElse(1);
 
-        String prefix = "요구사항 정의서_";
-        int digitCount = String.valueOf(maxRevision).length();
-        String format = "%0" + digitCount + "d";
-
         List<RequirementRevisionDto> versionList = new ArrayList<>();
         for (int i = maxRevision; i > 0; i--) {
             int finalI = i;
             Optional<Requirement> requirementOpt = requirementRepository.findFirstByProjectAndRevisionCount(project, i);
             requirementOpt.ifPresent(req -> {
-                String label = prefix + String.format(format, finalI);
                 String date = req.getCreatedDate().toLocalDate().toString();
-                versionList.add(new RequirementRevisionDto(label, finalI, date));
+                versionList.add(new RequirementRevisionDto("요구사항 정의서", finalI, date));
             });
         }
         return versionList;

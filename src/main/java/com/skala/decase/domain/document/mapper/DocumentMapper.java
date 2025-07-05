@@ -20,6 +20,17 @@ public class DocumentMapper {
                 .build();
     }
 
+    public DocumentDetailResponse toDetailResponseWithName(Document document, String name) {
+        return DocumentDetailResponse.builder()
+                .docId(document.getDocId())
+                .name(name)
+                .docDescription(document.getDocDescription() == null ? "" : document.getDocDescription())
+                .createdDate(document.getCreatedDate())
+                .createdBy(document.getCreatedBy().getName())
+                .build();
+    }
+
+
     public DocumentResponse toResponse(Document document) {
         return new DocumentResponse(
                 document.getDocId(),
