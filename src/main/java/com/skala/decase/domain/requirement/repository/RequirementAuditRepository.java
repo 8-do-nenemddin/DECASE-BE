@@ -86,7 +86,7 @@ public class RequirementAuditRepository {
         String sql =
                 "WITH target_requirements AS ( " +
                         "  SELECT *, " +
-                        "         ROW_NUMBER() OVER (PARTITION BY req_id_code ORDER BY revision_count DESC) AS rn " +
+                        "         ROW_NUMBER() OVER (PARTITION BY req_id_code ORDER BY modified_date DESC) AS rn " +
                         "  FROM td_requirements_aud " +
                         "  WHERE revision_count <= :targetRevision " +
                         "), " +
