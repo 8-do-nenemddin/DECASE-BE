@@ -50,7 +50,7 @@ public class PendingRequirementService {
                         .category3(originalRequirement.getLevel3())
                         .priority(originalRequirement.getPriority().toString())
                         .difficulty(originalRequirement.getDifficulty().toString())
-                            .reception(originalRequirement.getDescription())
+                            .reception(originalRequirement.getReception().toString())
                         .modifiedDate(
                                 Optional.ofNullable(originalRequirement.getModifiedDate())
                                         .map(LocalDateTime::toString)
@@ -71,7 +71,7 @@ public class PendingRequirementService {
                         .category3(pendingRequirement.getLevel3() != null ? pendingRequirement.getLevel3() : originalRequirement.getLevel3())
                         .priority(pendingRequirement.getPriority() != null ? pendingRequirement.getPriority().toString() : originalRequirement.getPriority().toString())
                         .difficulty(pendingRequirement.getDifficulty() != null ? pendingRequirement.getDifficulty().toString() : originalRequirement.getDifficulty().toString())
-                            .reception(pendingRequirement.getReception() != null ? pendingRequirement.getReception().toString() : originalRequirement.getDescription().toString())
+                            .reception(pendingRequirement.getReception() != null ? pendingRequirement.getReception().toString() : originalRequirement.getDescription())
                             .modifiedDate(pendingRequirement.getModifiedDate().toString())
                         .modifier(pendingRequirement.getCreatedBy().getName())
                         .reason(pendingRequirement.getModReason())

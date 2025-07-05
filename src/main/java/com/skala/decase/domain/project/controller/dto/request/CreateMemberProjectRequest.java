@@ -2,10 +2,11 @@ package com.skala.decase.domain.project.controller.dto.request;
 
 import com.skala.decase.domain.project.domain.Permission;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
 public record CreateMemberProjectRequest(
-        @NotBlank(message = "Admin의 Id를 입력해주세요.")
+        @NotNull(message = "Admin의 Id를 입력해주세요.")
         long adminId,
 
         @NotBlank(message = "초대할 이메일을 입력해주세요.")

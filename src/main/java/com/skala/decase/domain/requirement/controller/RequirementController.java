@@ -1,5 +1,7 @@
 package com.skala.decase.domain.requirement.controller;
 
+import com.skala.decase.domain.project.domain.Project;
+import com.skala.decase.domain.project.service.ProjectService;
 import com.skala.decase.domain.requirement.controller.dto.request.DeleteRequestDto;
 import com.skala.decase.domain.requirement.controller.dto.request.RequirementRevisionDto;
 import com.skala.decase.domain.requirement.controller.dto.request.UpdateRequirementDto;
@@ -14,6 +16,8 @@ import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.io.ByteArrayResource;
@@ -38,6 +42,7 @@ public class RequirementController {
 
     private final RequirementService requirementService;
     private final ExelExportService exelExportService;
+    private final ProjectService projectService;
 
     @Operation(summary = "요구사항 정의서 버전별 미리보기", description = "특정 리비전의 요구사항 정의서 미리보기를 지원합니다.")
     @GetMapping("/{projectId}/requirements/generated")
@@ -59,7 +64,9 @@ public class RequirementController {
             @RequestParam(required = false) Integer revisionCount) {
 
         try {
-            int revision = (revisionCount == null) ? 1 : revisionCount;
+            Project project = projectService.findByProjectId(projectId);
+            int maxRevision = requirementService.getMaxRevision(project);
+            int revision = (revisionCount == null) ? maxRevision : revisionCount;
 
             List<RequirementResponse> responses = requirementService.getGeneratedRequirements(projectId,
                     revision);

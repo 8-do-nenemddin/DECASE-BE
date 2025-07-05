@@ -63,6 +63,7 @@ public class PendingRequirement {
     @LastModifiedDate
     private LocalDateTime modifiedDate;
 
+    @Column(nullable = false)
     private String modReason;   //수정 사유
 
     private Boolean status;
