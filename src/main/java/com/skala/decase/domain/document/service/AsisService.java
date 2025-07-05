@@ -43,9 +43,8 @@ public class AsisService {
         List<Document> documents = documentRepository.findByDocIdStartingWithASIS(project);
 
         return documents.stream()
-                .map(documentMapper::toDetailResponse)
-                .collect(Collectors.toList());
-
+                .map((doc)->documentMapper.toDetailResponseWithName(doc, "현황 보고서.pdf"))
+                .toList();
     }
 
 

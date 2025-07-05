@@ -173,27 +173,4 @@ public class CreateMockupService {
         }
     }
 
-    /**
-     * 특정 프로젝트의 목업 파일들 조회
-     */
-    //    public List<Mockup> getMockupsByProject(Long projectId, Integer revisionCount) {
-    //        return mockupRepository.findByProjectIdAndRevisionCount(projectId, revisionCount);
-    //    }
-    private String getFileType(String filename) {
-        if (filename == null) {
-            return "UNKNOWN";
-        }
-
-        String extension = filename.substring(filename.lastIndexOf('.') + 1).toLowerCase();
-
-        return switch (extension) {
-            case "html", "htm" -> "HTML";
-            case "css" -> "CSS";
-            case "js" -> "JAVASCRIPT";
-            case "png", "jpg", "jpeg", "gif", "svg" -> "IMAGE";
-            case "json" -> "JSON";
-            default -> "OTHER";
-        };
-    }
-
 }

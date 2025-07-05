@@ -11,25 +11,30 @@ import org.springframework.stereotype.Component;
 public class DocumentMapper {
 
     public DocumentDetailResponse toDetailResponse(Document document) {
-        int lastUnderscore = document.getName().lastIndexOf("_");
-        String docName = document.getName().substring(0, lastUnderscore);
-
         return DocumentDetailResponse.builder()
                 .docId(document.getDocId())
-                .name(docName)
+                .name(document.getName())
                 .docDescription(document.getDocDescription() == null ? "" : document.getDocDescription())
                 .createdDate(document.getCreatedDate())
                 .createdBy(document.getCreatedBy().getName())
                 .build();
     }
 
-    public DocumentResponse toResponse(Document document) {
-        int lastUnderscore = document.getName().lastIndexOf("_");
-        String docName = document.getName().substring(0, lastUnderscore);
+    public DocumentDetailResponse toDetailResponseWithName(Document document, String name) {
+        return DocumentDetailResponse.builder()
+                .docId(document.getDocId())
+                .name(name)
+                .docDescription(document.getDocDescription() == null ? "" : document.getDocDescription())
+                .createdDate(document.getCreatedDate())
+                .createdBy(document.getCreatedBy().getName())
+                .build();
+    }
 
+
+    public DocumentResponse toResponse(Document document) {
         return new DocumentResponse(
                 document.getDocId(),
-                docName,
+                document.getName(),
                 document.getDocDescription() != null ? document.getDocDescription() : ""
         );
     }
