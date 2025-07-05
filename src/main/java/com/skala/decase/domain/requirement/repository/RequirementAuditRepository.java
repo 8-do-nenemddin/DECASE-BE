@@ -63,18 +63,21 @@ public class RequirementAuditRepository {
                 .toList();
     }
 
-    public List<RequirementModReasonResponse> findModReasonByProjectIdAndReqIdCodesNative(Long projectId, List<String> reqIdCodes) {
-        String sql = "SELECT r.req_id_code, r.mod_reason, rev.revtstmp " +
-                "FROM td_requirements_aud r " +
-                "JOIN revinfo rev ON r.rev = rev.rev " +
-                "WHERE r.project_id_aud = :projectId " +
-                "AND r.req_id_code IN :reqIdCodes " +
-                "ORDER BY r.req_id_code";
+    public List<RequirementModReasonResponse> findModReasonByProjectIdAndReqIdCodesNative(Long projectId, List<String> reqIdCodes, Integer revision) {
+        String sql =
+                "SELECT r.req_id_code, r.mod_reason, rev.revtstmp " +
+                        "FROM td_requirements_aud r " +
+                        "JOIN revinfo rev ON r.rev = rev.rev " +
+                        "WHERE r.project_id_aud = :projectId " +
+                        "AND r.req_id_code IN (:reqIdCodes) " +
+                        "AND r.revision_count <= :targetRevision " +
+                        "ORDER BY r.req_id_code";
 
         @SuppressWarnings("unchecked")
         List<Object[]> results = entityManager.createNativeQuery(sql)
                 .setParameter("projectId", projectId)
                 .setParameter("reqIdCodes", reqIdCodes)
+                .setParameter("targetRevision", revision)
                 .getResultList();
 
         return results.stream()
@@ -85,15 +88,22 @@ public class RequirementAuditRepository {
     public List<RequirementResponse> findByProjectIdAndRevisionCount(long projectId, int revisionCount) {
         String sql =
                 "WITH target_requirements AS ( " +
-                        "  SELECT *, " +
-                        "         ROW_NUMBER() OVER (PARTITION BY req_id_code ORDER BY modified_date DESC) AS rn " +
-                        "  FROM td_requirements_aud " +
-                        "  WHERE revision_count <= :targetRevision " +
-                        "), " +
-                        "target_sources AS ( " +
                         "  SELECT * " +
-                        "  FROM td_source_aud " +
-                        "  WHERE revision_count <= :targetRevision " +
+                        "  FROM ( " +
+                        "    SELECT *, ROW_NUMBER() OVER (PARTITION BY req_id_code ORDER BY modified_date DESC) AS rn " +
+                        "    FROM td_requirements_aud " +
+                        "    WHERE revision_count <= :targetRevision " +
+                        "  ) sub_r " +
+                        "  WHERE rn = 1 " +
+                        "), " +
+                        "distinct_sources AS ( " +
+                        "  SELECT * " +
+                        "  FROM ( " +
+                        "    SELECT *, ROW_NUMBER() OVER (PARTITION BY req_id_code, doc_id ORDER BY revision_count DESC) AS rn " +
+                        "    FROM td_source_aud " +
+                        "    WHERE revision_count <= :targetRevision " +
+                        "  ) sub_s " +
+                        "  WHERE rn = 1 " +
                         ") " +
                         "SELECT " +
                         "  r.req_pk, r.req_id_code, " +
@@ -103,21 +113,21 @@ public class RequirementAuditRepository {
                         "  r.created_date AS created_date, " +
                         "  r.revtype, r.reception, " +
                         "  IFNULL(JSON_ARRAYAGG(DISTINCT " +
-                        "    CASE WHEN s.source_id IS NOT NULL THEN " +
-                        "      JSON_OBJECT( " +
-                        "        'source_id', s.source_id, " +
-                        "        'page_num', s.page_num, " +
-                        "        'rel_sentence', s.rel_sentence, " +
-                        "        'doc_id', s.doc_id, " +
-                        "        'doc_name', d.name " +
-                        "      ) " +
-                        "    END " +
+                        "    JSON_OBJECT( " +
+                        "      'source_id', s.source_id, " +
+                        "      'page_num', s.page_num, " +
+                        "      'rel_sentence', s.rel_sentence, " +
+                        "      'doc_id', s.doc_id, " +
+                        "      'doc_name', CASE " +
+                        "                    WHEN s.doc_id LIKE 'RFP%' THEN 'RFP' " +
+                        "                    ELSE IFNULL(d.name, '') " +
+                        "                 END " +
+                        "    ) " +
                         "  ), JSON_ARRAY()) AS sources " +
                         "FROM target_requirements r " +
-                        "LEFT JOIN target_sources s ON r.req_id_code = s.req_id_code " +
+                        "LEFT JOIN distinct_sources s ON r.req_id_code = s.req_id_code " +
                         "LEFT JOIN tm_documents_aud d ON s.doc_id = d.doc_id " +
-                        "WHERE r.rn = 1 " +
-                        "  AND r.revtype <> 2 " +
+                        "WHERE r.revtype <> 2 " +
                         "  AND r.project_id_aud = :projectId " +
                         "GROUP BY " +
                         "  r.req_pk, r.req_id_code, " +
