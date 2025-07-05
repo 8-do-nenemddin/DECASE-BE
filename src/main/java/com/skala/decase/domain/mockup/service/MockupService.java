@@ -206,8 +206,8 @@ public class MockupService {
                 String fileName = resource.getFilename();
                 String zipEntryPath;
 
-                // _spec.html로 끝나는 파일은 screen_spec 폴더에, 나머지는 mockup 폴더에 넣기
-                if (fileName != null && fileName.endsWith("_spec.html")) {
+                // _spec.html/.png로 끝나는 파일은 screen_spec 폴더에, 나머지는 mockup 폴더에 넣기
+                if (fileName != null && (fileName.endsWith("_spec.html")|| fileName.endsWith(".png"))) {
                     zipEntryPath = "screen_spec/" + fileName;
                 } else {
                     zipEntryPath = "mockup/" + fileName;
@@ -221,40 +221,6 @@ public class MockupService {
                         zipOut.write(buffer, 0, length);
                     }
                     zipOut.closeEntry();
-                }
-            }
-
-            // 1. 기존 mockupResources 압축 코드 위에 추가
-            Path pngDirPath = Paths.get(MOCKUP_UPLOAD_PATH, "project_" + projectId, "revision_" + revisionCount,
-                    "screen_spec");
-            if (Files.exists(pngDirPath) && Files.isDirectory(pngDirPath)) {
-                try {
-                    // 디렉터리 내 모든 파일 로그 출력
-                    log.info("[PNG 디렉터리] {} 내 파일 목록:", pngDirPath);
-                    Files.list(pngDirPath).forEach(path -> log.info("  - {}", path.getFileName()));
-
-                    // PNG 파일만 필터링
-                    Files.list(pngDirPath)
-                            .filter(path -> path.toString().toLowerCase().endsWith(".png"))
-                            .forEach(pngPath -> {
-                                log.info("[PNG 추가 시도] 파일: {}", pngPath.getFileName());
-                                try (InputStream inputStream = Files.newInputStream(pngPath)) {
-                                    String fileName = pngPath.getFileName().toString();
-                                    String zipEntryPath = "screen_spec/" + fileName;
-                                    zipOut.putNextEntry(new ZipEntry(zipEntryPath));
-                                    byte[] buffer = new byte[1024];
-                                    int length;
-                                    while ((length = inputStream.read(buffer)) >= 0) {
-                                        zipOut.write(buffer, 0, length);
-                                    }
-                                    zipOut.closeEntry();
-                                    log.info("[PNG 추가 성공] {} -> {}", fileName, zipEntryPath);
-                                } catch (IOException e) {
-                                    log.error("[PNG 추가 실패] {} - {}", pngPath, e.getMessage(), e);
-                                }
-                            });
-                } catch (IOException e) {
-                    log.error("PNG 디렉터리 접근 실패: {} - {}", pngDirPath, e.getMessage(), e);
                 }
             }
 

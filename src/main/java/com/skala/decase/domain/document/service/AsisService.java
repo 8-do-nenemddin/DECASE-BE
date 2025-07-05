@@ -43,7 +43,7 @@ public class AsisService {
         List<Document> documents = documentRepository.findByDocIdStartingWithASIS(project);
 
         return documents.stream()
-                .map((doc)->documentMapper.toDetailResponseWithName(doc, "현황 보고서.pdf"))
+                .map((doc)->documentMapper.toDetailResponseWithName(doc, "ASIS_REPORT.pdf"))
                 .toList();
     }
 
