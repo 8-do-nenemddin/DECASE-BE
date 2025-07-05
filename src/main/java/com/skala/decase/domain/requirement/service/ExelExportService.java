@@ -184,7 +184,7 @@ public class ExelExportService {
 
         return sources.stream()
                 .map(source -> String.format("%s (%d페이지)\n%s",
-                        source.docId(),
+                        source.docName(),
                         source.pageNum(),
                         source.relSentence()))
                 .collect(Collectors.joining("\n\n"));
