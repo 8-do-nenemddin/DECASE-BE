@@ -11,8 +11,8 @@ public class WebClientConfig {
     @Bean
     public WebClient webClient() {
         return WebClient.builder()
-                .baseUrl("https://decase.skala25a.project.skala-ai.com") // ingress 주소
-//                 .baseUrl("http://localhost:8001")
+//                .baseUrl("https://decase.skala25a.project.skala-ai.com") // ingress 주소
+                 .baseUrl("http://localhost:8001")
                 .defaultHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
                 .build();
     }

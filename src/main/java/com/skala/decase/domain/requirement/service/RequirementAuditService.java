@@ -108,7 +108,7 @@ public class RequirementAuditService {
                         matchRequirement.getLevel3(),
                         matchRequirement.getName(),
                         matchRequirement.getDescription(),
-                        Reception.ACCEPTED
+                        matchRequirement.getReception()
                 );
 
                 matrixs.put(reqIdCode, matrixResponse);
