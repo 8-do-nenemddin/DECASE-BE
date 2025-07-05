@@ -3,7 +3,7 @@ package com.skala.decase.domain.project.service;
 import com.skala.decase.domain.job.domain.JobName;
 import com.skala.decase.domain.member.domain.Member;
 import com.skala.decase.domain.project.domain.Project;
-import com.skala.decase.domain.project.exception.ProjectException;
+import com.skala.decase.domain.project.exception.EmailException;
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
 import lombok.RequiredArgsConstructor;
@@ -49,7 +49,7 @@ public class AIMailService {
 
             javaMailSender.send(mimeMailMessage);
         } catch (MessagingException e) {
-            throw new ProjectException("수신자를 찾을 수 없습니다.", HttpStatus.BAD_REQUEST);
+            throw new EmailException("이메일 에러", HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
@@ -120,48 +120,48 @@ public class AIMailService {
         String detailMessageHtml = detailMessage.replace("\n", "<br/>");
 
         return """
-<!DOCTYPE html>
-<html lang="ko">
-<head>
-    <meta charset="UTF-8">
-    <title>DECASE 작업 결과 알림</title>
-</head>
-<body style="background:#fff; margin:0; padding:0; font-family:'Malgun Gothic','맑은 고딕',Arial,sans-serif; color:#222;">
-<table width="100%%" cellpadding="0" cellspacing="0" border="0" style="max-width:520px;margin:40px auto;border:1px solid #eee;border-radius:12px;background:#fff;">
-    <tr>
-        <td style="padding:40px 40px 24px 40px;">
-            <h1 style="margin:0 0 8px 0;font-size:28px;font-weight:700;letter-spacing:-1px;">DECASE 알림</h1>
-            <div style="font-size:15px;color:#888;margin-bottom:24px;">Break The Case</div>
-            <div style="font-size:16px;margin-bottom:32px;">안녕하세요, <b>DECASE</b>에서 AI 작업 처리 결과를 안내드립니다.</div>
-            <div style="font-size:20px;font-weight:600;margin-bottom:12px;">%s %s %s</div>
-            <div style="font-size:16px;line-height:1.7;margin-bottom:16px;white-space:pre-line;">%s</div>
-            %s
-            <table width="100%%" cellpadding="0" cellspacing="0" border="0" style="background:#fafafa;border:1px solid #eee;border-radius:8px;padding:0;margin-bottom:32px;">
-                <tr>
-                    <td style="padding:20px 18px;">
-                        <div style="font-size:15px;color:#666;margin-bottom:6px;">프로젝트</div>
-                        <div style="font-size:18px;font-weight:600;">%s</div>
-                    </td>
-                </tr>
-            </table>
-            <a href="%s" style="display:inline-block;background:%s;color:%s;padding:14px 32px;border-radius:28px;text-decoration:none;font-weight:600;font-size:16px;letter-spacing:0.5px;">DECASE 바로가기</a>
-            %s
-            <div style="font-size:13px;color:#aaa;margin-top:32px;line-height:1.6;">
-                본 메일은 <b>DECASE</b>에서 자동 발송된 알림입니다.<br><br><b>DECASE 팀 드림</b>
-            </div>
-        </td>
-    </tr>
-</table>
-</body>
-</html>
-""".formatted(
-    icon, jobDesc, statusDesc, // %s %s %s (아이콘, 작업명, 상태)
-    detailMessageHtml,         // %s (본문)
-    divider,                   // %s (구분선)
-    projectName,               // %s (프로젝트명)
-    link, btnColor, btnTextColor, // %s %s %s (링크, 버튼배경, 버튼글자색)
-    divider                    // %s (구분선)
-);
+                <!DOCTYPE html>
+                <html lang="ko">
+                <head>
+                    <meta charset="UTF-8">
+                    <title>DECASE 작업 결과 알림</title>
+                </head>
+                <body style="background:#fff; margin:0; padding:0; font-family:'Malgun Gothic','맑은 고딕',Arial,sans-serif; color:#222;">
+                <table width="100%%" cellpadding="0" cellspacing="0" border="0" style="max-width:520px;margin:40px auto;border:1px solid #eee;border-radius:12px;background:#fff;">
+                    <tr>
+                        <td style="padding:40px 40px 24px 40px;">
+                            <h1 style="margin:0 0 8px 0;font-size:28px;font-weight:700;letter-spacing:-1px;">DECASE 알림</h1>
+                            <div style="font-size:15px;color:#888;margin-bottom:24px;">Break The Case</div>
+                            <div style="font-size:16px;margin-bottom:32px;">안녕하세요, <b>DECASE</b>에서 AI 작업 처리 결과를 안내드립니다.</div>
+                            <div style="font-size:20px;font-weight:600;margin-bottom:12px;">%s %s %s</div>
+                            <div style="font-size:16px;line-height:1.7;margin-bottom:16px;white-space:pre-line;">%s</div>
+                            %s
+                            <table width="100%%" cellpadding="0" cellspacing="0" border="0" style="background:#fafafa;border:1px solid #eee;border-radius:8px;padding:0;margin-bottom:32px;">
+                                <tr>
+                                    <td style="padding:20px 18px;">
+                                        <div style="font-size:15px;color:#666;margin-bottom:6px;">프로젝트</div>
+                                        <div style="font-size:18px;font-weight:600;">%s</div>
+                                    </td>
+                                </tr>
+                            </table>
+                            <a href="%s" style="display:inline-block;background:%s;color:%s;padding:14px 32px;border-radius:28px;text-decoration:none;font-weight:600;font-size:16px;letter-spacing:0.5px;">DECASE 바로가기</a>
+                            %s
+                            <div style="font-size:13px;color:#aaa;margin-top:32px;line-height:1.6;">
+                                본 메일은 <b>DECASE</b>에서 자동 발송된 알림입니다.<br><br><b>DECASE 팀 드림</b>
+                            </div>
+                        </td>
+                    </tr>
+                </table>
+                </body>
+                </html>
+                """.formatted(
+                icon, jobDesc, statusDesc, // %s %s %s (아이콘, 작업명, 상태)
+                detailMessageHtml,         // %s (본문)
+                divider,                   // %s (구분선)
+                projectName,               // %s (프로젝트명)
+                link, btnColor, btnTextColor, // %s %s %s (링크, 버튼배경, 버튼글자색)
+                divider                    // %s (구분선)
+        );
     }
 
 }

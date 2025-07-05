@@ -115,6 +115,7 @@ public class SrsProcessingService {
             Document asisPdf = documentService.uploadASIS(project, member, file);
             saveAsisHtml(asisPdf);
             log.info("AS-IS 분석 결과 파일 저장 완료 - 프로젝트 ID: {}", projectId);
+            aiMailService.sendMail(JobName.ASIS, member, status, project,1);  // 메일 전송
         } else {
             throw new RequirementException("AS-IS 분석 실패. 상태: " + status + " - 프로젝트 ID: " + projectId,
                     HttpStatus.INTERNAL_SERVER_ERROR);

@@ -2,11 +2,13 @@ package com.skala.decase.domain.mockup.service;
 
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.skala.decase.domain.job.domain.JobName;
 import com.skala.decase.domain.mockup.controller.dto.request.CreateMockUpRequest;
 import com.skala.decase.domain.mockup.domain.Mockup;
 import com.skala.decase.domain.mockup.exception.MockupException;
 import com.skala.decase.domain.mockup.repository.MockupRepository;
 import com.skala.decase.domain.project.domain.Project;
+import com.skala.decase.domain.project.service.AIMailService;
 import com.skala.decase.domain.project.service.ProjectService;
 import com.skala.decase.domain.requirement.service.RequirementService;
 import java.nio.file.Files;
@@ -47,6 +49,7 @@ public class CreateMockupService {
     private final ProjectService projectService;
     private final RequirementService requirementService;
     private final MockupRepository mockupRepository;
+    private final AIMailService aiMailService;
 
     /**
      * 목업 생성 - fast api 서버에서 생성한 html/css 파일들을 받아옵니다.
@@ -117,6 +120,15 @@ public class CreateMockupService {
 
         // ZIP 파일 압축 해제 및 저장
         extractAndSaveMockupFiles(resource, project, revisionCount);
+
+        // 프로젝트에 참여하는 모든 멤버에게 메일 전송
+        if (project.getMembersProjects() != null) {
+            for (var memberProject : project.getMembersProjects()) {
+                if (memberProject.getMember() != null) {
+                    aiMailService.sendMail(JobName.MOCKUP, memberProject.getMember(), status, project, 1);
+                }
+            }
+        }
     }
 
     /**
