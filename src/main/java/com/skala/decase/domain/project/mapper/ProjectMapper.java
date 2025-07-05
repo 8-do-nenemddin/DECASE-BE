@@ -57,6 +57,7 @@ public class ProjectMapper {
                 project.getScale(),
                 project.getStartDate(),
                 project.getEndDate(),
+                project.getRevisionCount(),
                 project.getDescription(),
                 project.getProposalPM(),
                 creator.getMemberId()

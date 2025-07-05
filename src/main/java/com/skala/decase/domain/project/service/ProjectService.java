@@ -132,6 +132,7 @@ public class ProjectService {
         MemberProject memberProject = memberProjectRepository.findByProjectId(projectId)
                 .stream().filter(MemberProject::isAdmin).toList().get(0);
         Member creator = memberService.findByMemberId(memberProject.getMember().getMemberId());
+        project.setRevisionCount(requirementRepository.getMaxRevisionCount(project));
         return projectMapper.toDetailResponse(project, creator);
     }
 
@@ -174,5 +175,9 @@ public class ProjectService {
                 .stream()
                 .map(req -> new RequirementDescriptionResponse(req.getReqIdCode(), req.getDescription()))
                 .collect(Collectors.toList());
+    }
+
+    public void save(Project project) {
+        projectRepository.save(project);
     }
 }
