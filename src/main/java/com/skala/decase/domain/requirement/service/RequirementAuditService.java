@@ -39,7 +39,7 @@ public class RequirementAuditService {
                 .toList();
     }
 
-    public Map<String, List<String>> findModReasonByProjectIdAndReqIdCodes(long projectId, List<String> reqIdCodes) {
+    public Map<String, List<String>> findModReasonByProjectIdAndReqIdCodes(long projectId, List<String> reqIdCodes, Integer revision) {
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
         Map<String, List<String>> results = new LinkedHashMap<>();
 
@@ -48,7 +48,7 @@ public class RequirementAuditService {
             int end = Math.min(i + batchSize, reqIdCodes.size());
             List<String> batch = reqIdCodes.subList(i, end);
 
-            List<RequirementModReasonResponse> audits = requirementAuditRepository.findModReasonByProjectIdAndReqIdCodesNative(projectId, batch);
+            List<RequirementModReasonResponse> audits = requirementAuditRepository.findModReasonByProjectIdAndReqIdCodesNative(projectId, batch, revision);
 
             Map<String, List<String>> batchMap = audits.stream()
                     .sorted(Comparator.comparing(RequirementModReasonResponse::revisionDate))
