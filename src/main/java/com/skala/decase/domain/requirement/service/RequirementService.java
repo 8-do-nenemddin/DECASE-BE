@@ -76,7 +76,7 @@ public class RequirementService {
                 .toList();
 
         // 한 번에 이력 조회 (Map 형태로 반환)
-        Map<String, List<String>> reasonMap = requirementAuditService.findModReasonByProjectIdAndReqIdCodes(projectId, reqIdCodes);
+        Map<String, List<String>> reasonMap = requirementAuditService.findModReasonByProjectIdAndReqIdCodes(projectId, reqIdCodes, revisionCount);
         // 변환
         return requirements.stream()
                 .peek(req -> {
