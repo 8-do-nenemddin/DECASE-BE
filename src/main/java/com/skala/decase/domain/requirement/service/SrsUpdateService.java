@@ -150,9 +150,6 @@ public class SrsUpdateService {
         if (newFileName != null) {
             extension = file.getOriginalFilename().substring(file.getOriginalFilename().lastIndexOf("."));
         }
-        String fileName = newFileName == null
-                ? System.currentTimeMillis() + "_" + StringUtils.cleanPath(file.getOriginalFilename())
-                : System.currentTimeMillis() + "_" + newFileName + extension;
 
         Path path = Paths.get(uploadPath);
         if (!Files.exists(path)) {
@@ -162,8 +159,8 @@ public class SrsUpdateService {
                 throw new DocumentException("파일 uploadPath를 만들 수 없습니다.", HttpStatus.INTERNAL_SERVER_ERROR);
             }
         }
-
-        Path filePath = path.resolve(fileName);
+        String filePathName= newFileName+"_"+System.currentTimeMillis()+extension;
+        Path filePath = path.resolve(filePathName);
         try {
             Files.copy(file.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
         } catch (IOException e) {
@@ -173,7 +170,7 @@ public class SrsUpdateService {
         // Document 엔티티 생성 및 저장
         Document doc = new Document(
                 documentService.generateDocId(TYPE_PREFIX_MAP.get(docTypeIdx)),
-                fileName,
+                newFileName+extension,
                 filePath.toString(),
                 isMemberUpload,
                 project,
