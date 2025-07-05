@@ -51,7 +51,8 @@ public class RequirementServiceMapper {
                 requirement,
                 document,
                 response.source_page(),  //int로 변환할까
-                response.original_text()
+                response.original_text(),
+                requirement.getRevisionCount()
         );
         return newReq;
     }

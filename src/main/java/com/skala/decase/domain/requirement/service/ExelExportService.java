@@ -136,6 +136,9 @@ public class ExelExportService {
         if (reception == Reception.ACCEPTED) {
             return "수용";
         }
+        if (reception == Reception.REVIEWING) {
+            return "검토 중";
+        }
         return "미수용";
     }
 

@@ -180,6 +180,7 @@ public class RequirementAuditMapper {
                 requirementAuditDTO.getRequirement().getLevel3(),
                 requirementAuditDTO.getRequirement().getPriority(),
                 requirementAuditDTO.getRequirement().getDifficulty(),
+                requirementAuditDTO.getRequirement().getReception(),
                 requirementAuditDTO.getRequirement().getModReason(),
                 requirementAuditDTO.getRevisionDate(),
                 requirementAuditDTO.getRequirement().getCreatedBy().getId(),
