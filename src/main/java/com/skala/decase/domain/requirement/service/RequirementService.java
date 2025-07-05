@@ -247,11 +247,15 @@ public class RequirementService {
                 .toList();
     }
 
+    public int getMaxRevision(Project project) {
+        return Optional.ofNullable(requirementRepository.getMaxRevisionCount(project)).orElse(1);
+    }
+
     // 요구사항 버전 별 조회
     public List<RequirementRevisionDto> getRequirementRevisions(Long projectId) {
         Project project = projectService.findByProjectId(projectId);
 
-        int maxRevision = Optional.ofNullable(requirementRepository.getMaxRevisionCount(project)).orElse(0);
+        int maxRevision = Optional.ofNullable(requirementRepository.getMaxRevisionCount(project)).orElse(1);
 
         String prefix = "요구사항 정의서_";
         int digitCount = String.valueOf(maxRevision).length();
