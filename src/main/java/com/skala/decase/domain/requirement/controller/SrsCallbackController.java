@@ -1,5 +1,6 @@
 package com.skala.decase.domain.requirement.controller;
 
+import com.skala.decase.domain.project.service.AIMailService;
 import com.skala.decase.domain.requirement.controller.dto.request.SrsCallbackRequest;
 import com.skala.decase.domain.requirement.controller.dto.request.SrsUpdateCallbackRequest;
 import com.skala.decase.domain.requirement.service.SrsProcessingService;
@@ -29,6 +30,7 @@ public class SrsCallbackController {
 
     private final SrsProcessingService srsProcessingService;
     private final SrsUpdateService srsUpdateService;
+    private final AIMailService aiMailService;
 
     @PostMapping(value = "/{projectId}/asis/callback", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @Operation(summary = "AS-IS 분석 결과 콜백", description = "AS-IS 분석 완료 후 호출되는 콜백 API")

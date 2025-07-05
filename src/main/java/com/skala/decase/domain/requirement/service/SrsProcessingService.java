@@ -3,9 +3,11 @@ package com.skala.decase.domain.requirement.service;
 import com.skala.decase.domain.document.domain.Document;
 import com.skala.decase.domain.document.repository.DocumentRepository;
 import com.skala.decase.domain.document.service.DocumentService;
+import com.skala.decase.domain.job.domain.JobName;
 import com.skala.decase.domain.member.domain.Member;
 import com.skala.decase.domain.member.service.MemberService;
 import com.skala.decase.domain.project.domain.Project;
+import com.skala.decase.domain.project.service.AIMailService;
 import com.skala.decase.domain.project.service.ProjectService;
 import com.skala.decase.domain.requirement.controller.dto.request.CreateRfpRequest;
 import com.skala.decase.domain.requirement.domain.Requirement;
@@ -21,6 +23,7 @@ import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.hibernate.envers.internal.entities.mapper.id.AbstractIdMapper;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -44,6 +47,7 @@ public class SrsProcessingService {
     private final DocumentRepository documentRepository;
 
     private final EntityManager entityManager;
+    private final AIMailService aiMailService;
 
     @Value("${asis.callback-url}")
     private String asisCallbackUrl;
@@ -176,6 +180,7 @@ public class SrsProcessingService {
                 });
             }
         }
+        aiMailService.sendMail(JobName.SRS, member, status, project,1);  // 메일 전송
         log.info("요구사항 정의서 및 출처 저장 완료 - 프로젝트 ID: {}", projectId);
     }
 }
