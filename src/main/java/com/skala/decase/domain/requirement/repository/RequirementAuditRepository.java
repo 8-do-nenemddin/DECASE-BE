@@ -287,4 +287,38 @@ public class RequirementAuditRepository {
                 })
                 .toList();
     }
+
+    public List<RequirementResponse> findByProjectIdAndRevisionCountToUpdate(Long projectId, int revisionCount) {
+        String requirementsQuery =
+                "SELECT " +
+                        "  r.req_pk, r.req_id_code, " +
+                        "  r.type, r.level_1, r.level_2, r.level_3, " +
+                        "  r.name, r.description, r.priority, r.difficulty, " +
+                        "  r.modified_date AS modified_date, " +
+                        "  r.created_date AS created_date, " +
+                        "  r.revtype, r.reception " +
+                        "FROM ( " +
+                        "  SELECT *, ROW_NUMBER() OVER (PARTITION BY req_id_code ORDER BY modified_date DESC) AS rn " +
+                        "  FROM td_requirements_aud " +
+                        "  WHERE revision_count <= :targetRevision " +
+                        "    AND project_id_aud = :projectId " +
+                        "    AND revtype <> 2 " +
+                        ") r " +
+                        "WHERE r.rn = 1 " +
+                        "ORDER BY r.req_id_code";
+
+        @SuppressWarnings("unchecked")
+        List<Object[]> results = entityManager.createNativeQuery(requirementsQuery)
+                .setParameter("projectId", projectId)
+                .setParameter("targetRevision", revisionCount)
+                .getResultList();
+
+        return results.stream()
+                .map(result -> {
+                    RequirementResponse response = requirementAuditMapper.toDtoResponse(result, revisionCount);
+                    response.setSources(null);
+                    return response;
+                })
+                .toList();
+    }
 }

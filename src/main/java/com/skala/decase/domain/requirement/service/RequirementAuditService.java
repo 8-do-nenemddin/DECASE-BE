@@ -145,4 +145,8 @@ public class RequirementAuditService {
     public List<RequirementResponse> findByProjectIdAndRevisionCountToMockup(Long projectId, int revisionCount) {
         return requirementAuditRepository.findByProjectIdAndRevisionCountToMockup(projectId, revisionCount);
     }
+
+    public List<RequirementResponse> findByProjectIdAndRevisionCountToUpdate(Long projectId, int revisionCount) {
+        return requirementAuditRepository.findByProjectIdAndRevisionCountToUpdate(projectId, revisionCount);
+    }
 }

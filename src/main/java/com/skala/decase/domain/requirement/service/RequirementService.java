@@ -101,31 +101,16 @@ public class RequirementService {
 
         //유효한 요구사항 리스트 조회
         // 출처 없이 유효한 요구사항만 조회하도록 수정 필요
-        List<Requirement> requirements = requirementRepository.findValidRequirementsByProjectAndRevision(
-                projectId, revisionCount);
+        List<RequirementResponse> requirements = requirementAuditService.findByProjectIdAndRevisionCountToUpdate(projectId, revisionCount);
 
         //요구사항이 없는 경우
         if (requirements.isEmpty()) {
             return new ArrayList<>();
         }
 
-        // 이 로직 수정 해야함 !!!
-        // reqIdCode + revisionCount 조합별로 createdDate 기준 최신 요구사항만 필터링
-        List<Requirement> latestRequirements = requirements.stream()
-                .collect(Collectors.groupingBy(
-                        req -> req.getReqIdCode() + "_" + req.getRevisionCount(),
-                        Collectors.maxBy(Comparator.comparing(Requirement::getCreatedDate))
-                ))
-                .values()
-                .stream()
-                .filter(Optional::isPresent)
-                .map(Optional::get)
+        return requirements.stream()
+                .map(requirementUpdateServiceMapper::toUpdate)
                 .toList();
-
-        return latestRequirements.stream()
-                .map(requirementUpdateServiceMapper::toUpdateREQ)
-                .toList();
-
     }
 
     /**
