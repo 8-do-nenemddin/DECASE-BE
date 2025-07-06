@@ -76,3 +76,6 @@ srs-update:
 
 invite:
   web-url: "http://localhost:5173/invite"
+
+mail-alert:
+  web-url: "http://localhost:5173"

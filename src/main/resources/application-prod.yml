@@ -90,3 +90,6 @@ srs-update:
 
 invite:
   web-url: "https://decase.skala25a.project.skala-ai.com/invite"
+
+mail-alert:
+  web-url: "http://decase.skala25a.project.skala-ai.com"
