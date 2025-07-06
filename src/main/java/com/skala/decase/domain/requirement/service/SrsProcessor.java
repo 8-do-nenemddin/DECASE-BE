@@ -1,5 +1,8 @@
 package com.skala.decase.domain.requirement.service;
 
+import com.skala.decase.domain.document.domain.Document;
+import com.skala.decase.domain.document.repository.DocumentRepository;
+import com.skala.decase.domain.document.service.DocumentService;
 import com.skala.decase.domain.requirement.exception.RequirementException;
 import java.time.Duration;
 import java.util.Map;
@@ -14,13 +17,15 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.reactive.function.BodyInserters;
 import org.springframework.web.reactive.function.client.WebClient;
+import reactor.core.scheduler.Schedulers;
 
 @Service
 @Slf4j
 @RequiredArgsConstructor
 public class SrsProcessor {
     private final WebClient webClient;
-
+    private final DocumentRepository documentRepository;
+    private final DocumentService documentService;
 
     /**
      * 요구사항 정의서 생성 agent 호출 fast-api post "/api/v1/process-rfp-file"
@@ -55,13 +60,18 @@ public class SrsProcessor {
                         String message = (String) response.get("message");
                         log.info("요구사항 분석 시작, jobId: {}, 상태: {}, 메시지: {}", jobId, status, message);
                     })
+                    .publishOn(Schedulers.boundedElastic())
                     .doOnError(error -> {
                         log.error("요구사항 처리 실패 - 프로젝트: {}, 에러: {}", projectId, error.getMessage());
+                        Document document = documentService.findByDocId(documentId);
+                        documentRepository.delete(document);  //요구사항 정의서 저장 실패시 사용자 업로드 RFP 삭제
                     })
                     .toFuture();
 
         } catch (Exception e) {
             log.error("요구사항 처리 실패 - 프로젝트: {}, 에러: {}", projectId, e.getMessage(), e);
+            Document document = documentService.findByDocId(documentId);
+            documentRepository.delete(document);  //요구사항 정의서 저장 실패시 사용자 업로드 RFP 삭제
             throw new RequirementException("요구사항 정의서 생성 요청 중 오류가 발생했습니다.", HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
@@ -98,7 +108,8 @@ public class SrsProcessor {
                         Object statusObj = response.get("status");
                         Object messageObj = response.get("message");
 
-                        if (jobIdObj instanceof Integer && statusObj instanceof String status && messageObj instanceof String message) {
+                        if (jobIdObj instanceof Integer && statusObj instanceof String status
+                                && messageObj instanceof String message) {
                             int jobId = (Integer) jobIdObj;
                             log.info("현황 시스템 분석 시작, jobId: {}, 상태: {}, 메시지: {}", jobId, status, message);
                         } else {

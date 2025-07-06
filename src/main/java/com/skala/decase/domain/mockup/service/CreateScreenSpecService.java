@@ -2,11 +2,13 @@ package com.skala.decase.domain.mockup.service;
 
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.skala.decase.domain.job.domain.JobName;
 import com.skala.decase.domain.mockup.controller.dto.request.SpecGenerationRequest;
 import com.skala.decase.domain.mockup.domain.Mockup;
 import com.skala.decase.domain.mockup.exception.MockupException;
 import com.skala.decase.domain.mockup.repository.MockupRepository;
 import com.skala.decase.domain.project.domain.Project;
+import com.skala.decase.domain.project.service.AIMailService;
 import com.skala.decase.domain.project.service.ProjectService;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -33,6 +35,7 @@ public class CreateScreenSpecService {
     private final WebClient webClient;
     private final ProjectService projectService;
     private final MockupRepository mockupRepository;
+    private final AIMailService aiMailService;
 
     @Value("${screen-spec.callback-url}")
     private String callbackUrl;
@@ -113,6 +116,15 @@ public class CreateScreenSpecService {
             });
         } catch (IOException e) {
             throw new MockupException("화면 정의서 파일을 읽는 중 오류가 발생했습니다.", HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+
+        // 프로젝트에 참여하는 모든 멤버에게 메일 전송
+        if (project.getMembersProjects() != null) {
+            for (var memberProject : project.getMembersProjects()) {
+                if (memberProject.getMember() != null) {
+                    aiMailService.sendMail(JobName.SCREEN_SPEC, memberProject.getMember(), status, project, 1);
+                }
+            }
         }
     }
 }

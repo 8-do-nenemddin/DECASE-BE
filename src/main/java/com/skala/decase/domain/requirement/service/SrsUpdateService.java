@@ -7,10 +7,12 @@ import com.skala.decase.domain.document.domain.Document;
 import com.skala.decase.domain.document.exception.DocumentException;
 import com.skala.decase.domain.document.repository.DocumentRepository;
 import com.skala.decase.domain.document.service.DocumentService;
+import com.skala.decase.domain.job.domain.JobName;
 import com.skala.decase.domain.member.domain.Member;
 import com.skala.decase.domain.member.service.MemberService;
 import com.skala.decase.domain.project.domain.Project;
 import com.skala.decase.domain.project.repository.ProjectRepository;
+import com.skala.decase.domain.project.service.AIMailService;
 import com.skala.decase.domain.project.service.ProjectService;
 import com.skala.decase.domain.requirement.controller.dto.request.SrsDeleteRequestDetail;
 import com.skala.decase.domain.requirement.controller.dto.request.SrsUpdateRequest;
@@ -61,6 +63,7 @@ public class SrsUpdateService {
     private final MemberService memberService;
     private final DocumentService documentService;
     private final RequirementService requirementService;
+    private final AIMailService aiMailService;
 
     private final EntityManager entityManager;
 
@@ -272,6 +275,7 @@ public class SrsUpdateService {
             requirementRepository.save(reqToDelete);
         }
         log.info("요구사항 정의서 업데이트 완료");
+        aiMailService.sendMail(JobName.UPDATE, member, status, project,1);
 
     }
 }
