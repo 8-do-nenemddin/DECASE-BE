@@ -83,7 +83,7 @@ public class Project {
         this.endDate = endDate;
         this.description = description;
         this.proposalPM = proposalPM;
-        this.revisionCount = 1;
+        this.revisionCount = 0;
         this.status = ProjectStatus.NOT_STARTED;
         this.createdDate = createdDate;
         this.modifiedDate = modifiedDate;
