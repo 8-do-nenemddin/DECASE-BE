@@ -61,16 +61,16 @@ public class RequirementAuditMapper {
                 getLocalDateTime(result[11]),
                 getLocalDateTime(result[10]),
                 null,
-                parseSourcesForResponse(result[14])
+                null //parseSourcesForResponse(result[14])
         );
     }
 
-    private String mapRevtypeToString(Object revtype) {
-        if (revtype == null) return null;
+    private String mapRevtypeToString(Object revType) {
+        if (revType == null) return null;
 
         int value;
-        if (revtype instanceof Number) {
-            value = ((Number) revtype).intValue();  // Byte, Integer, etc. 모두 처리
+        if (revType instanceof Number) {
+            value = ((Number) revType).intValue();  // Byte, Integer, etc. 모두 처리
         } else {
             return "알 수 없음";
         }

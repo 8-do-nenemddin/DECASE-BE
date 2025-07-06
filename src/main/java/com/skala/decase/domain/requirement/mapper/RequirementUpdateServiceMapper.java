@@ -5,6 +5,7 @@ import com.skala.decase.domain.member.domain.Member;
 import com.skala.decase.domain.project.domain.Project;
 import com.skala.decase.domain.requirement.controller.dto.request.SrsUpdateRequestDetail;
 import com.skala.decase.domain.requirement.controller.dto.request.UpdateSrsAgentRequest;
+import com.skala.decase.domain.requirement.controller.dto.response.RequirementResponse;
 import com.skala.decase.domain.requirement.domain.Difficulty;
 import com.skala.decase.domain.requirement.domain.Priority;
 import com.skala.decase.domain.requirement.domain.Requirement;
@@ -61,6 +62,20 @@ public class RequirementUpdateServiceMapper {
                 requirement.getDifficulty().name(),
                 requirement.getName(),
                 requirement.getDescription()
+        );
+    }
+
+    public UpdateSrsAgentRequest toUpdate(RequirementResponse response) {
+        return new UpdateSrsAgentRequest(
+                response.getReqIdCode(),
+                response.getType(),
+                response.getLevel1(),
+                response.getLevel2(),
+                response.getLevel3(),
+                response.getPriority(),
+                response.getDifficulty(),
+                response.getName(),
+                response.getDescription()
         );
     }
 

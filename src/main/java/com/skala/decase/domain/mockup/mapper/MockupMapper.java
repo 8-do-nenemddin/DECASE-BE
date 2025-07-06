@@ -2,7 +2,9 @@ package com.skala.decase.domain.mockup.mapper;
 
 import com.skala.decase.domain.mockup.controller.dto.request.CreateMockUpRequest;
 import com.skala.decase.domain.mockup.controller.dto.request.CreateMockUpSourceRequest;
+import com.skala.decase.domain.requirement.controller.dto.response.RequirementResponse;
 import com.skala.decase.domain.requirement.controller.dto.response.RequirementWithSourceResponse;
+import com.skala.decase.domain.requirement.controller.dto.response.SourceResponse;
 import com.skala.decase.domain.requirement.domain.Requirement;
 import com.skala.decase.domain.requirement.domain.RequirementType;
 import java.util.ArrayList;
@@ -41,6 +43,28 @@ public class MockupMapper {
                 requirement.priority(), // importance
                 requirement.difficulty(), // difficulty
                 requirement.reqIdCode() // requirement_id
+        );
+    }
+
+    public CreateMockUpRequest toCreateMockUp(RequirementResponse response) {
+        return new CreateMockUpRequest(
+                response.getName(),
+                response.getType(),
+                response.getSources().stream().map(this::toCreateMockUpSource).toList(),
+                response.getDescription(),
+                response.getLevel1(),
+                response.getLevel2(),
+                response.getLevel3(),
+                response.getPriority(),
+                response.getDifficulty(),
+                response.getReqIdCode()
+        );
+    }
+
+    private CreateMockUpSourceRequest toCreateMockUpSource(SourceResponse sourceResponse) {
+        return new CreateMockUpSourceRequest(
+                sourceResponse.pageNum(),
+                sourceResponse.relSentence()
         );
     }
 
