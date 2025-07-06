@@ -248,7 +248,7 @@ public class RequirementService {
     }
 
     public int getMaxRevision(Project project) {
-        return Optional.ofNullable(requirementRepository.getMaxRevisionCount(project)).orElse(1);
+        return Optional.ofNullable(requirementRepository.getMaxRevisionCount(project)).orElse(0);
     }
 
     // 요구사항 버전 별 조회

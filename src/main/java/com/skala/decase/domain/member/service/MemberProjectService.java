@@ -10,6 +10,9 @@ import com.skala.decase.domain.project.exception.ProjectException;
 import com.skala.decase.domain.project.mapper.MemberProjectMapper;
 
 import java.util.List;
+
+import com.skala.decase.domain.project.service.ProjectService;
+import com.skala.decase.domain.requirement.service.RequirementService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -26,7 +29,8 @@ public class MemberProjectService {
     private final MemberProjectRepository memberProjectRepository;
     private final MemberService memberService;
     private final MemberProjectMapper memberProjectMapper;
-
+    private final RequirementService requirementService;
+    private final ProjectService projectService;
 
     /**
      * 프로젝트 권한 확인
@@ -46,6 +50,15 @@ public class MemberProjectService {
         Member member = memberService.findByMemberId(memberId);
 
         // 회원의 프로젝트 목록 조회
+        List<Project> projects = memberProjectRepository.findByMemberId(memberId)
+                .stream().map(MemberProject::getProject).toList();
+        projects.forEach(
+                project -> {
+                    int revisionCount = requirementService.getMaxRevision(project);
+                    project.setRevisionCount(revisionCount);
+                    projectService.save(project);
+                }
+        );
 
         // 필터 조건에 따라 적절한 Repository 메서드 호출
         Page<MemberProject> memberProjectsPage = findMemberProjectsByFilter(memberId, projectName, status, proposalPM,
