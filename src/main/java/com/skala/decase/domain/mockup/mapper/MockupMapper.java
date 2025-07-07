@@ -47,10 +47,17 @@ public class MockupMapper {
     }
 
     public CreateMockUpRequest toCreateMockUp(RequirementResponse response) {
+        List<CreateMockUpSourceRequest> sources = null;
+        if (response.getSources() != null) {
+            sources = response.getSources().stream()
+                    .map(src -> new CreateMockUpSourceRequest(src.pageNum(), src.relSentence()))
+                    .toList();
+        }
+
         return new CreateMockUpRequest(
                 response.getName(),
-                response.getType(),
-                response.getSources().stream().map(this::toCreateMockUpSource).toList(),
+                RequirementType.toKorean(response.getType()),
+                sources,
                 response.getDescription(),
                 response.getLevel1(),
                 response.getLevel2(),
@@ -58,13 +65,6 @@ public class MockupMapper {
                 response.getPriority(),
                 response.getDifficulty(),
                 response.getReqIdCode()
-        );
-    }
-
-    private CreateMockUpSourceRequest toCreateMockUpSource(SourceResponse sourceResponse) {
-        return new CreateMockUpSourceRequest(
-                sourceResponse.pageNum(),
-                sourceResponse.relSentence()
         );
     }
 
