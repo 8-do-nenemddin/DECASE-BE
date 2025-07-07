@@ -271,6 +271,8 @@ public class RequirementService {
                 .orElseThrow(() -> new MemberException("해당 멤버가 존재하지 않습니다.", HttpStatus.NOT_FOUND));
 
         if (memberProjectRepository.existsAdminPermission(project, member)) {
+            List<PendingRequirement> pendings = pendingRequirementRepository.findAllPendingRequirementByReqIdCode(requirement.getReqIdCode());
+            pendingRequirementRepository.deleteAll(pendings);
             requirementRepository.delete(requirement);
         }
 

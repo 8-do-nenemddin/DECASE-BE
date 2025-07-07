@@ -17,6 +17,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -25,61 +26,72 @@ import java.util.Optional;
 @Transactional(readOnly = true)
 public class PendingRequirementService {
     private final PendingRequirementRepository pendingRequirementRepository;
-	private final RequirementRepository requirementRepository;
+    private final RequirementRepository requirementRepository;
     private final SourceRepository sourceRepository;
 
-    @Transactional(readOnly = true)
+    @Transactional
     public List<PendingRequirementDto> getPendingRequirementsList(Long projectId) {
-        return pendingRequirementRepository.findAllByProject_ProjectIdAndStatusFalse(projectId).stream()
-            .map(pendingRequirement -> {
-                // 동일한 reqIdCode, projectId로 원본 찾기
-                var originalRequirement = requirementRepository
-                        .findByProject_ProjectIdAndReqIdCode(
-                                projectId, pendingRequirement.getReqIdCode()
-                        ).orElseThrow(() -> new IllegalArgumentException("원본 요구사항을 찾을 수 없습니다."));
+        List<PendingRequirement> pendingList = pendingRequirementRepository.findAllByProject_ProjectIdAndStatusFalse(projectId);
 
-                return PendingRequirementDto.builder()
+        List<PendingRequirementDto> result = new ArrayList<>();
+
+        for (PendingRequirement pendingRequirement : pendingList) {
+            Optional<Requirement> originalOpt = requirementRepository
+                    .findByProject_ProjectIdAndReqIdCode(projectId, pendingRequirement.getReqIdCode());
+
+            if (originalOpt.isEmpty()) {
+                // 원본 요구사항 없으면 해당 pending 삭제
+                pendingRequirementRepository.delete(pendingRequirement);
+                continue;
+            }
+
+            Requirement original = originalOpt.get();
+
+            PendingRequirementDto dto = PendingRequirementDto.builder()
                     .original(RequirementDto.builder()
-                        .id(originalRequirement.getReqPk())
-                        .idCode(pendingRequirement.getReqIdCode())
-                        .type(originalRequirement.getType().toString())
-                        .name(originalRequirement.getName())
-                        .description(originalRequirement.getDescription())
-                        .category1(originalRequirement.getLevel1())
-                        .category2(originalRequirement.getLevel2())
-                        .category3(originalRequirement.getLevel3())
-                        .priority(originalRequirement.getPriority().toString())
-                        .difficulty(originalRequirement.getDifficulty().toString())
-                            .reception(originalRequirement.getReception().toString())
-                        .modifiedDate(
-                                Optional.ofNullable(originalRequirement.getModifiedDate())
-                                        .map(LocalDateTime::toString)
-                                        .orElse(null)
-                        )
-                        .modifier(originalRequirement.getCreatedBy().getName())
-                        .reason(originalRequirement.getModReason())
-                        .isDelete(false)
-                        .build())
+                            .id(original.getReqPk())
+                            .idCode(pendingRequirement.getReqIdCode())
+                            .type(original.getType().toString())
+                            .name(original.getName())
+                            .description(original.getDescription())
+                            .category1(original.getLevel1())
+                            .category2(original.getLevel2())
+                            .category3(original.getLevel3())
+                            .priority(original.getPriority().toString())
+                            .difficulty(original.getDifficulty().toString())
+                            .reception(original.getReception().toString())
+                            .modifiedDate(
+                                    Optional.ofNullable(original.getModifiedDate())
+                                            .map(LocalDateTime::toString)
+                                            .orElse(null)
+                            )
+                            .modifier(original.getCreatedBy().getName())
+                            .reason(original.getModReason())
+                            .isDelete(false)
+                            .build())
                     .proposed(RequirementDto.builder()
-                        .id(pendingRequirement.getPendingPk())
-                        .idCode(pendingRequirement.getReqIdCode())
-                        .type(pendingRequirement.getType() != null ? pendingRequirement.getType().toString() : originalRequirement.getType().toString())
-                        .name(pendingRequirement.getName() != null ? pendingRequirement.getName() : originalRequirement.getName())
-                        .description(pendingRequirement.getDescription() != null ? pendingRequirement.getDescription() : originalRequirement.getDescription())
-                        .category1(pendingRequirement.getLevel1() != null ? pendingRequirement.getLevel1() : originalRequirement.getLevel1())
-                        .category2(pendingRequirement.getLevel2() != null ? pendingRequirement.getLevel2() : originalRequirement.getLevel2())
-                        .category3(pendingRequirement.getLevel3() != null ? pendingRequirement.getLevel3() : originalRequirement.getLevel3())
-                        .priority(pendingRequirement.getPriority() != null ? pendingRequirement.getPriority().toString() : originalRequirement.getPriority().toString())
-                        .difficulty(pendingRequirement.getDifficulty() != null ? pendingRequirement.getDifficulty().toString() : originalRequirement.getDifficulty().toString())
-                            .reception(pendingRequirement.getReception() != null ? pendingRequirement.getReception().toString() : originalRequirement.getDescription())
+                            .id(pendingRequirement.getPendingPk())
+                            .idCode(pendingRequirement.getReqIdCode())
+                            .type(pendingRequirement.getType() != null ? pendingRequirement.getType().toString() : original.getType().toString())
+                            .name(pendingRequirement.getName() != null ? pendingRequirement.getName() : original.getName())
+                            .description(pendingRequirement.getDescription() != null ? pendingRequirement.getDescription() : original.getDescription())
+                            .category1(pendingRequirement.getLevel1() != null ? pendingRequirement.getLevel1() : original.getLevel1())
+                            .category2(pendingRequirement.getLevel2() != null ? pendingRequirement.getLevel2() : original.getLevel2())
+                            .category3(pendingRequirement.getLevel3() != null ? pendingRequirement.getLevel3() : original.getLevel3())
+                            .priority(pendingRequirement.getPriority() != null ? pendingRequirement.getPriority().toString() : original.getPriority().toString())
+                            .difficulty(pendingRequirement.getDifficulty() != null ? pendingRequirement.getDifficulty().toString() : original.getDifficulty().toString())
+                            .reception(pendingRequirement.getReception() != null ? pendingRequirement.getReception().toString() : original.getReception().toString())
                             .modifiedDate(pendingRequirement.getModifiedDate().toString())
-                        .modifier(pendingRequirement.getCreatedBy().getName())
-                        .reason(pendingRequirement.getModReason())
-                        .isDelete(pendingRequirement.getIsDelete())
-                        .build())
+                            .modifier(pendingRequirement.getCreatedBy().getName())
+                            .reason(pendingRequirement.getModReason())
+                            .isDelete(pendingRequirement.getIsDelete())
+                            .build())
                     .build();
-            })
-            .toList();
+
+            result.add(dto);
+        }
+
+        return result;
     }
 
     public void approveRequest(Long projectId, ApproveDto approveDto) {
