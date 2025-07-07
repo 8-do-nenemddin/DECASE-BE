@@ -161,13 +161,14 @@ public class ProjectService {
         return result.stream().sorted(Comparator.comparing(MappingTableResponseDto::req_code)).toList();
     }
 
-    public String getAuthority(Long projectId, Long memberId) {
+    public PermissionResponse getAuthority(Long projectId, Long memberId) {
+        Member member = memberService.findByMemberId(memberId);
         MemberProject memberProject = memberProjectRepository.findByProject_ProjectIdAndMember_MemberId(projectId, memberId);
         if (memberProject == null) {
             throw new ProjectException("해당 멤버의 프로젝트 권한을 찾을 수 없습니다.", HttpStatus.NOT_FOUND);
         }
-        System.out.println("✅ : "+ memberProject.getPermission().toString());
-        return memberProject.getPermission().toString();
+        Boolean isAdmin = memberProjectRepository.existsByMemberAndIsAdminTrue(member);
+        return new PermissionResponse(memberProject.getPermission().toString(), isAdmin);
     }
 
     public List<RequirementDescriptionResponse> getDescriptions(Long projectId, List<String> ids) {
