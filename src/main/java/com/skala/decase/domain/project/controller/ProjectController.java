@@ -100,8 +100,8 @@ public class ProjectController {
     public ResponseEntity<PermissionResponse> getAuthority(
             @PathVariable Long projectId,
             @PathVariable Long memberId) {
-        String permission = projectService.getAuthority(projectId, memberId);
-        return ResponseEntity.ok(new PermissionResponse(permission));
+        PermissionResponse response = projectService.getAuthority(projectId, memberId);
+        return ResponseEntity.ok(response);
     }
 
     @PostMapping("/{projectId}/requirements/descriptions")
