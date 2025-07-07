@@ -14,7 +14,7 @@ spec:
         prometheus.io/scrape: "true"
         prometheus.io/port: "8081"
         prometheus.io/path: "/actuator/prometheus"
-        update: d3272faf9d55224d94bd87de7f987abe
+        update: 5bf9a97aeece2c42fa277d4f2a3c9ac8
       labels:
         app: decase
     spec:
@@ -22,7 +22,7 @@ spec:
       # 초기화 컨테이너로 디렉토리 생성
       initContainers:
         - name: init-storage
-          image: amdp-registry.skala-ai.com/skala25a/sk-team-08-decase:1.0.0-73-420e39d3bf55
+          image: amdp-registry.skala-ai.com/skala25a/sk-team-08-decase:1.0.0-75-73674d725b2b
           command:
             - /bin/sh
             - -c
@@ -38,7 +38,7 @@ spec:
 
       containers:
         - name: decase
-          image: amdp-registry.skala-ai.com/skala25a/sk-team-08-decase:1.0.0-73-420e39d3bf55
+          image: amdp-registry.skala-ai.com/skala25a/sk-team-08-decase:1.0.0-75-73674d725b2b
           imagePullPolicy: Always
           # 볼륨 마운트 설정 (EFS)
           volumeMounts:
