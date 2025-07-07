@@ -188,6 +188,9 @@ public class RequirementAuditRepository {
     }
 
     public List<RequirementResponse> findByProjectIdAndRevisionCountToMockup(long projectId, int revisionCount) {
+        System.out.println("=== 디버깅 시작 ===");
+        System.out.println("projectId: " + projectId + ", revisionCount: " + revisionCount);
+
         String requirementsQuery =
                 "SELECT " +
                         "  r.req_pk, r.req_id_code, " +
@@ -202,7 +205,6 @@ public class RequirementAuditRepository {
                         "  WHERE revision_count <= :targetRevision " +
                         "    AND project_id_aud = :projectId " +
                         "    AND revtype <> 2 " +
-                        "    AND type = 'FR' " + // 기능적 요구사항만
                         ") r " +
                         "WHERE r.rn = 1 " +
                         "ORDER BY r.req_id_code";
@@ -213,13 +215,47 @@ public class RequirementAuditRepository {
                 .setParameter("targetRevision", revisionCount)
                 .getResultList();
 
-        // 첫 번째 쿼리 결과에서 req_pk 리스트 추출
-        List<Long> reqPkList = results.stream()
+        System.out.println("전체 쿼리 결과 수: " + results.size());
+
+        // 타입별 분포 확인
+        Map<String, Long> typeCount = results.stream()
+                .collect(Collectors.groupingBy(
+                        result -> (String) result[2], // type 컬럼
+                        Collectors.counting()
+                ));
+
+        System.out.println("타입별 분포: " + typeCount);
+
+        // 처음 몇 개 결과 출력
+        for (int i = 0; i < Math.min(5, results.size()); i++) {
+            Object[] result = results.get(i);
+            System.out.println("결과 " + i + ": req_pk=" + result[0] +
+                    ", req_id_code=" + result[1] +
+                    ", type=" + result[2] +
+                    ", name=" + result[6]);
+        }
+
+        // Java에서 FR 타입만 필터링
+        List<Object[]> frResults = results.stream()
+                .filter(result -> {
+                    String type = (String) result[2];
+                    System.out.println("타입 체크: " + type + " -> " + "FR".equals(type));
+                    return "FR".equals(type);
+                })
+                .collect(Collectors.toList());
+
+        System.out.println("FR 타입 필터링 후 결과 수: " + frResults.size());
+
+        // FR 타입 결과에서 req_pk 리스트 추출
+        List<Long> reqPkList = frResults.stream()
                 .map(result -> ((Number) result[0]).longValue())
                 .collect(Collectors.toList());
 
+        System.out.println("reqPkList: " + reqPkList);
+
         // req_pk 리스트가 비어있으면 빈 결과 반환
         if (reqPkList.isEmpty()) {
+            System.out.println("reqPkList가 비어있음 - 빈 결과 반환");
             return Collections.emptyList();
         }
 
@@ -250,6 +286,8 @@ public class RequirementAuditRepository {
                 .setParameter("reqPkList", reqPkList)
                 .getResultList();
 
+        System.out.println("소스 쿼리 결과 수: " + docs.size());
+
         // docs를 Map<req_id_code, List<SourceResponse>>로 변환하면서 중복 문서 제거
         Map<String, List<SourceResponse>> sourcesMap = new HashMap<>();
 
@@ -276,7 +314,8 @@ public class RequirementAuditRepository {
             }
         }
 
-        return results.stream()
+        // FR 타입 결과만 사용해서 최종 응답 생성
+        List<RequirementResponse> finalResult = frResults.stream()
                 .map(result -> {
                     RequirementResponse response = requirementAuditMapper.toDtoResponse(result, revisionCount);
                     // 해당 요구사항의 소스 목록을 추가
@@ -286,6 +325,11 @@ public class RequirementAuditRepository {
                     return response;
                 })
                 .toList();
+
+        System.out.println("최종 결과 수: " + finalResult.size());
+        System.out.println("=== 디버깅 끝 ===");
+
+        return finalResult;
     }
 
     public List<RequirementResponse> findByProjectIdAndRevisionCountToUpdate(Long projectId, int revisionCount) {
